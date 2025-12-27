@@ -1,8 +1,8 @@
-def hello():
-    return "Astro IT Profile backend is alive!"
+from fastapi import FastAPI
+app = FastAPI()
 
-if __name__ == "__main__":
-    print(hello())
-
+@app.get("/")
+def root():
+    return {"message": "Astro IT Profile backend is running"}
 
 
