@@ -1,0 +1,42 @@
+# === Virtual environments ===
+.venv/
+venv/
+ENV/
+env/
+
+# === Python cache / compiled ===
+__pycache__/
+*.py[cod]
+*$py.class
+
+# === Logs / local runtime files ===
+*.log
+
+# === Environment variables (secrets) ===
+.env
+.env.*
+
+# === IDEs ===
+.idea/
+.vscode/
+
+# === OS files ===
+.DS_Store
+Thumbs.db
+
+# === Test / coverage ===
+.pytest_cache/
+.coverage
+htmlcov/
+
+# === Build artifacts ===
+dist/
+build/
+*.egg-info/
+
+# === Mypy / type check ===
+.mypy_cache/
+
+
+
+
