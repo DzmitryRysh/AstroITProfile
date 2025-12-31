@@ -1,20 +1,18 @@
-from datetime import date
+from datetime import date, time
 
 from pydantic import BaseModel, Field, field_validator
 
 
 class ProfileRequest(BaseModel):
-    birth_date: date = Field(..., description="Date of birthday YYYY-MM-DD")
-    favorite_stack: str  | None = Field(
-        default=None,
-        description="Favorite stack(ex. Python, JS, DevOps",
-        # examples=["Python"],
+    birth_date: date = Field(..., description="Date of birth YYYY-MM-DD")
+    birth_time: time = Field(..., description="Time of birth (HH:MM)")
+    birth_place: str = Field(..., min_length=2, description="Place of birth(e.g., 'Miami, FL, USA')")
 
-    )
 
     @field_validator("birth_date")
     @classmethod
     def validate_birth_date(cls,v: date) -> date:
+        from datetime import date as d
         if v > date.today():
             raise ValueError("Date can't be from future")
         if v < date(1900,1,1):
@@ -26,5 +24,8 @@ class ProfileRequest(BaseModel):
 class ProfileResponse(BaseModel):
     title: str
     sun_sign: str
+    it_fit_score: int
     it_archetype: str
+    strengths: list[str]
+    risks: list[str]
     notes: str
