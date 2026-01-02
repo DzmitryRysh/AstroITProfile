@@ -9,6 +9,8 @@ from fastapi import HTTPException
 
 from app.services.timezones import timezone_name_from_coords, to_utc_birth_moment, to_utc_birth_moment
 
+from app.services.day_night import is_day_chart
+
 router = APIRouter(prefix="/profile", tags=["profile"])
 
 
@@ -26,11 +28,17 @@ def build_profile(payload: ProfileRequest) -> ProfileResponse:
             birth_time=payload.birth_time,
             tz_name=tz_name,
         )
+        day_chart = is_day_chart(moment.local_dt)
+
+
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
 
 
-    it = build_it_profile(sun_sign=sun_sign)
+    it = build_it_profile(
+        sun_sign=sun_sign,
+        is_day=day_chart
+    )
 
     # coords = find_coordinates(payload.birth_place)
 
@@ -45,9 +53,10 @@ def build_profile(payload: ProfileRequest) -> ProfileResponse:
         it_archetype=it.archetype,
         strengths=it.strengths,
         risks=it.risks,
-        notes=f"{it.notes} | TZ={moment.tz_name}, "
-            f"local={moment.local_dt.isoformat()}, "
-            f"utc={moment.utc_dt.isoformat()}",
+        notes=f"{it.notes} | chart={'day' if day_chart else 'night'}"
+        # notes=f"{it.notes} | TZ={moment.tz_name}, "
+        #     f"local={moment.local_dt.isoformat()}, "
+        #     f"utc={moment.utc_dt.isoformat()}",
     )
 
 
