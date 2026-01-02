@@ -1,4 +1,6 @@
 from dataclasses import dataclass
+from app.services.astro_calc import calc_mercury_sign
+
 
 @dataclass(frozen=True)
 class ITProfile:
@@ -96,7 +98,71 @@ SUN_SIGN_TO_IT = {
     ),
 }
 
-def build_it_profile(*, sun_sign: str, is_day: bool) -> ITProfile:
+MERCURY_TO_THINKING = {
+    "Aries": (
+        3,
+        ["fast decision making", "initiative"],
+        ["impulsiveness"],
+    ),
+    "Taurus": (
+        2,
+        ["consistent thinking", "reliability"],
+        ["slowness in switching context"],
+    ),
+    "Gemini": (
+        5,
+        ["quick learning", "multi-tasking"],
+        ["context overload"],
+    ),
+    "Cancer": (
+        2,
+        ["intuitive understanding", "team empathy"],
+        ["emotional bias"],
+    ),
+    "Leo": (
+        3,
+        ["confident communication", "presentation skills"],
+        ["overconfidence"],
+    ),
+    "Virgo": (
+        6,
+        ["analytical thinking", "clean code"],
+        ["overthinking"],
+    ),
+    "Libra": (
+        3,
+        ["system design balance", "architectural sense"],
+        ["indecision"],
+    ),
+    "Scorpio": (
+        5,
+        ["deep focus", "problem investigation"],
+        ["obsessiveness"],
+    ),
+    "Sagittarius": (
+        4,
+        ["big-picture thinking", "learning drive"],
+        ["lack of detail"],
+    ),
+    "Capricorn": (
+        4,
+        ["structured thinking", "planning"],
+        ["rigidity"],
+    ),
+    "Aquarius": (
+        5,
+        ["abstract thinking", "innovation"],
+        ["detachment"],
+    ),
+    "Pisces": (
+        2,
+        ["creative thinking", "intuition"],
+        ["lack of structure"],
+    ),
+}
+
+
+def build_it_profile(*, sun_sign: str, is_day: bool, mercury_sign: str) -> ITProfile:
     score, archetype, strengths, risks, notes = SUN_SIGN_TO_IT.get(
         sun_sign,
         (72, "Balanced Engineer",
@@ -116,6 +182,15 @@ def build_it_profile(*, sun_sign: str, is_day: bool) -> ITProfile:
 
     score = min(100,score + score_delta)
     strengths = strengths + extra_strengths
+    m_score, m_strengths, m_risks = MERCURY_TO_THINKING.get(
+        mercury_sign,
+        (0, [], [])
+    )
+
+    score = min(100, score + m_score)
+    strengths = strengths + m_strengths
+    risks = risks + m_risks
+
     return ITProfile(
         score=score,
         archetype=archetype,
