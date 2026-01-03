@@ -59,6 +59,10 @@ The result includes:
 * Python **3.12.x** (required)
 * Windows OS
 
+> Python 3.12 is recommended on Windows to ensure smooth installation of
+> Swiss Ephemeris (pyswisseph) via prebuilt wheels.
+> Newer Python versions may require manual C++ compilation.
+
 > Python 3.13+ may require manual C++ compilation for Swiss Ephemeris.
 
 ### Installation
