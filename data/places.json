@@ -12,6 +12,11 @@
   "Saint Petersburg, Russia": {"lat": 59.9311, "lon": 30.3609},
   "Sochi, Russia": {"lat": 43.6028, "lon": 39.7342},
   "Kazan, Russia": {"lat": 55.7963, "lon": 49.1088},
+  "Penza, Russia": {"lat": 53.1959, "lon": 45.0183},
 
-  "Minsk, Belarus": { "lat": 53.9006, "lon": 27.5590 }
+  "Minsk, Belarus": { "lat": 53.9006, "lon": 27.5590 },
+
+  "Kyiv, Ukraine": { "lat": 50.4501, "lon": 30.5234 },
+  "Donetsk, Ukraine": { "lat": 48.0159, "lon": 37.8029 }
+
 }

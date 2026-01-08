@@ -26,6 +26,30 @@ def calc_mercury_sign(*, utc_dt: datetime) -> str:
     lon = float(mercury[0])
     return _sign_from_lon(lon)
 
+
+def calc_planet_sign(*, utc_dt: datetime, planet: int) -> str:
+    jd = _julian_day_utc(utc_dt)
+    lon = _planet_lon_ut(jd, planet)
+    return _sign_from_lon(lon)
+
+
+def calc_planet_house(
+    *, utc_dt: datetime, lat: float, lon: float, planet: int, house_system: bytes = b'P'
+) -> int:
+    jd = _julian_day_utc(utc_dt)
+    cusps_raw, _ascmc = swe.houses_ex(jd, lat, lon, house_system, swe.FLG_SWIEPH)
+
+    if len(cusps_raw) == 13:
+        cusps = [float(cusps_raw[i]) for i in range(1, 13)]
+    elif len(cusps_raw) == 12:
+        cusps = [float(c) for c in cusps_raw]
+    else:
+        raise RuntimeError(f"Unexpected cusps length from swe.houses_ex: {len(cusps_raw)}")
+
+    pl_lon = _planet_lon_ut(jd, planet)
+    return _house_index_from_lon(pl_lon, cusps)
+
+
 def _planet_lon_ut(jd_ut: float, planet: int) -> float:
     """Ecliptic longitude (0..360) for a planet at UT (Swiss Ephemeris)."""
     pos, _ = swe.calc_ut(jd_ut, planet, swe.FLG_SWIEPH)
@@ -54,8 +78,8 @@ def _house_index_from_lon(lon: float, cusps: list[float]) -> int:
             if lon >= start or lon < end:
                 return i + 1
 
-    # Fallback (should never happen)
     return 1
+
 
 def calc_uranus_house(
     *, utc_dt: datetime, lat: float, lon: float, house_system: bytes = b'P'

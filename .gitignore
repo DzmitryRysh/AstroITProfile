@@ -1,41 +1,28 @@
-# === Virtual environments ===
+# Environments
 .venv/
 venv/
-ENV/
-env/
+.env
 
-# === Python cache / compiled ===
+# Python cache
 __pycache__/
-*.py[cod]
-*$py.class
+*.pyc
+*.pyo
 
-# === Logs / local runtime files ===
+# Logs
+logs/
 *.log
 
-# === Environment variables (secrets) ===
-.env
-.env.*
-
-# === IDEs ===
+# IDE
 .idea/
 .vscode/
 
-# === OS files ===
+# OS
 .DS_Store
 Thumbs.db
 
-# === Test / coverage ===
-.pytest_cache/
-.coverage
-htmlcov/
-
-# === Build artifacts ===
-dist/
-build/
-*.egg-info/
-
-# === Mypy / type check ===
-.mypy_cache/
+# Data (если не хочешь коммитить пользовательские данные)
+data/*.json
+data/*.csv
 
 
 

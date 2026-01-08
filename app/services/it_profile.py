@@ -1,10 +1,14 @@
 from dataclasses import dataclass
+import swisseph as swe
+from typing import Optional
+
 
 
 @dataclass(frozen=True)
 class ITProfile:
     score: int
-    archetype: str
+    personality_style_archetype: str
+    it_archetype: str
     strengths: list[str]
     risks: list[str]
     notes: str
@@ -12,84 +16,84 @@ class ITProfile:
 
 SUN_SIGN_TO_IT = {
 "Aries": (
-        78,
+        0,
         "Product-Driven Builder",
         ["initiative", "speed", "risk-taking"],
         ["impatience", "burnout risk"],
         "High energy and drive — strong fit for fast-moving product teams."
     ),
     "Taurus": (
-        74,
+        0,
         "Reliable Systems Engineer",
         ["stability", "consistency", "long-term focus"],
         ["resistance to change"],
         "Great for systems requiring reliability and persistence."
     ),
     "Gemini": (
-        76,
+        0,
         "Polyglot Problem Solver",
         ["fast learning", "communication", "context switching"],
         ["scattered focus"],
         "Well-suited for roles with diverse tasks and collaboration."
     ),
     "Cancer": (
-        72,
+        0,
         "Supportive Team Engineer",
         ["empathy", "team care", "responsibility"],
         ["overprotectiveness"],
         "Strong in team-oriented environments and long-term products."
     ),
     "Leo": (
-        80,
+        0,
         "Technical Leader",
         ["confidence", "ownership", "influence"],
         ["ego clashes"],
         "Naturally fits leadership or lead engineer paths."
     ),
     "Virgo": (
-        82,
+        0,
         "Quality & Process Specialist",
         ["attention to detail", "debugging", "documentation"],
         ["perfectionism"],
         "Excellent for clean backend systems and quality-focused work."
     ),
     "Libra": (
-        75,
+        0,
         "Architecture Mediator",
         ["balance", "design sense", "decision support"],
         ["indecisiveness"],
         "Good at designing balanced systems and APIs."
     ),
     "Scorpio": (
-        81,
+        0,
         "Deep Systems Analyst",
         ["focus", "investigation", "security mindset"],
         ["over-intensity"],
         "Strong fit for security, backend, and deep technical domains."
     ),
     "Sagittarius": (
-        77,
+        0,
         "Exploring Technologist",
         ["vision", "learning", "adaptability"],
         ["lack of routine"],
         "Thrives in innovation-heavy and exploratory roles."
     ),
     "Capricorn": (
-        84,
+        0,
         "Strategic Architect",
         ["discipline", "planning", "ownership"],
         ["overwork", "rigidity"],
         "Excellent for architecture and long-term responsibility."
     ),
     "Aquarius": (
-        80,
+        0,
         "Innovative Technologist",
         ["systems thinking", "original ideas", "future orientation"],
         ["detachment"],
         "Great for R&D and non-standard technical solutions."
     ),
     "Pisces": (
-        70,
+        0,
         "Creative Product Thinker",
         ["empathy", "creativity", "user focus"],
         ["lack of structure"],
@@ -291,80 +295,242 @@ HOUSE10_SIGN_TO_CAREER = {
 }
 
 
-def build_it_profile(*, sun_sign: str, is_day: bool,
-                     mercury_sign: str,
-                     uranus_house: int,
-                     house_6_sign: str,
-                     house_10_sign: str) -> ITProfile:
+def build_it_profile(
+    *,
+    sun_sign: str,
+    is_day: bool,
+    mercury_sign: str,
+    uranus_house: int,
+    house_6_sign: str,
+    house_10_sign: str,
+    main_ruler_name: str,
+    main_ruler_sign: str,
+    main_ruler_house: int,
+    co_ruler_name: Optional[str] = None,
+    co_ruler_sign: Optional[str] = None,
+    co_ruler_house: Optional[int] = None,
+) -> ITProfile:
 
-    score, archetype, strengths, risks, notes = SUN_SIGN_TO_IT.get(
+    # ---- 0) Sun is STYLE only (NO score impact) ----
+    sun_base = SUN_SIGN_TO_IT.get(
         sun_sign,
-        (72, "Balanced Engineer",
-         ["adaptability", "learning mindset"],
-         ["needs clearer structure"],
-         "General profile: suitable for IT with the right direction.")
+        (
+            0,
+            "Balanced Engineer",
+            ["adaptability", "learning mindset"],
+            ["needs clearer structure"],
+            "General profile: suitable for IT with the right direction.",
+        ),
     )
-    score_delta = 0
-    extra_strengths: list[str] = []
+    _unused, personality_style_archetype, strengths, risks, notes = sun_base
 
-
+    # day/night -> narrative only
     if is_day:
-        score_delta += 3
-        extra_strengths.append("team-oriented work style")
+        strengths = strengths + ["team-oriented work style"]
+        notes = f"{notes} | Day chart: energy is more externally expressed."
     else:
-        score_delta += 5
-        extra_strengths.append("deep focus and analytical thinking")
+        strengths = strengths + ["deep focus potential"]
+        notes = f"{notes} | Night chart: energy is more internal and focused."
 
-    score = min(100,score + score_delta)
-    strengths = strengths + extra_strengths
-
-    m_score, m_strengths, m_risks, m_notes = MERCURY_TO_THINKING.get(
+    # ---- 1) Mercury block (0..100) ----
+    m_points, m_strengths, m_risks, m_notes = MERCURY_TO_THINKING.get(
         mercury_sign,
-        (0, [], [],"")
+        (2, [], [], "Mercury: default practical thinking."),
     )
-
-    score = min(100, score + m_score)
+    mercury_score = mercury_points_to_score(int(m_points))
     strengths = strengths + m_strengths
     risks = risks + m_risks
     notes = f"{notes} | {m_notes}"
 
+    # ---- 2) Uranus block (0..100) ----
     allowed = {1, 6, 10, 11}
     if uranus_house not in allowed:
         uranus_house = 0
 
     if uranus_house:
-        u_score, u_strengths, u_risks, u_note = URANUS_HOUSE_TO_IT[uranus_house]
-        score = min(100, score + u_score)
+        u_points, u_strengths, u_risks, u_note = URANUS_HOUSE_TO_IT[uranus_house]
         strengths = strengths + u_strengths
         risks = risks + u_risks
         notes = f"{notes} | {u_note}"
 
+    uranus_score = URANUS_HOUSE_TO_SCORE.get(uranus_house, DEFAULT_URANUS_SCORE)
 
-    # --- 6th house: daily work style ---
+    # ---- 3) House 6 block (soft) ----
     h6_strengths, h6_risks, h6_note = HOUSE6_SIGN_TO_WORKSTYLE.get(
         house_6_sign, ([], [], f"6th house {house_6_sign}: daily style noted.")
     )
     strengths += h6_strengths
     risks += h6_risks
     notes = f"{notes} | {h6_note}"
+    workstyle_score = HOUSE6_SIGN_TO_SCORE.get(house_6_sign, DEFAULT_HOUSE_SCORE)
 
-    # --- 10th house: career direction / archetype ---
+    # ---- 4) House 10 block (soft) ----
     arch, h10_strengths, h10_risks, h10_note = HOUSE10_SIGN_TO_CAREER.get(
-        house_10_sign, ("Backend Astronaut", [], [], f"10th house {house_10_sign}: career style noted.")
+        house_10_sign,
+        ("Backend Astronaut", [], [], f"10th house {house_10_sign}: career style noted."),
     )
 
-    archetype = f"{archetype} / {arch}"
-
+    it_archetype = arch
     strengths += h10_strengths
     risks += h10_risks
     notes = f"{notes} | {h10_note}"
+    career_score = HOUSE10_SIGN_TO_SCORE.get(house_10_sign, DEFAULT_HOUSE_SCORE)
 
+
+    # ---- 5) Final weighted score (0..100) ----
+    tech_signature = (
+        0.45 * uranus_score +
+        0.35 * mercury_score +
+        0.10 * career_score +
+        0.10 * workstyle_score
+    )
+
+    score = clamp_0_100(tech_signature)
+
+    # clean duplicates (optional but nice)
+    strengths = list(dict.fromkeys(strengths))
+    risks = list(dict.fromkeys(risks))
+
+    # debug note to validate calibration
+    notes = (
+        f"{notes} | Scores: Uranus={uranus_score}, Mercury={mercury_score}, "
+        f"Career(10H)={career_score}, Workstyle(6H)={workstyle_score} -> Total={score}"
+    )
+
+    ruler_info = f"10H rulers: main={main_ruler_name} in {main_ruler_sign} (H{main_ruler_house})"
+    if co_ruler_name:
+        ruler_info += f"; co={co_ruler_name} in {co_ruler_sign} (H{co_ruler_house})"
+    notes = f"{notes} | {ruler_info}"
+
+    def ruler_prefix(house_num: int) -> str:
+        if house_num == 1:
+            return "Public / Visible"
+        if house_num == 10:
+            return "Career Axis"
+        if house_num == 11:
+            return "Network / Platform"
+        if house_num == 6:
+            return "Craft / Skill Builder"
+        return "Strategic"
+
+    it_archetype = f"{ruler_prefix(main_ruler_house)} {it_archetype}"
 
     return ITProfile(
         score=score,
-        archetype=archetype,
+        personality_style_archetype=personality_style_archetype,
+        it_archetype=it_archetype,
         strengths=strengths,
         risks=risks,
         notes=notes,
     )
 
+
+# Uranus block: only house-based for MVP
+URANUS_HOUSE_TO_SCORE = {
+    1: 60,
+    6: 68,
+    10: 75,
+    11: 72,
+}
+DEFAULT_URANUS_SCORE = 50
+
+# Mercury thinking block: map your 0..5 points into a 0..100-ish score
+def mercury_points_to_score(points: int) -> int:
+    # points is 0..5
+    # 0 -> 55, 5 -> 75
+    return max(0, min(100, 55 + points * 4))
+
+# House signs as "soft modifiers" (not too strong)
+HOUSE6_SIGN_TO_SCORE = {
+    "Virgo": 70,
+    "Capricorn": 68,
+    "Scorpio": 66,
+    "Aquarius": 66,
+    "Gemini": 64,
+    "Aries": 62,
+    "Taurus": 60,
+    "Libra": 60,
+    "Cancer": 58,
+    "Leo": 58,
+    "Sagittarius": 58,
+    "Pisces": 56,
+}
+HOUSE10_SIGN_TO_SCORE = {
+    "Capricorn": 70,
+    "Aquarius": 68,
+    "Virgo": 68,
+    "Scorpio": 66,
+    "Aries": 64,
+    "Gemini": 64,
+    "Taurus": 62,
+    "Libra": 62,
+    "Leo": 60,
+    "Cancer": 60,
+    "Sagittarius": 60,
+    "Pisces": 58,
+}
+DEFAULT_HOUSE_SCORE = 60
+
+SIGN_TO_RULER_TRADITIONAL = {
+    "Aries": "Mars",
+    "Taurus": "Venus",
+    "Gemini": "Mercury",
+    "Cancer": "Moon",
+    "Leo": "Sun",
+    "Virgo": "Mercury",
+    "Libra": "Venus",
+    "Scorpio": "Mars",
+    "Sagittarius": "Jupiter",
+    "Capricorn": "Saturn",
+    "Aquarius": "Saturn",
+    "Pisces": "Jupiter",
+}
+
+# Modern rulerships: useful for tech-oriented interpretation
+SIGN_TO_RULER_MODERN = {
+    "Aries": "Mars",
+    "Taurus": "Venus",
+    "Gemini": "Mercury",
+    "Cancer": "Moon",
+    "Leo": "Sun",
+    "Virgo": "Mercury",
+    "Libra": "Venus",
+    "Scorpio": "Pluto",      # (often Mars co-ruler)
+    "Sagittarius": "Jupiter",
+    "Capricorn": "Saturn",
+    "Aquarius": "Uranus",    # key for IT
+    "Pisces": "Neptune",     # (often Jupiter co-ruler)
+}
+
+# Optional: co-rulers to keep both worlds (nice for explanation text)
+SIGN_TO_CO_RULER = {
+    "Scorpio": "Mars",
+    "Aquarius": "Saturn",
+    "Pisces": "Jupiter",
+}
+
+PLANET_NAME_TO_SWE = {
+    "Sun": swe.SUN,
+    "Moon": swe.MOON,
+    "Mercury": swe.MERCURY,
+    "Venus": swe.VENUS,
+    "Mars": swe.MARS,
+    "Jupiter": swe.JUPITER,
+    "Saturn": swe.SATURN,
+    "Uranus": swe.URANUS,
+    "Neptune": swe.NEPTUNE,
+    "Pluto": swe.PLUTO,
+}
+
+
+def clamp_0_100(x: float) -> int:
+    return int(max(0, min(100, round(x))))
+
+
+def get_10h_rulers(mc_sign: str) -> tuple[str, str | None]:
+    main = SIGN_TO_RULER_MODERN.get(mc_sign)
+    if not main:
+        main = SIGN_TO_RULER_TRADITIONAL.get(mc_sign, "Saturn")
+
+    co = SIGN_TO_CO_RULER.get(mc_sign)
+    return main, co

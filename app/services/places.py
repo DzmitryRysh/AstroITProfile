@@ -26,3 +26,7 @@ def find_coordinates(place: str) -> Coordinates:
 
     item = places[key]
     return Coordinates(lat=float(item["lat"]), lon=float(item["lon"]))
+
+
+def list_places() -> list[str]:
+    return sorted(load_places().keys())
