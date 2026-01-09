@@ -1,5 +1,6 @@
 from datetime import date, time
 from datetime import date as dt_date
+from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -27,6 +28,8 @@ class ProfileResponse(BaseModel):
     it_fit_score: int
     personality_style_archetype: str
     it_archetype: str
+    career_axis: dict[str, Any]
+
     strengths: list[str]
     risks: list[str]
     notes: str

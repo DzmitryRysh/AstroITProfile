@@ -12,7 +12,8 @@ from app.services.astro_calc import (
     calc_planet_house,
 )
 from app.services.day_night import is_day_chart
-from app.services.it_profile import build_it_profile, get_10h_rulers, PLANET_NAME_TO_SWE
+from app.services.it_profile import build_it_profile
+from app.services.it_rulership import get_10h_rulers, PLANET_NAME_TO_SWE
 from app.services.places import find_coordinates
 from app.services.timezones import timezone_name_from_coords, to_utc_birth_moment
 
@@ -112,5 +113,6 @@ class AstroService:
             uranus_house=uranus_house,
             house_6_sign=house_6_sign,
             house_10_sign=house_10_sign,
+            career_axis=it.career_axis.__dict__,
 
         )
