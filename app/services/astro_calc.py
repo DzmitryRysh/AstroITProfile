@@ -1,5 +1,7 @@
 from datetime import datetime
 import swisseph as swe
+from typing import Tuple
+
 
 
 SIGNS = [
@@ -8,6 +10,29 @@ SIGNS = [
     "Sagittarius", "Capricorn", "Aquarius", "Pisces"
 ]
 
+def safe_houses_ex(
+    jd: float,
+    lat: float,
+    lon: float,
+    house_system: bytes,
+    flags: int,
+) -> Tuple[list[float], object, bytes]:
+    """
+    Try requested house system first; if it fails (high latitudes),
+    fallback to Whole Sign ('W'), then Porphyry ('O').
+    Returns: (cusps_raw, ascmc, used_house_system)
+    """
+    candidates = (house_system, b"W", b"O")
+    last_error = None
+
+    for hs in candidates:
+        try:
+            cusps_raw, ascmc = swe.houses_ex(jd, lat, lon, hs, flags)
+            return cusps_raw, ascmc, hs
+        except swe.Error as e:
+            last_error = e
+
+    raise last_error
 
 def _sign_from_lon(lon: float) -> str:
     index = int(lon // 30)
@@ -34,11 +59,12 @@ def calc_planet_sign(*, utc_dt: datetime, planet: int) -> str:
 
 
 def calc_planet_house(
-    *, utc_dt: datetime, lat: float, lon: float, planet: int, house_system: bytes = b'P'
-) -> int:
+        *, utc_dt: datetime, lat: float, lon: float, planet: int, house_system: bytes = b'P'
+) -> tuple[int, bytes]:
     jd = _julian_day_utc(utc_dt)
-    cusps_raw, _ascmc = swe.houses_ex(jd, lat, lon, house_system, swe.FLG_SWIEPH)
-
+    cusps_raw, _ascmc, used_hsys = safe_houses_ex(
+        jd, lat, lon, house_system, swe.FLG_SWIEPH
+    )
     if len(cusps_raw) == 13:
         cusps = [float(cusps_raw[i]) for i in range(1, 13)]
     elif len(cusps_raw) == 12:
@@ -47,7 +73,7 @@ def calc_planet_house(
         raise RuntimeError(f"Unexpected cusps length from swe.houses_ex: {len(cusps_raw)}")
 
     pl_lon = _planet_lon_ut(jd, planet)
-    return _house_index_from_lon(pl_lon, cusps)
+    return _house_index_from_lon(pl_lon, cusps), used_hsys
 
 
 def _planet_lon_ut(jd_ut: float, planet: int) -> float:
@@ -82,11 +108,13 @@ def _house_index_from_lon(lon: float, cusps: list[float]) -> int:
 
 
 def calc_uranus_house(
-    *, utc_dt: datetime, lat: float, lon: float, house_system: bytes = b'P'
-) -> int:
+        *, utc_dt: datetime, lat: float, lon: float, house_system: bytes = b'P'
+) -> tuple[int, bytes]:
     jd = _julian_day_utc(utc_dt)
 
-    cusps_raw, _ascmc = swe.houses_ex(jd, lat, lon, house_system, swe.FLG_SWIEPH)
+    cusps_raw, _ascmc, used_hsys = safe_houses_ex(
+        jd, lat, lon, house_system, swe.FLG_SWIEPH
+    )
 
     # Normalize cusps to a 12-element list (pyswisseph may return len 12 or 13)
     if len(cusps_raw) == 13:
@@ -97,20 +125,19 @@ def calc_uranus_house(
         raise RuntimeError(f"Unexpected cusps length from swe.houses_ex: {len(cusps_raw)}")
 
     ur_lon = _planet_lon_ut(jd, swe.URANUS)
-    return _house_index_from_lon(ur_lon, cusps)
+    return _house_index_from_lon(ur_lon, cusps), used_hsys
 
 
 def calc_house_signs(
-    *, utc_dt: datetime,
-        lat: float,
-        lon: float,
-        house_system: bytes = b'P'
-) -> dict[str, str]:
+        *, utc_dt: datetime, lat: float, lon: float, house_system: bytes = b'P'
+) -> tuple[dict[str, str], bytes]:
     """
     Zodiac signs on cusps of 6th and 10th houses (Swiss Ephemeris).
     """
     jd = _julian_day_utc(utc_dt)
-    cusps_raw, _ascmc = swe.houses_ex(jd, lat, lon, house_system, swe.FLG_SWIEPH)
+    cusps_raw, _ascmc, used_hsys = safe_houses_ex(
+        jd, lat, lon, house_system, swe.FLG_SWIEPH
+    )
 
     # Normalize cusps to 12-element list
     if len(cusps_raw) == 13:
@@ -127,4 +154,6 @@ def calc_house_signs(
     return {
         "house_6_sign": _sign_from_lon(house_6_lon),
         "house_10_sign": _sign_from_lon(house_10_lon),
-    }
+    }, used_hsys
+
+

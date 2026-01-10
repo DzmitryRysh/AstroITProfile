@@ -134,8 +134,6 @@ def build_it_profile(
 
     it_archetype = f"{ruler_prefix(main_ruler_house)} {it_archetype}"
 
-    # DEBUG: check ruler placement
-    notes = f"{notes} | DEBUG ruler={main_ruler_name} H{main_ruler_house} {main_ruler_sign}"
 
     # ---- 4.3) Career Axis block (for frontend) ----
     career_axis = build_career_axis(

@@ -39,5 +39,5 @@ class ProfileResponse(BaseModel):
     uranus_house: int
     house_6_sign: str
     house_10_sign: str
-
+    house_system_used: str
 

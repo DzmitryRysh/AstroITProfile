@@ -38,18 +38,20 @@ class AstroService:
         utc_dt = moment.utc_dt
         day_chart = is_day_chart(moment.local_dt)
 
-        # 4) astrology parts (no rewrite, call existing funcs)
+        # 4) astrology parts
         sun_sign = get_sun_sign(payload.birth_date)
         mercury_sign = calc_mercury_sign(utc_dt=utc_dt)
 
-        uranus_house = calc_uranus_house(
+        # Uranus house (now returns: (house, used_house_system))
+        uranus_house, used_hsys_uranus = calc_uranus_house(
             utc_dt=utc_dt,
             lat=coords.lat,
             lon=coords.lon,
             house_system=self.default_house_system,
         )
 
-        house_signs = calc_house_signs(
+        # house signs (now returns: (dict, used_house_system))
+        house_signs, used_hsys_houses = calc_house_signs(
             utc_dt=utc_dt,
             lat=coords.lat,
             lon=coords.lon,
@@ -58,11 +60,13 @@ class AstroService:
         house_6_sign = house_signs["house_6_sign"]
         house_10_sign = house_signs["house_10_sign"]
 
+        # 10H rulers
         main_ruler_name, co_ruler_name = get_10h_rulers(house_10_sign)
 
+        # main ruler sign + house (planet house now returns: (house, used_house_system))
         main_ruler_id = PLANET_NAME_TO_SWE[main_ruler_name]
         main_ruler_sign = calc_planet_sign(utc_dt=utc_dt, planet=main_ruler_id)
-        main_ruler_house = calc_planet_house(
+        main_ruler_house, used_hsys_main_ruler = calc_planet_house(
             utc_dt=utc_dt,
             lat=coords.lat,
             lon=coords.lon,
@@ -70,18 +74,32 @@ class AstroService:
             house_system=self.default_house_system,
         )
 
+        # co-ruler (optional)
         co_ruler_sign = None
         co_ruler_house = None
+        used_hsys_co_ruler = None
+
         if co_ruler_name:
             co_ruler_id = PLANET_NAME_TO_SWE[co_ruler_name]
             co_ruler_sign = calc_planet_sign(utc_dt=utc_dt, planet=co_ruler_id)
-            co_ruler_house = calc_planet_house(
+            co_ruler_house, used_hsys_co_ruler = calc_planet_house(
                 utc_dt=utc_dt,
                 lat=coords.lat,
                 lon=coords.lon,
                 planet=co_ruler_id,
                 house_system=self.default_house_system,
             )
+
+        # Decide which house system was actually used (usually they will match)
+        # We pick the first non-default that appeared, otherwise keep the default.
+        used_system = (
+            used_hsys_uranus
+            or used_hsys_houses
+            or used_hsys_main_ruler
+            or used_hsys_co_ruler
+            or self.default_house_system
+        )
+        house_system_used = used_system.decode("ascii")
 
         # 5) IT profile aggregation
         it = build_it_profile(
@@ -105,6 +123,7 @@ class AstroService:
             it_fit_score=it.score,
             personality_style_archetype=it.personality_style_archetype,
             it_archetype=it.it_archetype,
+            career_axis=it.career_axis.__dict__ if hasattr(it.career_axis, "__dict__") else it.career_axis,
             strengths=it.strengths,
             risks=it.risks,
             notes=it.notes,
@@ -113,6 +132,5 @@ class AstroService:
             uranus_house=uranus_house,
             house_6_sign=house_6_sign,
             house_10_sign=house_10_sign,
-            career_axis=it.career_axis.__dict__,
-
+            house_system_used=house_system_used,
         )
