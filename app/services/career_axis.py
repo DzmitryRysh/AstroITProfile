@@ -106,7 +106,6 @@ def build_career_axis(
         {"text": "a balanced professional tone", "roles": []},
     )
 
-    # Тон “вариант 4” (IT-friendly)
     summary = (
         "This is a strong signature for public expertise in technology. "
         f"It points to roles where {house_pack['text']} matters — such as research, innovation, DevRel, "

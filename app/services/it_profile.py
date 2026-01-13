@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Optional
 
-from app.services.career_axis import build_career_axis
+from app.services.career_axis import build_career_axis, CareerAxisBlock
 from app.services.it_dictionaries import (
     SUN_SIGN_TO_IT,
     MERCURY_TO_THINKING,
@@ -28,7 +28,7 @@ class ITProfile:
     score: int
     personality_style_archetype: str
     it_archetype: str
-    career_axis: dict[str, Any]
+    career_axis: CareerAxisBlock
     strengths: list[str]
     risks: list[str]
     notes: str
@@ -45,6 +45,8 @@ def build_it_profile(
     main_ruler_name: str,
     main_ruler_sign: str,
     main_ruler_house: int,
+    aspects_bonus: int = 0,
+    tech_mind_bonus: int = 0,
     co_ruler_name: Optional[str] = None,
     co_ruler_sign: Optional[str] = None,
     co_ruler_house: Optional[int] = None,
@@ -77,9 +79,10 @@ def build_it_profile(
         (2, [], [], "Mercury: default practical thinking."),
     )
     mercury_score = mercury_points_to_score(int(m_points))
+    mercury_score = min(100, mercury_score + tech_mind_bonus)
     strengths = strengths + m_strengths
     risks = risks + m_risks
-    notes = f"{notes} | {m_notes}"
+    notes = f"{notes} | {m_notes} | Technical mind bonus:  +{tech_mind_bonus}"
 
     # ---- 2) Uranus block (0..100) ----
     allowed = {1, 6, 10, 11}
@@ -119,6 +122,8 @@ def build_it_profile(
     career_ruler_bonus = calc_career_ruler_bonus(main_ruler_name, main_ruler_house)
     career_score = min(100, career_score + career_ruler_bonus)
     notes = f"{notes} | Career ruler bonus: +{career_ruler_bonus}"
+    career_score = min(100, career_score + aspects_bonus)
+    notes = f"{notes} | Ruler aspects bonus: +{aspects_bonus}"
 
     # ---- 4.2) Archetype prefix by ruler house ----
     def ruler_prefix(house_num: int) -> str:

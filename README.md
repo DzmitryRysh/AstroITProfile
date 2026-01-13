@@ -1,176 +1,198 @@
-# Astro IT Profile
+# AstroIT Profile 🪐💻
+**Astrology-driven career & technical aptitude profiling for IT professionals**
 
-Astro IT Profile is a FastAPI-based backend project that generates an explainable IT profile using precise astronomical calculations.
+AstroIT Profile is an experimental analytics engine that maps **astrological career indicators** to **IT roles, technical strengths, risks, and growth paths**.
 
-The goal of the project is **not astrology as belief**, but an engineering-style experiment: translating astronomical configurations into structured thinking styles, work patterns, and IT career archetypes — with all calculations fully transparent and interview-ready.
+The project does **not** aim to replace traditional assessments (CVs, interviews, coding tests).  
+Instead, it adds a **symbolic + structural layer** that helps explain:
 
----
-
-## ✨ Key Features
-
-* **FastAPI backend** with clean, modular architecture
-* **Swiss Ephemeris (pyswisseph)** as the single source of astronomical truth
-* Deterministic calculations (no randomization, no tables by date)
-* Explainable business logic layered on top of raw astronomical data
-* Portfolio-level codebase (~800–900 LOC)
+- How a person naturally thinks in technical systems  
+- Where their career energy is best expressed  
+- Why certain IT roles feel natural or exhausting  
+- What long-term technical growth path fits them best  
 
 ---
 
-## 🧠 What the API Calculates
+## Core Idea
 
-Based on **date, time, and place of birth**, the service computes:
+AstroIT Profile translates **classical and modern astrology** into **clear, readable IT-oriented insights**.
 
-* ☉ **Sun sign** – base personality type
-* ☿ **Mercury sign** – thinking and problem-solving style (Swiss Ephemeris)
-* ☾ **Day / Night chart** – focus vs collaboration mode
-* ♅ **Uranus house** (1 / 6 / 10 / 11 only) – main IT potential indicator
-* 🏠 **6th house sign** – daily work style
-* 🏔 **10th house sign** – career direction and IT archetype
+Instead of vague horoscopes, the system works with:
+- Houses (career, work style, visibility)
+- Planetary rulers
+- Technical planets (Mercury, Uranus, Saturn)
+- Weighted scoring
+- Explicit logic and explainable output
 
-All planets and houses are calculated via **Swiss Ephemeris**, not simplified date tables.
-
----
-
-## 🧩 IT Profile Model
-
-The IT profile is built layer by layer:
-
-1. **Sun sign** → base IT personality
-2. **Day / Night chart** → work mode modifier
-3. **Mercury sign** → cognitive and thinking style
-4. **Uranus house** → IT specialization potential
-5. **6th house sign** → daily work habits
-6. **10th house sign** → career trajectory
-
-The result includes:
-
-* IT fit score
-* IT archetype (e.g. *Backend Astronaut*, *Systems Analyst*)
-* Strengths
-* Risks
-* Human-readable explanation (`notes`)
+This makes astrology usable as a **decision-support tool**, not mysticism.
 
 ---
 
-## 🚀 Getting Started
+## What the Profile Includes
 
-### Requirements
+### 1. IT Fit Score (0–100)
 
-* Python **3.12.x** (required)
-* Windows OS
+A weighted score representing **technical alignment with IT work**, based on:
 
-> Python 3.12 is recommended on Windows to ensure smooth installation of
-> Swiss Ephemeris (pyswisseph) via prebuilt wheels.
-> Newer Python versions may require manual C++ compilation.
+- Uranus (technology, innovation)
+- Mercury (thinking style)
+- 10th house (career axis)
+- 6th house (daily work style)
+- Career ruler bonuses
+- Key aspects (advanced layer)
 
-> Python 3.13+ may require manual C++ compilation for Swiss Ephemeris.
-
-### Installation
-
-```bash
-python -m venv .venv
-.\.venv\Scripts\activate
-pip install -r requirements.txt
-```
-
-### Run the Server
-
-```bash
-uvicorn app.main:app --reload
-```
-
-Open:
-
-```
-http://127.0.0.1:8000/docs
-```
+The score is **capped, calibrated, and explainable**.
 
 ---
 
-## 📥 API Example
+### 2. Personality Style Archetype (Sun)
 
-### Request
+A **recognition layer** — how the person tends to express themselves.
 
-```json
-{
-  "birth_date": "1995-11-18",
-  "birth_time": "14:30",
-  "birth_place": "Berlin, Germany"
-}
-```
+Examples:
+- Deep Systems Analyst  
+- Strategic Architect  
+- Innovative Technologist  
 
-### Response (example)
-
-```json
-{
-  "title": "Astro IT Profile (draft)",
-  "sun_sign": "Scorpio",
-  "it_fit_score": 100,
-  "it_archetype": "Deep Systems Analyst / Backend Astronaut",
-  "strengths": ["focus", "systems thinking", "analysis"],
-  "risks": ["over-intensity"],
-  "notes": "Strong fit for backend and deep technical domains.",
-  "chart_type": "day",
-  "mercury_sign": "Sagittarius",
-  "uranus_house": 11,
-  "house_6_sign": "Virgo",
-  "house_10_sign": "Aquarius"
-}
-```
+This layer supports **self-identification**, not career prediction.
 
 ---
 
-## 🏗 Architecture Overview
+### 3. IT Archetype (Career-Driven)
 
-```
-AstroITProfile/
-├─ app/
-│  ├─ api/            # FastAPI routes
-│  ├─ services/       # Astro calculations & business logic
-│  ├─ schemas/        # Pydantic models
-│  └─ main.py
-├─ data/              # Places and coordinates
-├─ tests/
-└─ requirements.txt
-```
+The **main professional archetype**, derived from:
+- 10th house sign (MC)
+- Ruler of the 10th house
+- Ruler’s house placement
 
-Key design decisions:
+Examples:
+- Public / Visible Research Engineer  
+- Platform Futurist  
+- Architecture-Focused Engineer  
 
-* Swiss Ephemeris is the **only** source for planetary data
-* Business logic is fully separated from API layer
-* No hidden heuristics or magic constants
+This answers:
+**“What role fits me long-term in IT?”**
 
 ---
 
-## 🎯 Project Status
+### 4. Career Axis Block (Key Feature)
 
-* Core calculations: ✅ complete
-* Uranus house logic: ✅ complete
-* House 6 / 10 sign logic: ✅ complete
-* Aspects: ⏳ planned (future)
-* Frontend: ❌ not planned (backend-only project)
+A dedicated structured block describing **career realization**.
 
----
+Includes:
+- Career theme (visibility, research, platforms, leadership, etc.)
+- Plain-English summary
+- Role hints
+- Core factors:
+  - MC sign
+  - Main ruler
+  - Ruler sign & house
+- Career-related aspects
+- Aspect score bonuses
 
-## ⚠️ Disclaimer
-
-This project is experimental and educational.
-It does **not** claim scientific validity — the focus is on software architecture, deterministic computation, and explainable logic.
-
----
-
-## 📌 Why This Project
-
-This project demonstrates:
-
-* backend API design
-* working with external C-based libraries
-* timezone and astronomical calculations
-* layered business logic
-* explainability over black-box results
+This block is designed for **frontend visualization**.
 
 ---
 
-## 📄 License
+### 5. Technical Mind (Mercury ↔ Uranus)
 
-MIT (or specify if different)
+A special block detecting **aspects between Mercury and Uranus**.
+
+Describes:
+- Non-linear thinking
+- Innovation style
+- How technical insights arise
+- Where the mind thrives (R&D, automation, architecture, security)
+
+Each aspect includes:
+- Aspect type
+- Orb
+- Impact (support / tension)
+- Score bonus
+- Title, explanation, and advice
+
+---
+
+### 6. Strengths & Risks
+
+Human-readable lists generated from all active factors.
+
+**Strengths** examples:
+- systems thinking
+- security mindset
+- learning drive
+
+**Risks** examples:
+- over-intensity
+- skipping details
+- burnout tendency
+
+---
+
+### 7. Transparent Notes
+
+Each profile includes a **debug-style explanation**:
+- What contributed to the score
+- Which bonuses were applied
+- Which planets and houses mattered most
+
+This keeps the system **auditable and honest**.
+
+---
+
+## Architecture Overview
+
+**Backend**
+- Python
+- FastAPI
+- Swiss Ephemeris (`swisseph`)
+
+**Structure**
+- `astro_calc` — planetary positions & houses
+- `it_profile` — scoring logic
+- `career_axis` — career interpretation
+- `aspects` — aspect detection & scoring
+- `technical_mind` — Mercury–Uranus logic
+- `astro_service` — orchestration layer
+
+All blocks are **modular and replaceable**.
+
+---
+
+## Current Status
+
+- Core MVP implemented
+- Career Axis logic complete
+- Ruler bonuses implemented
+- Aspect system (Level 2) live
+- Technical Mind block live
+- Stable API output
+
+Frontend is planned next.
+
+---
+
+## Target Audience
+
+- IT professionals & engineers  
+- Career switchers into tech  
+- Founders & indie hackers  
+- Career coaches / HR innovators  
+- Astrology-aware users who want structure  
+
+---
+
+## Roadmap
+
+- Saturn & architecture depth
+- Team compatibility profiles
+- Money-focused project (MoneyCompass)
+- Frontend dashboard
+- Paid API / B2B integrations
+
+---
+
+## Disclaimer
+
+AstroIT Profile is an **exploratory decision-support system**.  
+It does not claim absolute truth and should not be used as the sole basis for life or career decisions.

@@ -10,12 +10,15 @@ from app.services.astro_calc import (
     calc_house_signs,
     calc_planet_sign,
     calc_planet_house,
+    calc_planet_lon,
 )
 from app.services.day_night import is_day_chart
 from app.services.it_profile import build_it_profile
 from app.services.it_rulership import get_10h_rulers, PLANET_NAME_TO_SWE
 from app.services.places import find_coordinates
 from app.services.timezones import timezone_name_from_coords, to_utc_birth_moment
+from app.services.aspects import ruler_aspects_package
+from app.services.technical_mind import technical_mind_aspect
 
 
 @dataclass
@@ -74,6 +77,25 @@ class AstroService:
             house_system=self.default_house_system,
         )
 
+        # ---- longitudes for aspects (Level 2) ----
+        mercury_lon = calc_planet_lon(utc_dt=utc_dt, planet=PLANET_NAME_TO_SWE["Mercury"])
+        uranus_lon = calc_planet_lon(utc_dt=utc_dt, planet=PLANET_NAME_TO_SWE["Uranus"])
+        ruler_lon = calc_planet_lon(utc_dt=utc_dt, planet=main_ruler_id)
+
+        technical_mind, tech_mind_bonus = technical_mind_aspect(
+            mercury_lon=mercury_lon,
+            uranus_lon=uranus_lon,
+        )
+
+        aspects_list, aspects_bonus = ruler_aspects_package(
+            ruler_lon=ruler_lon,
+            mercury_lon=mercury_lon,
+            uranus_lon=uranus_lon,
+        )
+
+
+        print("DEBUG ASPECTS:", aspects_list, "BONUS", aspects_bonus)
+
         # co-ruler (optional)
         co_ruler_sign = None
         co_ruler_house = None
@@ -115,7 +137,17 @@ class AstroService:
             co_ruler_name=co_ruler_name,
             co_ruler_sign=co_ruler_sign,
             co_ruler_house=co_ruler_house,
+            aspects_bonus=aspects_bonus,
+            tech_mind_bonus=tech_mind_bonus,
+
         )
+
+
+        # attach aspects list for frontend
+        career_axis_dict = it.career_axis.__dict__ if hasattr(it.career_axis, "__dict__") else dict(it.career_axis)
+        career_axis_dict["aspects"] = aspects_list
+        career_axis_dict["aspects_bonus"] = aspects_bonus
+
 
         return ProfileResponse(
             title="Astro IT Profile (draft)",
@@ -123,7 +155,7 @@ class AstroService:
             it_fit_score=it.score,
             personality_style_archetype=it.personality_style_archetype,
             it_archetype=it.it_archetype,
-            career_axis=it.career_axis.__dict__ if hasattr(it.career_axis, "__dict__") else it.career_axis,
+            career_axis=career_axis_dict,
             strengths=it.strengths,
             risks=it.risks,
             notes=it.notes,
@@ -133,4 +165,6 @@ class AstroService:
             house_6_sign=house_6_sign,
             house_10_sign=house_10_sign,
             house_system_used=house_system_used,
+            technical_mind= technical_mind,
+
         )

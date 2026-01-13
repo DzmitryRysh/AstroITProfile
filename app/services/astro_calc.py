@@ -107,6 +107,14 @@ def _house_index_from_lon(lon: float, cusps: list[float]) -> int:
     return 1
 
 
+def calc_planet_lon(*, utc_dt: datetime, planet: int) -> float:
+    """
+    Public helper: ecliptic longitude (0..360) for a planet at given UTC datetime.
+    """
+    jd = _julian_day_utc(utc_dt)
+    return _planet_lon_ut(jd, planet)
+
+
 def calc_uranus_house(
         *, utc_dt: datetime, lat: float, lon: float, house_system: bytes = b'P'
 ) -> tuple[int, bytes]:

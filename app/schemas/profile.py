@@ -1,6 +1,6 @@
 from datetime import date, time
 from datetime import date as dt_date
-from typing import Any
+from typing import Any, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -40,4 +40,6 @@ class ProfileResponse(BaseModel):
     house_6_sign: str
     house_10_sign: str
     house_system_used: str
+    technical_mind: Optional[dict[str, Any]] = None
+
 
