@@ -5,11 +5,13 @@ from app.services.mercury_rules import SIGN_UNAVAILABLE_LIMITATION
 from app.services.mercury_work_profile import synthesize_mercury_narrative
 
 
-def _narrative(sign: str, element: str, motion: str = "direct"):
+def _narrative(sign: str, element: str, motion: str = "direct", mercury_house=None, aspects=None):
     return synthesize_mercury_narrative(
         mercury_sign=sign,
         mercury_element=element,
         mercury_motion=motion,
+        mercury_house=mercury_house,
+        aspects=aspects,
     )
 
 
@@ -166,6 +168,8 @@ class MercuryUnavailableAndUnknownTimeTests(unittest.TestCase):
             mercury_sign=factors.mercury_sign,
             mercury_element=factors.mercury_element,
             mercury_motion=factors.mercury_motion,
+            mercury_house=factors.mercury_house,
+            aspects=factors.aspects,
         )
         self.assertTrue(n.thinking)
         self.assertIn("Precision Analysis", n.strengths)

@@ -1,7 +1,8 @@
-"""Mercury Work Profile interpretation rules (milestone 2).
+"""Mercury Work Profile interpretation rules.
 
-Element + sign + retrograde modifier only.
-House, aspect, and dispositor interpretation are intentionally absent.
+Milestone 2: element + sign + retrograde.
+Milestone 3: house context + supported aspect modifiers.
+Dispositor interpretation is intentionally absent.
 """
 
 from __future__ import annotations
@@ -616,3 +617,568 @@ RETROGRADE_RULE = MercuryRetrogradeRule(
 SIGN_UNAVAILABLE_LIMITATION = (
     "Interpretation omitted because Mercury sign is unavailable; no guess was made."
 )
+
+
+@dataclass(frozen=True)
+class MercuryHouseRule:
+    themes: frozenset[str]
+    thinking: str = ""
+    learning: str = ""
+    communication: str = ""
+    team_value: str = ""
+    thinking_reinforce: str = ""
+    learning_reinforce: str = ""
+    communication_reinforce: str = ""
+    team_value_reinforce: str = ""
+    strengths: tuple[str, ...] = ()
+    risks: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class MercuryAspectRule:
+    themes: frozenset[str]
+    thinking: str = ""
+    learning: str = ""
+    communication: str = ""
+    thinking_reinforce: str = ""
+    learning_reinforce: str = ""
+    communication_reinforce: str = ""
+    communication_if_talkative: str = ""
+    strengths: tuple[str, ...] = ()
+    risks: tuple[str, ...] = ()
+
+
+SIGN_THEMES: dict[str, frozenset[str]] = {
+    "Aries": frozenset({"fast_response", "haste", "listening", "conflict", "direct", "talkative"}),
+    "Taurus": frozenset({"practical", "slow", "verify"}),
+    "Gemini": frozenset({"fast_processing", "contact", "scattered", "negotiation", "talkative", "overload"}),
+    "Cancer": frozenset({"context", "emotion", "private"}),
+    "Leo": frozenset({"presentation", "talkative", "listening"}),
+    "Virgo": frozenset({"detail", "method", "precision"}),
+    "Libra": frozenset({"diplomacy", "negotiation", "talkative"}),
+    "Scorpio": frozenset({"investigation", "depth", "sharp", "suspicion", "over_dig"}),
+    "Sagittarius": frozenset({"conceptual", "theory", "teaching", "abstraction", "talkative", "precision_gap"}),
+    "Capricorn": frozenset({"structure", "formal", "slow"}),
+    "Aquarius": frozenset({"abstract", "scattered", "talkative", "innovation"}),
+    "Pisces": frozenset({"imagination", "fog", "context", "fact_assumption"}),
+}
+
+TALKATIVE_THEMES = frozenset({"talkative", "contact"})
+
+LABEL_THEME: dict[str, str] = {
+    "Rapid Problem Response": "fast_response",
+    "Fast Mental Response": "fast_response",
+    "Rapid Learning": "rapid_learning",
+    "Diplomatic Communication": "diplomacy",
+    "Negotiation": "negotiation",
+    "Presentation": "presentation",
+    "Deep Investigation": "deep_investigation",
+    "Hasty Conclusions": "haste",
+    "Hasty Action": "haste",
+    "Poor Active Listening": "listening",
+    "Poor Listening Under Pressure": "listening",
+    "Weak Listening": "listening",
+    "Conflict Escalation": "conflict",
+    "Conflict-Prone Communication": "conflict",
+    "Information Overload": "overload",
+    "Scattered Attention": "scattered",
+    "Fragmented Attention": "scattered",
+    "Fact / Interpretation Confusion": "fact_assumption",
+    "Fact-Assumption Confusion": "fact_assumption",
+    "Over-investigation": "over_dig",
+    "Over-Fixation": "over_dig",
+    "Suspicion": "suspicion",
+    "Suspicion Bias": "suspicion",
+}
+
+
+HOUSE_RULES: dict[int, MercuryHouseRule] = {
+    1: MercuryHouseRule(
+        themes=frozenset({"fast_response", "talkative", "scattered"}),
+        learning=(
+            "Learning tends to happen through fast adaptation, active curiosity, "
+            "and quick trial rather than long private preparation."
+        ),
+        communication=(
+            "Communication is more visible and spontaneous, with quick reactions and quick wit."
+        ),
+        team_value=(
+            "Useful where the team needs initiative and a fast, visible verbal response."
+        ),
+        learning_reinforce=(
+            "The already quick style is further pulled toward fast adaptation and trying ideas out loud."
+        ),
+        communication_reinforce=(
+            "Spontaneous, visible communication is even more likely; finishing one thread before starting the next needs attention."
+        ),
+        strengths=("Fast Adaptation", "Active Communication"),
+        risks=(
+            "Restlessness / Fussiness",
+            "Starting Without Finishing",
+            "Excessive Talking / Scattered Activity",
+        ),
+    ),
+    2: MercuryHouseRule(
+        themes=frozenset({"practical"}),
+        learning=(
+            "Information work tends to connect with practical value and usable outcomes."
+        ),
+        communication=(
+            "Communication often sits in a commercial, persuasive, or written-information context "
+            "where usefulness matters."
+        ),
+        team_value=(
+            "Can help where analysis or explanation needs to become practically usable."
+        ),
+        strengths=("Commercial Communication", "Practical Information Use"),
+        risks=(
+            "Superficial Decisions",
+            "Overconfidence in Practical Reasoning",
+        ),
+    ),
+    3: MercuryHouseRule(
+        themes=frozenset({"fast_processing", "contact", "scattered"}),
+        learning=(
+            "The working context strongly supports contact-based learning: switching information "
+            "streams, writing or languages, useful questions, tactical thinking, dialogue, "
+            "feedback, and group learning."
+        ),
+        communication=(
+            "Dialogue, writing, and rapid information switching are close to daily work."
+        ),
+        team_value=(
+            "Useful in high-contact learning and short-cycle information exchange."
+        ),
+        learning_reinforce=(
+            "The already information-oriented style is further supported by dialogue, writing, "
+            "and switching between streams; attention can disperse if contacts multiply."
+        ),
+        strengths=(
+            "Rapid Learning",
+            "Written Communication",
+            "Tactical Problem Solving",
+            "Information Switching",
+        ),
+        risks=(
+            "Too Many Contacts / Information Streams",
+            "Dispersion of Attention",
+        ),
+    ),
+    4: MercuryHouseRule(
+        themes=frozenset({"private", "context"}),
+        learning=(
+            "Thinking and learning tend to be strongest in familiar or private settings, "
+            "including independent study and work with a smaller trusted circle. Interest "
+            "often goes to background, history, or origins of information."
+        ),
+        communication=(
+            "Communication is often more effective with a smaller trusted circle than in constant public exposure."
+        ),
+        team_value=(
+            "Contributes more in private, focused, or context-heavy settings than in always-on visibility."
+        ),
+        strengths=("Independent Study", "Contextual Memory"),
+        risks=("Communication May Remain Too Private",),
+    ),
+    5: MercuryHouseRule(
+        themes=frozenset({"presentation", "teaching"}),
+        learning=(
+            "The context favors enjoyment of learning and intellectually creative reworking of material."
+        ),
+        communication=(
+            "Ideas are often explained publicly or creatively through writing, speaking, or presentation."
+        ),
+        team_value=(
+            "Useful where learning needs to be made engaging or publicly explainable."
+        ),
+        communication_reinforce=(
+            "The already presentation-oriented style has more room for creative public explanation; "
+            "substance still needs to stay ahead of performance."
+        ),
+        strengths=("Creative Communication", "Presentation", "Educational Creativity"),
+        risks=("Over-Intellectualizing Creative or Emotional Situations",),
+    ),
+    6: MercuryHouseRule(
+        themes=frozenset({"method", "detail", "precision"}),
+        learning=(
+            "The work context is operational and methodical: high information-processing load, "
+            "routine or process thinking, and many small tasks."
+        ),
+        communication=(
+            "Professional, process-oriented communication is part of daily execution."
+        ),
+        team_value=(
+            "Useful where information must be handled methodically under workload."
+        ),
+        learning_reinforce=(
+            "The already methodical style is further pulled into operational workload and small-task volume; "
+            "priority can be lost inside minor problems."
+        ),
+        strengths=(
+            "Process Thinking",
+            "Operational Communication",
+            "Methodical Information Handling",
+        ),
+        risks=(
+            "Grabbing Too Many Small Tasks",
+            "Losing Priority to Minor Problems",
+            "Excessive Micro-Focus",
+        ),
+    ),
+    7: MercuryHouseRule(
+        themes=frozenset({"negotiation", "diplomacy", "conflict"}),
+        learning=(
+            "Thinking improves through dialogue, feedback, negotiation, and exchange with another person."
+        ),
+        communication=(
+            "One-to-one exchange, compromise, and perspective-taking are central to how ideas develop."
+        ),
+        team_value=(
+            "Useful where work depends on dialogue, feedback, and negotiated clarity."
+        ),
+        communication_reinforce=(
+            "In one-to-one exchange, an already direct or conflict-prone style can become more argumentative; "
+            "feedback still sharpens thinking."
+        ),
+        strengths=("Dialogue", "Negotiation", "Perspective Exchange"),
+        risks=("Argumentativeness in Conflict-Prone Exchange",),
+    ),
+    8: MercuryHouseRule(
+        themes=frozenset({"investigation", "depth", "sharp", "over_dig"}),
+        thinking=(
+            "This thinking style tends to become especially engaged in deep investigation, "
+            "hidden dependencies, and complex information."
+        ),
+        learning=(
+            "Learning favors intensive concentration, research, and uncovering what is not obvious."
+        ),
+        communication=(
+            "Verbal influence can be strong; wording may become sharp when probing hidden problems."
+        ),
+        team_value=(
+            "Useful where the team needs someone willing to stay with complex or non-obvious information."
+        ),
+        thinking_reinforce=(
+            "The already investigative style is further engaged by hidden dependencies and complex information; "
+            "this is a working context, not a job title."
+        ),
+        communication_reinforce=(
+            "Probing communication can escalate tension if wording stays too sharp."
+        ),
+        strengths=("Deep Investigation", "Research Thinking", "Hidden-Pattern Analysis"),
+        risks=(
+            "Excessively Sharp Wording",
+            "Communication Tension Escalation",
+            "Over-Fixation on Hidden Problems",
+        ),
+    ),
+    9: MercuryHouseRule(
+        themes=frozenset({"conceptual", "theory", "abstraction", "teaching"}),
+        thinking=(
+            "Analysis tends to combine with abstraction: meaningful information is filtered, "
+            "and arguments or conceptual justification matter."
+        ),
+        learning=(
+            "The working context favors higher learning, theory, languages or broad knowledge, "
+            "and conceptual justification."
+        ),
+        communication=(
+            "Discussion often wants the larger argument, not only local detail."
+        ),
+        team_value=(
+            "Useful where theory, knowledge synthesis, and conceptual framing are part of the work."
+        ),
+        thinking_reinforce=(
+            "The already conceptual baseline has more room for theory, abstraction, and knowledge synthesis; "
+            "precision weaknesses remain."
+        ),
+        learning_reinforce=(
+            "Higher-learning and theoretical settings further support this style; detail verification is still required."
+        ),
+        strengths=("Conceptual Learning", "Theory Integration", "Knowledge Filtering"),
+        risks=(
+            "Excessive Abstraction / Formality",
+            "Over-Processing Unnecessary Information",
+        ),
+    ),
+    10: MercuryHouseRule(
+        themes=frozenset({"formal", "presentation"}),
+        learning=(
+            "Large information volumes are often handled in a professional, publicly visible setting."
+        ),
+        communication=(
+            "Intellect and communication tend to be visible in professional life; reputation can "
+            "become linked with knowledge or information."
+        ),
+        team_value=(
+            "Knowledge and communication may sit close to professional visibility."
+        ),
+        strengths=("Professional Communication", "Knowledge Leadership"),
+        risks=(
+            "Status Can Distort Curiosity",
+            "Direction Changes Until Work Is Intellectually and Professionally Meaningful",
+        ),
+    ),
+    11: MercuryHouseRule(
+        themes=frozenset({"contact", "talkative"}),
+        learning=(
+            "Learning tends to happen through teams and networks: teaching and learning from others, "
+            "exchanging ideas, and collaborative intellectual work."
+        ),
+        communication=(
+            "Idea exchange in a group or network setting is a natural channel."
+        ),
+        team_value=(
+            "Useful in collaborative, network, or idea-exchange settings."
+        ),
+        learning_reinforce=(
+            "The already contact-oriented style is further supported by team and network learning; "
+            "debate can become endless if ideas stay speculative."
+        ),
+        strengths=("Collaborative Learning", "Idea Exchange", "Team Knowledge Sharing"),
+        risks=(
+            "Endless Debate",
+            "Too Many Speculative Ideas or Projects",
+        ),
+    ),
+    12: MercuryHouseRule(
+        themes=frozenset({"private", "internal", "fog"}),
+        thinking=(
+            "Strongest processing may happen internally or alone, especially with ambiguous "
+            "information or hidden meanings."
+        ),
+        learning=(
+            "Independent, self-paced learning and private research fit this context; ideas are "
+            "often formulated better after internal processing."
+        ),
+        communication=(
+            "Spontaneous public expression can be harder; useful ideas may stay private too long."
+        ),
+        team_value=(
+            "Contributes more through internal processing and private deep work than through immediate public speech."
+        ),
+        thinking_reinforce=(
+            "Internal or private processing is further emphasized; assumptions still need explicit verification."
+        ),
+        strengths=("Independent Deep Work", "Internal Processing"),
+        risks=(
+            "Difficult Spontaneous Public Expression",
+            "Useful Ideas Kept Private Too Long",
+            "Assumptions Replacing Explicit Verification",
+        ),
+    ),
+}
+
+
+_sun_conjunction = MercuryAspectRule(
+    themes=frozenset({"listening", "talkative"}),
+    communication=(
+        "Speech can become more self-monitored, with concern about how words are received, "
+        "and a swing between taking conversational space and holding back."
+    ),
+    risks=("Self-Critical Communication", "Public Expression Friction"),
+)
+
+_venus_conjunction = MercuryAspectRule(
+    themes=frozenset({"diplomacy"}),
+    communication=(
+        "Attention to others' approval or reaction increases, which can make it harder to "
+        "say no or risk offence."
+    ),
+    strengths=("Social Awareness",),
+    risks=("Approval-Seeking Communication", "Difficulty Setting Verbal Boundaries"),
+)
+
+_venus_harmonious = MercuryAspectRule(
+    themes=frozenset({"diplomacy"}),
+    communication=(
+        "Tact and socially smoother, more diplomatic expression come more easily."
+    ),
+    communication_reinforce=(
+        "An already diplomatic style has more ease with tact; agreement-seeking can still delay a firm position."
+    ),
+    strengths=("Diplomatic Communication", "Tactful Expression"),
+)
+
+_moon_tense = MercuryAspectRule(
+    themes=frozenset({"emotion"}),
+    thinking=(
+        "Emotion competes with reasoning; thinking becomes more subjective under emotional "
+        "load, and decisions can depend heavily on mood."
+    ),
+    thinking_reinforce=(
+        "Emotional context already shapes thinking; under load, mood can further compete with cooler reasoning."
+    ),
+    risks=("Mood-Dependent Reasoning", "Emotional Decision Noise"),
+)
+
+_mars_tense = MercuryAspectRule(
+    themes=frozenset({"haste", "listening", "conflict", "fast_response"}),
+    thinking=(
+        "Thoughts convert rapidly into action. Impatience, haste, and sharper words increase; "
+        "interrupting, arguing, or incomplete listening is more likely, and conflict or nervous "
+        "fuss can appear under pressure."
+    ),
+    thinking_reinforce=(
+        "The already fast, action-oriented processing style is further pushed toward immediate "
+        "response under pressure, which can intensify haste, conflict, and incomplete listening."
+    ),
+    communication=(
+        "Wording can become sharper; interrupting or arguing is more likely when pressure rises."
+    ),
+    communication_reinforce=(
+        "Under pressure, wording can get sharper and listening can drop further."
+    ),
+    strengths=("Fast Mental Response",),
+    risks=(
+        "Hasty Action",
+        "Poor Listening Under Pressure",
+        "Conflict-Prone Communication",
+    ),
+)
+
+_mars_harmonious = MercuryAspectRule(
+    themes=frozenset({"fast_response", "direct"}),
+    thinking=(
+        "Thought and action connect efficiently: faster, sharper analytical response and an "
+        "easier time talking, learning, and doing at once."
+    ),
+    communication=(
+        "Expression can be persuasive and direct without as much friction between idea and execution."
+    ),
+    strengths=(
+        "Fast Analytical Response",
+        "Thought-to-Action Execution",
+        "Persuasive Direct Communication",
+    ),
+)
+
+_jupiter_tense = MercuryAspectRule(
+    themes=frozenset({"overload", "abstraction"}),
+    thinking=(
+        "Too many ideas, plans, or information streams can inflate the scale of work, start "
+        "too much, and lose the central point through long explanation or learning overload."
+    ),
+    thinking_reinforce=(
+        "The already wide information intake can inflate scope further; the central message "
+        "needs active protection."
+    ),
+    communication=(
+        "Explanation may run long and lose the core message."
+    ),
+    risks=("Information Overload", "Scope Inflation", "Loss of Core Message"),
+)
+
+_jupiter_harmonious = MercuryAspectRule(
+    themes=frozenset({"diplomacy", "talkative"}),
+    communication=(
+        "Socially engaging, diplomatically confident conversation comes more easily."
+    ),
+    strengths=("Engaging Communication",),
+)
+
+_saturn_tense = MercuryAspectRule(
+    themes=frozenset({"guarded", "inhibit"}),
+    communication=(
+        "Fear of saying the wrong thing can inhibit speech, replay errors, feed negative "
+        "thought loops, and produce silence when communication is needed."
+    ),
+    communication_if_talkative=(
+        "Internal processing can stay quick and information-oriented, but external speech "
+        "becomes more guarded, self-censored, or blocked when the cost of a wrong word feels high."
+    ),
+    learning=(
+        "Learning may be slowed by fear of error and by replaying mistakes."
+    ),
+    risks=("Communication Inhibition", "Error Rumination", "Fear-Based Learning"),
+)
+
+_uranus_tense = MercuryAspectRule(
+    themes=frozenset({"scattered", "innovation"}),
+    thinking=(
+        "Thoughts jump rapidly through unconventional associations and sudden insights, "
+        "with high novelty orientation and difficulty staying on one topic."
+    ),
+    thinking_reinforce=(
+        "The already novelty-oriented or multi-stream style jumps even faster; staying on one "
+        "topic needs deliberate containment."
+    ),
+    strengths=("Non-Linear Problem Solving", "Unexpected Insight"),
+    risks=("Fragmented Attention", "Mental Overstimulation"),
+)
+
+_neptune_tense = MercuryAspectRule(
+    themes=frozenset({"imagination", "fog", "fact_assumption"}),
+    thinking=(
+        "Thoughts may become diffuse; imagination can mix with facts, making it harder to "
+        "distinguish assumption from verified information. Explicit verification criteria "
+        "and written facts help."
+    ),
+    thinking_reinforce=(
+        "Imagination already shapes conclusions; verification criteria and written facts are "
+        "needed so assumption does not pass as evidence."
+    ),
+    strengths=("Imaginative Association",),
+    risks=("Mental Fog", "Fact-Assumption Confusion"),
+)
+
+_pluto_tense = MercuryAspectRule(
+    themes=frozenset({"investigation", "over_dig", "suspicion", "sharp"}),
+    thinking=(
+        "Focus goes very deep, with a drive to keep digging for hidden causes; mental "
+        "fixation, suspicion, and verbal pressure can increase."
+    ),
+    thinking_reinforce=(
+        "The already investigative style digs further; fixation, suspicion, and verbal pressure "
+        "can intensify without turning this into a job title."
+    ),
+    strengths=("Deep Investigation",),
+    risks=("Over-Fixation", "Suspicion Bias", "Mental Pressure"),
+)
+
+ASPECT_RULES: dict[tuple[str, str], MercuryAspectRule] = {
+    ("Sun", "conjunction"): _sun_conjunction,
+    ("Venus", "conjunction"): _venus_conjunction,
+    ("Venus", "trine"): _venus_harmonious,
+    ("Venus", "sextile"): _venus_harmonious,
+    ("Moon", "square"): _moon_tense,
+    ("Moon", "opposition"): _moon_tense,
+    ("Mars", "conjunction"): _mars_tense,
+    ("Mars", "square"): _mars_tense,
+    ("Mars", "opposition"): _mars_tense,
+    ("Mars", "trine"): _mars_harmonious,
+    ("Mars", "sextile"): _mars_harmonious,
+    ("Jupiter", "square"): _jupiter_tense,
+    ("Jupiter", "opposition"): _jupiter_tense,
+    ("Jupiter", "trine"): _jupiter_harmonious,
+    ("Jupiter", "sextile"): _jupiter_harmonious,
+    ("Saturn", "conjunction"): _saturn_tense,
+    ("Saturn", "square"): _saturn_tense,
+    ("Saturn", "opposition"): _saturn_tense,
+    ("Uranus", "conjunction"): _uranus_tense,
+    ("Uranus", "square"): _uranus_tense,
+    ("Uranus", "opposition"): _uranus_tense,
+    ("Neptune", "conjunction"): _neptune_tense,
+    ("Neptune", "square"): _neptune_tense,
+    ("Neptune", "opposition"): _neptune_tense,
+    ("Pluto", "conjunction"): _pluto_tense,
+    ("Pluto", "square"): _pluto_tense,
+    ("Pluto", "opposition"): _pluto_tense,
+}
+
+ASPECT_APPLY_ORDER = (
+    "Sun",
+    "Moon",
+    "Venus",
+    "Mars",
+    "Jupiter",
+    "Saturn",
+    "Uranus",
+    "Neptune",
+    "Pluto",
+)
+
+
+def get_aspect_rule(planet: str, aspect_type: str) -> MercuryAspectRule | None:
+    return ASPECT_RULES.get((planet, aspect_type))
+

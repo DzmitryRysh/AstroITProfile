@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import Iterable, Optional
 
 from app.schemas.mercury_work_profile import (
+    MercuryAspect,
     MercuryWorkProfileRequest,
     MercuryWorkProfileResponse,
 )
@@ -13,10 +14,18 @@ from app.services.mercury_facts import (
     compute_unknown_time_facts,
 )
 from app.services.mercury_rules import (
+    ASPECT_APPLY_ORDER,
     ELEMENT_RULES,
+    HOUSE_RULES,
+    LABEL_THEME,
     RETROGRADE_RULE,
     SIGN_RULES,
+    SIGN_THEMES,
     SIGN_UNAVAILABLE_LIMITATION,
+    TALKATIVE_THEMES,
+    MercuryAspectRule,
+    MercuryHouseRule,
+    get_aspect_rule,
 )
 from app.services.places import find_coordinates
 from app.services.timezones import timezone_name_from_coords, to_utc_birth_moment
@@ -45,6 +54,22 @@ def _dedupe_keep_order(items: list[str]) -> list[str]:
     return result
 
 
+def _extend_labels(existing: list[str], new_items: Iterable[str]) -> list[str]:
+    seen_labels = set(existing)
+    seen_themes = {LABEL_THEME[item] for item in existing if item in LABEL_THEME}
+    for item in new_items:
+        if item in seen_labels:
+            continue
+        theme = LABEL_THEME.get(item)
+        if theme and theme in seen_themes:
+            continue
+        seen_labels.add(item)
+        if theme:
+            seen_themes.add(theme)
+        existing.append(item)
+    return existing
+
+
 def _join_unique_parts(*parts: str) -> str:
     chunks: list[str] = []
     seen: set[str] = set()
@@ -60,16 +85,119 @@ def _join_unique_parts(*parts: str) -> str:
     return " ".join(chunks)
 
 
+def _pick_text(
+    *,
+    base: str,
+    reinforce: str,
+    overlapping: bool,
+) -> str:
+    if overlapping and reinforce:
+        return reinforce
+    return base
+
+
+def _apply_house(
+    *,
+    house: int,
+    sign_themes: frozenset[str],
+    thinking_parts: list[str],
+    learning_parts: list[str],
+    communication_parts: list[str],
+    team_value_parts: list[str],
+    strengths: list[str],
+    risks: list[str],
+) -> None:
+    rule: MercuryHouseRule | None = HOUSE_RULES.get(house)
+    if not rule:
+        return
+    overlapping = bool(sign_themes & rule.themes)
+    thinking_parts.append(
+        _pick_text(base=rule.thinking, reinforce=rule.thinking_reinforce, overlapping=overlapping)
+    )
+    learning_parts.append(
+        _pick_text(base=rule.learning, reinforce=rule.learning_reinforce, overlapping=overlapping)
+    )
+    communication_parts.append(
+        _pick_text(
+            base=rule.communication,
+            reinforce=rule.communication_reinforce,
+            overlapping=overlapping,
+        )
+    )
+    team_value_parts.append(
+        _pick_text(
+            base=rule.team_value,
+            reinforce=rule.team_value_reinforce,
+            overlapping=overlapping,
+        )
+    )
+    _extend_labels(strengths, rule.strengths)
+    _extend_labels(risks, rule.risks)
+
+
+def _apply_aspect(
+    *,
+    rule: MercuryAspectRule,
+    sign_themes: frozenset[str],
+    thinking_parts: list[str],
+    learning_parts: list[str],
+    communication_parts: list[str],
+    strengths: list[str],
+    risks: list[str],
+) -> None:
+    overlapping = bool(sign_themes & rule.themes)
+    thinking_parts.append(
+        _pick_text(base=rule.thinking, reinforce=rule.thinking_reinforce, overlapping=overlapping)
+    )
+    learning_parts.append(
+        _pick_text(base=rule.learning, reinforce=rule.learning_reinforce, overlapping=overlapping)
+    )
+    if rule.communication_if_talkative and (sign_themes & TALKATIVE_THEMES):
+        communication_parts.append(rule.communication_if_talkative)
+    else:
+        communication_parts.append(
+            _pick_text(
+                base=rule.communication,
+                reinforce=rule.communication_reinforce,
+                overlapping=overlapping,
+            )
+        )
+    _extend_labels(strengths, rule.strengths)
+    _extend_labels(risks, rule.risks)
+
+
+def _normalize_aspects(
+    aspects: Optional[Iterable[MercuryAspect | dict]],
+) -> list[tuple[str, str]]:
+    normalized: list[tuple[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for item in aspects or []:
+        if isinstance(item, MercuryAspect):
+            planet, aspect_type = item.planet, item.type
+        else:
+            planet, aspect_type = item.get("planet"), item.get("type")
+        if not planet or not aspect_type:
+            continue
+        key = (planet, aspect_type)
+        if key in seen:
+            continue
+        seen.add(key)
+        normalized.append(key)
+    return normalized
+
+
 def synthesize_mercury_narrative(
     *,
     mercury_sign: Optional[str],
     mercury_element: Optional[str],
     mercury_motion: Optional[str],
+    mercury_house: Optional[int] = None,
+    aspects: Optional[Iterable[MercuryAspect | dict]] = None,
 ) -> MercuryNarrative:
     """
-    Milestone 2 synthesis: element baseline + sign + retrograde modifier.
+    element → sign → retrograde → house (if known) → supported aspects → dedupe.
 
-    House, aspects, and dispositors must not be passed in or used.
+    Dispositors are not used.
     """
     if not mercury_sign or mercury_sign not in SIGN_RULES:
         return MercuryNarrative(
@@ -85,9 +213,10 @@ def synthesize_mercury_narrative(
 
     sign_rule = SIGN_RULES[mercury_sign]
     element_rule = ELEMENT_RULES.get(mercury_element or "")
+    sign_themes = SIGN_THEMES.get(mercury_sign, frozenset())
 
-    thinking_parts = []
-    communication_parts = []
+    thinking_parts: list[str] = []
+    communication_parts: list[str] = []
     if element_rule:
         thinking_parts.append(f"{element_rule.thinking_type}. {element_rule.thinking}")
         communication_parts.append(element_rule.communication)
@@ -95,6 +224,7 @@ def synthesize_mercury_narrative(
     communication_parts.append(sign_rule.communication)
 
     learning_parts = [sign_rule.learning]
+    team_value_parts = [sign_rule.team_value]
     strengths = list(sign_rule.strengths)
     risks = list(sign_rule.risks)
 
@@ -102,8 +232,38 @@ def synthesize_mercury_narrative(
         thinking_parts.append(RETROGRADE_RULE.thinking)
         learning_parts.append(RETROGRADE_RULE.learning)
         communication_parts.append(RETROGRADE_RULE.communication)
-        strengths.extend(RETROGRADE_RULE.strengths)
-        risks.extend(RETROGRADE_RULE.risks)
+        _extend_labels(strengths, RETROGRADE_RULE.strengths)
+        _extend_labels(risks, RETROGRADE_RULE.risks)
+
+    if mercury_house is not None:
+        _apply_house(
+            house=mercury_house,
+            sign_themes=sign_themes,
+            thinking_parts=thinking_parts,
+            learning_parts=learning_parts,
+            communication_parts=communication_parts,
+            team_value_parts=team_value_parts,
+            strengths=strengths,
+            risks=risks,
+        )
+
+    by_planet = {planet: aspect_type for planet, aspect_type in _normalize_aspects(aspects)}
+    for planet in ASPECT_APPLY_ORDER:
+        aspect_type = by_planet.get(planet)
+        if not aspect_type:
+            continue
+        rule = get_aspect_rule(planet, aspect_type)
+        if not rule:
+            continue
+        _apply_aspect(
+            rule=rule,
+            sign_themes=sign_themes,
+            thinking_parts=thinking_parts,
+            learning_parts=learning_parts,
+            communication_parts=communication_parts,
+            strengths=strengths,
+            risks=risks,
+        )
 
     return MercuryNarrative(
         thinking=_join_unique_parts(*thinking_parts),
@@ -111,7 +271,7 @@ def synthesize_mercury_narrative(
         communication=_join_unique_parts(*communication_parts),
         strengths=_dedupe_keep_order(strengths),
         risks=_dedupe_keep_order(risks),
-        team_value=sign_rule.team_value,
+        team_value=_join_unique_parts(*team_value_parts),
         possible_roles=_dedupe_keep_order(list(sign_rule.possible_roles)),
         extra_limitations=[],
     )
@@ -145,6 +305,8 @@ def build_mercury_work_profile(
         mercury_sign=source_factors.mercury_sign,
         mercury_element=source_factors.mercury_element,
         mercury_motion=source_factors.mercury_motion,
+        mercury_house=source_factors.mercury_house if source_factors.birth_time_known else None,
+        aspects=source_factors.aspects,
     )
     all_limitations = limitations + narrative.extra_limitations
 
