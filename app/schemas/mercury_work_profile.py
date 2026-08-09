@@ -60,6 +60,17 @@ class MercurySourceFactors(BaseModel):
     minor_dispositor_condition: Optional[DispositorCondition] = None
 
 
+class RecruiterView(BaseModel):
+    thinking_style: str
+    top_skills: list[str]
+    key_risks: list[str]
+    team_function: str
+    team_contribution: str
+    communication_style: str
+    onboarding_guidance: list[str]
+    role_directions: list[str]
+
+
 class MercuryWorkProfileResponse(BaseModel):
     thinking: str
     learning: str
@@ -70,3 +81,4 @@ class MercuryWorkProfileResponse(BaseModel):
     possible_roles: list[str]
     source_factors: MercurySourceFactors
     limitations: list[str]
+    recruiter_view: Optional[RecruiterView] = None

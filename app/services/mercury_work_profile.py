@@ -9,6 +9,7 @@ from app.schemas.mercury_work_profile import (
     MercuryWorkProfileResponse,
     PlanetAspect,
 )
+from app.services.mercury_recruiter_view import build_recruiter_view
 from app.services.mercury_facts import (
     DEFAULT_HOUSE_SYSTEM,
     compute_exact_time_facts,
@@ -413,6 +414,10 @@ def build_mercury_work_profile(
         minor_dispositor_aspects=source_factors.minor_dispositor_aspects,
     )
     all_limitations = limitations + narrative.extra_limitations
+    recruiter_view = build_recruiter_view(
+        mercury_sign=source_factors.mercury_sign,
+        narrative=narrative,
+    )
 
     return MercuryWorkProfileResponse(
         thinking=narrative.thinking,
@@ -424,4 +429,5 @@ def build_mercury_work_profile(
         possible_roles=narrative.possible_roles,
         source_factors=source_factors,
         limitations=all_limitations,
+        recruiter_view=recruiter_view,
     )
