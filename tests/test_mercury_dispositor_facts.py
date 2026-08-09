@@ -149,6 +149,10 @@ class DispositorExactTimeFactTests(unittest.TestCase):
             mercury_motion=result.source_factors.mercury_motion,
             mercury_house=result.source_factors.mercury_house,
             aspects=result.source_factors.aspects,
+            major_dispositor=result.source_factors.major_dispositor,
+            minor_dispositor=result.source_factors.minor_dispositor,
+            major_dispositor_aspects=result.source_factors.major_dispositor_aspects,
+            minor_dispositor_aspects=result.source_factors.minor_dispositor_aspects,
         )
         self.assertEqual(result.thinking, expected.thinking)
         self.assertEqual(result.learning, expected.learning)

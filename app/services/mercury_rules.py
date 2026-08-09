@@ -2,7 +2,8 @@
 
 Milestone 2: element + sign + retrograde.
 Milestone 3: house context + supported aspect modifiers.
-Dispositor interpretation is intentionally absent.
+Milestone 4B: dispositor planet function + aspect-condition modifier.
+Dispositor sign/house interpretation is intentionally absent.
 """
 
 from __future__ import annotations
@@ -668,13 +669,24 @@ TALKATIVE_THEMES = frozenset({"talkative", "contact"})
 LABEL_THEME: dict[str, str] = {
     "Rapid Problem Response": "fast_response",
     "Fast Mental Response": "fast_response",
+    "Action-Oriented Thinking": "fast_response",
+    "Decisive Problem Response": "fast_response",
     "Rapid Learning": "rapid_learning",
     "Diplomatic Communication": "diplomacy",
+    "Social Calibration": "diplomacy",
     "Negotiation": "negotiation",
     "Presentation": "presentation",
+    "Personal Expression": "presentation",
+    "Idea Ownership": "own_view",
+    "Overattachment to Own Interpretation": "own_view",
+    "Over-identification With Own Viewpoint": "own_view",
     "Deep Investigation": "deep_investigation",
+    "Investigative Depth": "deep_investigation",
+    "Root-Cause Analysis": "root_cause",
+    "Root-Cause Orientation": "root_cause",
     "Hasty Conclusions": "haste",
     "Hasty Action": "haste",
+    "Premature Action Bias": "haste",
     "Poor Active Listening": "listening",
     "Poor Listening Under Pressure": "listening",
     "Weak Listening": "listening",
@@ -685,10 +697,36 @@ LABEL_THEME: dict[str, str] = {
     "Fragmented Attention": "scattered",
     "Fact / Interpretation Confusion": "fact_assumption",
     "Fact-Assumption Confusion": "fact_assumption",
+    "Reduced Verification Discipline": "fact_assumption",
     "Over-investigation": "over_dig",
     "Over-Fixation": "over_dig",
+    "Over-Control or Over-Investigation": "over_dig",
     "Suspicion": "suspicion",
     "Suspicion Bias": "suspicion",
+    "Contextual Thinking": "context",
+    "Context Sensitivity": "context",
+    "Subjectivity": "subjectivity",
+    "Subjective Filtering": "subjectivity",
+    "Structured Reasoning": "structure",
+    "Structured Thinking": "structure",
+    "Rigidity": "rigidity",
+    "Cognitive Rigidity": "rigidity",
+    "Big-Picture Thinking": "conceptual",
+    "Conceptual Thinking": "conceptual",
+    "Meaning-Oriented Thinking": "conceptual",
+    "Concept Expansion": "expansion",
+    "Over-expansion": "expansion",
+    "Scope Inflation": "expansion",
+    "Knowledge Teaching": "teaching",
+    "Knowledge Transfer": "teaching",
+    "Innovation": "innovation",
+    "Innovation Orientation": "innovation",
+    "Unconventional Problem Framing": "innovation",
+    "Non-Linear Problem Solving": "innovation",
+    "Imaginative Association": "imagination",
+    "Conceptual Creativity": "imagination",
+    "Approval-Seeking Communication": "approval",
+    "Over-weighting Approval or Preference": "approval",
 }
 
 
@@ -1181,4 +1219,224 @@ ASPECT_APPLY_ORDER = (
 
 def get_aspect_rule(planet: str, aspect_type: str) -> MercuryAspectRule | None:
     return ASPECT_RULES.get((planet, aspect_type))
+
+
+@dataclass(frozen=True)
+class DispositorFunctionRule:
+    themes: frozenset[str]
+    routing: str
+    routing_reinforce: str
+    supported: str
+    pressured: str
+    mixed: str
+    minor_routing: str
+    minor_supported: str = ""
+    minor_pressured: str = ""
+    minor_mixed: str = ""
+    learning: str = ""
+    communication: str = ""
+    team_value: str = ""
+    strengths: tuple[str, ...] = ()
+    risks: tuple[str, ...] = ()
+
+
+TENSE_CONJUNCTION_TARGETS = frozenset({"Mars", "Saturn", "Uranus", "Neptune", "Pluto"})
+DISPOSITOR_CONDITION_STATES = frozenset({"supported", "pressured", "mixed", "neutral"})
+
+
+def effective_dispositor_condition_state(aspects) -> str:
+    """Interpretation-only condition. Does not change factual DispositorCondition counts."""
+    harmonious = 0
+    tense = 0
+    for item in aspects or []:
+        planet = item.planet if hasattr(item, "planet") else item.get("planet")
+        aspect_type = item.type if hasattr(item, "type") else item.get("type")
+        if aspect_type in ("trine", "sextile"):
+            harmonious += 1
+        elif aspect_type in ("square", "opposition"):
+            tense += 1
+        elif aspect_type == "conjunction" and planet in TENSE_CONJUNCTION_TARGETS:
+            tense += 1
+    if harmonious == 0 and tense == 0:
+        return "neutral"
+    if harmonious > 0 and tense > 0 and harmonious == tense:
+        return "mixed"
+    if harmonious > tense:
+        return "supported"
+    if tense > harmonious:
+        return "pressured"
+    return "neutral"
+
+
+DISPOSITOR_FUNCTION_RULES: dict[str, DispositorFunctionRule] = {
+    "Sun": DispositorFunctionRule(
+        themes=frozenset({"presentation", "own_view"}),
+        routing=(
+            "Thinking and communication tend to be routed toward self-expression, "
+            "forming a personal position, and presenting or leading with ideas."
+        ),
+        routing_reinforce=(
+            "The deeper routing further orients this Mercury toward owning and presenting "
+            "a personal position."
+        ),
+        supported="That expressive routing can operate with relatively little friction.",
+        pressured=(
+            "That drive to lead with a personal view may be harder to regulate and can "
+            "over-identify with one's own position."
+        ),
+        mixed=(
+            "Expressive ownership is available, but supportive and tense signals both show, "
+            "so visibility needs measured delivery."
+        ),
+        minor_routing="A secondary influence can pull communication toward personal visibility or authorship.",
+        strengths=("Idea Ownership", "Personal Expression"),
+        risks=("Over-identification With Own Viewpoint",),
+    ),
+    "Moon": DispositorFunctionRule(
+        themes=frozenset({"context", "emotion"}),
+        routing=(
+            "Thinking can be routed strongly through subjective context, memory, emotional "
+            "relevance, and adaptation to the environment."
+        ),
+        routing_reinforce="Context and adaptive relevance further shape how information is selected.",
+        supported="That contextual routing can stay usable when the environment is readable.",
+        pressured="Subjective filtering can outweigh cooler verification when emotional load is high.",
+        mixed=(
+            "Context sensitivity is active, with both support and pressure around how much "
+            "mood should steer the call."
+        ),
+        minor_routing="A secondary influence can tint conclusions with context or felt relevance.",
+        strengths=("Context Sensitivity", "Adaptive Communication"),
+        risks=("Subjective Filtering",),
+    ),
+    "Venus": DispositorFunctionRule(
+        themes=frozenset({"diplomacy", "approval"}),
+        routing=(
+            "Thinking and communication tend to be routed through comparison, evaluation, "
+            "social response, and finding an acceptable or balanced form."
+        ),
+        routing_reinforce=(
+            "Evaluation and social calibration further guide how ideas are shaped for others."
+        ),
+        supported="Comparison and balance can operate with relatively little social friction.",
+        pressured="Preference and approval can be over-weighted when a choice needs a firmer call.",
+        mixed=(
+            "Evaluative, social routing is present alongside mixed signals about how much "
+            "harmony should decide."
+        ),
+        minor_routing="A secondary influence can add evaluation or a preference for an acceptable form.",
+        strengths=("Evaluative Thinking", "Social Calibration"),
+        risks=("Over-weighting Approval or Preference",),
+    ),
+    "Mars": DispositorFunctionRule(
+        themes=frozenset({"fast_response", "haste"}),
+        routing=(
+            "Thinking tends to be routed toward action, execution, challenge, and solving "
+            "what must be done now."
+        ),
+        routing_reinforce=(
+            "This process is further routed toward action, execution, and solving what must "
+            "be done now."
+        ),
+        supported="Idea-to-action conversion can stay relatively direct.",
+        pressured="That action routing can bias toward moving before the problem is fully framed.",
+        mixed="Action routing is available, with mixed signals about when to pause versus push.",
+        minor_routing="A secondary influence can add urgency to execute.",
+        strengths=("Action-Oriented Thinking", "Decisive Problem Response"),
+        risks=("Premature Action Bias",),
+    ),
+    "Jupiter": DispositorFunctionRule(
+        themes=frozenset({"conceptual", "teaching", "abstraction", "expansion"}),
+        routing=(
+            "Thinking tends to be routed toward meaning, broader context, generalization, "
+            "teaching, or forming a larger conceptual framework."
+        ),
+        routing_reinforce=(
+            "This Mercury's deeper routing is toward meaning, broader context, and transmitting knowledge."
+        ),
+        supported=(
+            "The deeper routing of this Mercury favors expanding concepts, connecting information "
+            "to meaning, and transmitting knowledge."
+        ),
+        pressured=(
+            "The same drive toward scale and meaning may become harder to regulate, increasing "
+            "the need to control over-expansion and keep conclusions grounded."
+        ),
+        mixed=(
+            "Meaning and expansion are active, but supportive and tense signals both show, "
+            "so scale needs grounding."
+        ),
+        minor_routing="A secondary influence can widen the frame toward meaning or teaching.",
+        minor_pressured="A secondary expansive influence can inflate scope if the core message is not protected.",
+        learning="Learning may stretch toward broader frameworks and passing knowledge on.",
+        team_value="Useful where information needs to be expanded, given meaning, or transferred.",
+        strengths=("Meaning-Oriented Thinking", "Concept Expansion", "Knowledge Transfer"),
+        risks=("Over-expansion",),
+    ),
+    "Saturn": DispositorFunctionRule(
+        themes=frozenset({"structure", "rigidity"}),
+        routing=(
+            "Thinking tends to be routed toward structure, rules, sequencing, verification, "
+            "and durable results."
+        ),
+        routing_reinforce="Structure, sequencing, and durable results further direct this thinking style.",
+        supported="That structural routing can hold steady without much extra strain.",
+        pressured="The same structural drive can tighten into rigidity if rules crowd out revision.",
+        mixed="Structure is available, with mixed signals about flexibility versus control.",
+        minor_routing="A secondary influence can add demand for sequence, rules, or durable proof.",
+        strengths=("Structured Thinking", "Discipline", "Long-Horizon Reasoning"),
+        risks=("Cognitive Rigidity",),
+    ),
+    "Uranus": DispositorFunctionRule(
+        themes=frozenset({"innovation", "scattered"}),
+        routing=(
+            "Thinking tends to be routed toward novelty, unconventional solutions, independence, "
+            "and alternatives to established patterns."
+        ),
+        routing_reinforce="Novelty and unconventional framing further direct this Mercury.",
+        supported="Alternative approaches can surface with relatively little blockage.",
+        pressured=(
+            "Novelty bias can outrun follow-through, and established methods may be dismissed too quickly."
+        ),
+        mixed="Innovation routing is present alongside mixed signals about stability versus change.",
+        minor_routing="A secondary influence can pull toward unconventional alternatives.",
+        strengths=("Innovation Orientation", "Unconventional Problem Framing"),
+        risks=("Novelty Bias", "Resistance to Established Methods"),
+    ),
+    "Neptune": DispositorFunctionRule(
+        themes=frozenset({"imagination", "fact_assumption", "fog"}),
+        routing=(
+            "Thinking can be routed toward imagination, associations, abstraction, subtle context, "
+            "and conceptual imagery."
+        ),
+        routing_reinforce="Imaginative association further colors how information is combined.",
+        supported="Imagery and association can add useful conceptual range.",
+        pressured="Verification discipline may drop, so assumptions need explicit checks.",
+        mixed=(
+            "Imaginative routing is present, with mixed signals about how firmly facts should bind the image."
+        ),
+        minor_routing=(
+            "A secondary influence can add imaginative or associative coloring, without replacing "
+            "the primary routing."
+        ),
+        minor_pressured=(
+            "A secondary imaginative influence can blur verification if facts are not written down."
+        ),
+        strengths=("Imaginative Association", "Conceptual Creativity"),
+        risks=("Reduced Verification Discipline",),
+    ),
+    "Pluto": DispositorFunctionRule(
+        themes=frozenset({"investigation", "depth", "over_dig"}),
+        routing=(
+            "Thinking tends to be routed toward depth, hidden causes, transformation, and investigation."
+        ),
+        routing_reinforce="Depth and root-cause investigation further direct this Mercury.",
+        supported="That investigative depth can stay relatively usable.",
+        pressured="That depth can become harder to regulate and more prone to over-fixation.",
+        mixed="Investigative depth is active, with mixed signals about when to stop digging.",
+        minor_routing="A secondary influence can pull attention toward hidden causes or deeper layers.",
+        strengths=("Investigative Depth", "Root-Cause Orientation"),
+        risks=("Over-Control or Over-Investigation",),
+    ),
+}
 

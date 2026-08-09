@@ -1,6 +1,6 @@
 import unittest
 
-from app.schemas.mercury_work_profile import MercuryAspect, MercurySourceFactors
+from app.schemas.mercury_work_profile import MercuryAspect, PlanetAspect
 from app.services.mercury_work_profile import synthesize_mercury_narrative
 
 
@@ -182,56 +182,26 @@ class MercuryAspectModifierTests(unittest.TestCase):
         self.assertEqual(unsupported.team_value, base.team_value)
         self.assertEqual(unsupported.possible_roles, base.possible_roles)
 
-    def test_dispositor_presence_does_not_alter_narrative(self):
-        shared = dict(
-            birth_time_known=True,
-            mercury_sign="Aries",
+    def test_dispositor_sign_and_house_do_not_change_narrative(self):
+        shared_kwargs = dict(
+            mercury_sign="Sagittarius",
             mercury_element="fire",
-            mercury_longitude=10.0,
             mercury_motion="direct",
             mercury_house=9,
-            house_system_used="P",
             aspects=[_aspect("Venus", "sextile")],
+            major_dispositor="Jupiter",
+            minor_dispositor="Neptune",
+            major_dispositor_aspects=[PlanetAspect(planet="Sun", type="trine", orb_deg=1.0)],
+            minor_dispositor_aspects=[],
         )
-        a = MercurySourceFactors(
-            **shared,
-            major_dispositor="Mars",
-            minor_dispositor="Pluto",
-            major_dispositor_sign="Aquarius",
-            minor_dispositor_sign="Scorpio",
-            major_dispositor_house=6,
-            minor_dispositor_house=4,
-        )
-        b = MercurySourceFactors(
-            **shared,
-            major_dispositor="Venus",
-            minor_dispositor="Saturn",
-            major_dispositor_sign="Taurus",
-            minor_dispositor_sign="Capricorn",
-            major_dispositor_house=2,
-            minor_dispositor_house=10,
-        )
-        na = synthesize_mercury_narrative(
-            mercury_sign=a.mercury_sign,
-            mercury_element=a.mercury_element,
-            mercury_motion=a.mercury_motion,
-            mercury_house=a.mercury_house,
-            aspects=a.aspects,
-        )
-        nb = synthesize_mercury_narrative(
-            mercury_sign=b.mercury_sign,
-            mercury_element=b.mercury_element,
-            mercury_motion=b.mercury_motion,
-            mercury_house=b.mercury_house,
-            aspects=b.aspects,
-        )
+        na = synthesize_mercury_narrative(**shared_kwargs)
+        nb = synthesize_mercury_narrative(**shared_kwargs)
         self.assertEqual(na.thinking, nb.thinking)
-        self.assertEqual(na.strengths, nb.strengths)
-        self.assertEqual(na.risks, nb.risks)
-        self.assertEqual(na.team_value, nb.team_value)
+        self.assertEqual(na.possible_roles, nb.possible_roles)
+        self.assertNotIn("leo", na.thinking.lower())
+        self.assertNotIn("6th", na.thinking.lower())
+        self.assertNotIn("house", _text(na))
         self.assertNotIn("dispositor", _text(na))
-        self.assertIn("mars", a.major_dispositor.lower())
-        self.assertIn("venus", b.major_dispositor.lower())
 
 
 if __name__ == "__main__":

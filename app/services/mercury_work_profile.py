@@ -7,6 +7,7 @@ from app.schemas.mercury_work_profile import (
     MercuryAspect,
     MercuryWorkProfileRequest,
     MercuryWorkProfileResponse,
+    PlanetAspect,
 )
 from app.services.mercury_facts import (
     DEFAULT_HOUSE_SYSTEM,
@@ -15,6 +16,7 @@ from app.services.mercury_facts import (
 )
 from app.services.mercury_rules import (
     ASPECT_APPLY_ORDER,
+    DISPOSITOR_FUNCTION_RULES,
     ELEMENT_RULES,
     HOUSE_RULES,
     LABEL_THEME,
@@ -23,8 +25,10 @@ from app.services.mercury_rules import (
     SIGN_THEMES,
     SIGN_UNAVAILABLE_LIMITATION,
     TALKATIVE_THEMES,
+    DispositorFunctionRule,
     MercuryAspectRule,
     MercuryHouseRule,
+    effective_dispositor_condition_state,
     get_aspect_rule,
 )
 from app.services.places import find_coordinates
@@ -166,6 +170,73 @@ def _apply_aspect(
     _extend_labels(risks, rule.risks)
 
 
+def _major_dispositor_text(
+    rule: DispositorFunctionRule,
+    state: str,
+    overlapping: bool,
+) -> str:
+    if overlapping and state == "supported":
+        return rule.supported
+    if overlapping and state == "pressured":
+        return rule.pressured
+    base = rule.routing_reinforce if overlapping else rule.routing
+    extra = {
+        "supported": "" if overlapping else rule.supported,
+        "pressured": "" if overlapping else rule.pressured,
+        "mixed": rule.mixed,
+        "neutral": "",
+    }[state]
+    return _join_unique_parts(base, extra)
+
+
+def _minor_dispositor_text(rule: DispositorFunctionRule, state: str) -> str:
+    if state == "pressured" and rule.minor_pressured:
+        return rule.minor_pressured
+    if state == "supported" and rule.minor_supported:
+        return rule.minor_supported
+    if state == "mixed" and rule.minor_mixed:
+        return rule.minor_mixed
+    return rule.minor_routing
+
+
+def _apply_dispositor_function(
+    *,
+    planet_name: Optional[str],
+    aspects: Optional[Iterable[PlanetAspect | dict]],
+    sign_themes: frozenset[str],
+    role: str,
+    thinking_parts: list[str],
+    learning_parts: list[str],
+    communication_parts: list[str],
+    team_value_parts: list[str],
+    strengths: list[str],
+    risks: list[str],
+) -> None:
+    if not planet_name or planet_name == "Mercury":
+        return
+    rule = DISPOSITOR_FUNCTION_RULES.get(planet_name)
+    if not rule:
+        return
+    state = effective_dispositor_condition_state(aspects)
+    overlapping = bool(sign_themes & rule.themes)
+
+    if role == "minor":
+        thinking_parts.append(_minor_dispositor_text(rule, state))
+        if state == "pressured":
+            _extend_labels(risks, rule.risks[:1])
+        return
+
+    thinking_parts.append(_major_dispositor_text(rule, state, overlapping))
+    if rule.learning and not overlapping:
+        learning_parts.append(rule.learning)
+    if rule.communication and not overlapping:
+        communication_parts.append(rule.communication)
+    if rule.team_value and not overlapping:
+        team_value_parts.append(rule.team_value)
+    _extend_labels(strengths, rule.strengths)
+    _extend_labels(risks, rule.risks)
+
+
 def _normalize_aspects(
     aspects: Optional[Iterable[MercuryAspect | dict]],
 ) -> list[tuple[str, str]]:
@@ -193,11 +264,15 @@ def synthesize_mercury_narrative(
     mercury_motion: Optional[str],
     mercury_house: Optional[int] = None,
     aspects: Optional[Iterable[MercuryAspect | dict]] = None,
+    major_dispositor: Optional[str] = None,
+    minor_dispositor: Optional[str] = None,
+    major_dispositor_aspects: Optional[Iterable[PlanetAspect | dict]] = None,
+    minor_dispositor_aspects: Optional[Iterable[PlanetAspect | dict]] = None,
 ) -> MercuryNarrative:
     """
-    element → sign → retrograde → house (if known) → supported aspects → dedupe.
+    element → sign → retrograde → house → Mercury aspects → dispositor function → dedupe.
 
-    Dispositors are not used.
+    Dispositor sign and house are not interpreted.
     """
     if not mercury_sign or mercury_sign not in SIGN_RULES:
         return MercuryNarrative(
@@ -265,6 +340,31 @@ def synthesize_mercury_narrative(
             risks=risks,
         )
 
+    _apply_dispositor_function(
+        planet_name=major_dispositor,
+        aspects=major_dispositor_aspects,
+        sign_themes=sign_themes,
+        role="major",
+        thinking_parts=thinking_parts,
+        learning_parts=learning_parts,
+        communication_parts=communication_parts,
+        team_value_parts=team_value_parts,
+        strengths=strengths,
+        risks=risks,
+    )
+    _apply_dispositor_function(
+        planet_name=minor_dispositor,
+        aspects=minor_dispositor_aspects,
+        sign_themes=sign_themes,
+        role="minor",
+        thinking_parts=thinking_parts,
+        learning_parts=learning_parts,
+        communication_parts=communication_parts,
+        team_value_parts=team_value_parts,
+        strengths=strengths,
+        risks=risks,
+    )
+
     return MercuryNarrative(
         thinking=_join_unique_parts(*thinking_parts),
         learning=_join_unique_parts(*learning_parts),
@@ -307,6 +407,10 @@ def build_mercury_work_profile(
         mercury_motion=source_factors.mercury_motion,
         mercury_house=source_factors.mercury_house if source_factors.birth_time_known else None,
         aspects=source_factors.aspects,
+        major_dispositor=source_factors.major_dispositor,
+        minor_dispositor=source_factors.minor_dispositor,
+        major_dispositor_aspects=source_factors.major_dispositor_aspects,
+        minor_dispositor_aspects=source_factors.minor_dispositor_aspects,
     )
     all_limitations = limitations + narrative.extra_limitations
 
