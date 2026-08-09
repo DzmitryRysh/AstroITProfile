@@ -23,10 +23,20 @@ class MercuryWorkProfileRequest(BaseModel):
         return v
 
 
-class MercuryAspect(BaseModel):
+class PlanetAspect(BaseModel):
     planet: str
     type: str
     orb_deg: Optional[float] = None
+
+
+class MercuryAspect(PlanetAspect):
+    """Mercury-to-planet aspect. Same geometry shape as PlanetAspect."""
+
+
+class DispositorCondition(BaseModel):
+    harmonious_aspect_count: int
+    tense_aspect_count: int
+    conjunction_count: int
 
 
 class MercurySourceFactors(BaseModel):
@@ -44,6 +54,10 @@ class MercurySourceFactors(BaseModel):
     minor_dispositor_sign: Optional[str] = None
     major_dispositor_house: Optional[int] = None
     minor_dispositor_house: Optional[int] = None
+    major_dispositor_aspects: list[PlanetAspect] = Field(default_factory=list)
+    minor_dispositor_aspects: list[PlanetAspect] = Field(default_factory=list)
+    major_dispositor_condition: Optional[DispositorCondition] = None
+    minor_dispositor_condition: Optional[DispositorCondition] = None
 
 
 class MercuryWorkProfileResponse(BaseModel):

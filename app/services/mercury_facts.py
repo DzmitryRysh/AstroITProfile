@@ -1,10 +1,15 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, time
 from typing import Optional
 
-from app.schemas.mercury_work_profile import MercuryAspect, MercurySourceFactors
+from app.schemas.mercury_work_profile import (
+    DispositorCondition,
+    MercuryAspect,
+    MercurySourceFactors,
+    PlanetAspect,
+)
 from app.services.astro_calc import (
     calc_planet_house,
     calc_planet_lon_and_speed,
@@ -13,7 +18,14 @@ from app.services.astro_calc import (
     sign_from_longitude,
 )
 from app.services.it_rulership import PLANET_NAME_TO_SWE
-from app.services.mercury_aspects import MERCURY_ASPECT_TARGETS, mercury_aspects_at
+from app.services.mercury_aspects import (
+    DISPOSITOR_ASPECT_TARGETS,
+    HARMONIOUS_ASPECT_TYPES,
+    MERCURY_ASPECT_TARGETS,
+    TENSE_ASPECT_TYPES,
+    mercury_aspects_at,
+    planet_aspects_at,
+)
 from app.services.timezones import to_utc_birth_moment
 
 DEFAULT_HOUSE_SYSTEM = b"P"
@@ -82,6 +94,7 @@ class DayProbeSnapshot:
     mercury_motion: str
     planet_signs: dict[str, str]
     aspect_types: dict[str, str]
+    planet_aspect_types: dict[str, dict[str, str]] = field(default_factory=dict)
 
 
 def element_from_sign(sign: Optional[str]) -> Optional[str]:
@@ -94,6 +107,29 @@ def dispositors_for_sign(sign: str) -> tuple[str, Optional[str]]:
     return MERCURY_DISPOSITORS[sign]
 
 
+def summarize_dispositor_condition(aspects: list[PlanetAspect] | list[dict]) -> DispositorCondition:
+    harmonious = 0
+    tense = 0
+    conjunctions = 0
+    for item in aspects:
+        aspect_type = item.type if isinstance(item, PlanetAspect) else item["type"]
+        if aspect_type in HARMONIOUS_ASPECT_TYPES:
+            harmonious += 1
+        elif aspect_type in TENSE_ASPECT_TYPES:
+            tense += 1
+        elif aspect_type == "conjunction":
+            conjunctions += 1
+    return DispositorCondition(
+        harmonious_aspect_count=harmonious,
+        tense_aspect_count=tense,
+        conjunction_count=conjunctions,
+    )
+
+
+def _aspect_models(raw_items: list[dict]) -> list[PlanetAspect]:
+    return [PlanetAspect(**item) for item in raw_items]
+
+
 def snapshot_day_probe(*, utc_dt) -> DayProbeSnapshot:
     mercury_lon, mercury_speed = calc_planet_lon_and_speed(
         utc_dt=utc_dt,
@@ -104,14 +140,23 @@ def snapshot_day_probe(*, utc_dt) -> DayProbeSnapshot:
         for name, planet_id in PLANET_NAME_TO_SWE.items()
         if name in _DISPOSITOR_PLANETS
     }
-    aspects = mercury_aspects_at(utc_dt=utc_dt, include_moon=False, include_orb=False)
-    aspect_types = {item["planet"]: item["type"] for item in aspects}
+    planet_aspect_types: dict[str, dict[str, str]] = {}
+    for name in _DISPOSITOR_PLANETS:
+        items = planet_aspects_at(
+            utc_dt=utc_dt,
+            planet_name=name,
+            include_moon=False,
+            include_orb=False,
+        )
+        planet_aspect_types[name] = {item["planet"]: item["type"] for item in items}
+    aspect_types = planet_aspect_types.get("Mercury", {})
 
     return DayProbeSnapshot(
         mercury_sign=sign_from_longitude(mercury_lon),
         mercury_motion=motion_from_speed(mercury_speed),
         planet_signs=planet_signs,
         aspect_types=aspect_types,
+        planet_aspect_types=planet_aspect_types,
     )
 
 
@@ -122,6 +167,33 @@ def _stable_value(values: list) -> Optional[object]:
     if all(v == first for v in values):
         return first
     return None
+
+
+def _stable_planet_aspects_from_probes(
+    probes: list[DayProbeSnapshot],
+    source_planet: str,
+    *,
+    label: str,
+) -> tuple[list[PlanetAspect], list[str]]:
+    aspects: list[PlanetAspect] = []
+    limitations: list[str] = []
+    for target_name in DISPOSITOR_ASPECT_TARGETS:
+        if target_name == source_planet:
+            continue
+        if target_name == "Moon":
+            continue
+        types = [
+            p.planet_aspect_types.get(source_planet, {}).get(target_name)
+            for p in probes
+        ]
+        if types[0] is not None and _stable_value(types) is not None:
+            aspects.append(PlanetAspect(planet=target_name, type=types[0], orb_deg=None))
+        elif any(t is not None for t in types):
+            limitations.append(
+                f"{label} ({source_planet})–{target_name} aspect is not stable "
+                "across the birth date; omitted."
+            )
+    return aspects, limitations
 
 
 def merge_unknown_time_probes(
@@ -157,6 +229,10 @@ def merge_unknown_time_probes(
     minor_dispositor: Optional[str] = None
     major_dispositor_sign: Optional[str] = None
     minor_dispositor_sign: Optional[str] = None
+    major_dispositor_aspects: list[PlanetAspect] = []
+    minor_dispositor_aspects: list[PlanetAspect] = []
+    major_dispositor_condition: Optional[DispositorCondition] = None
+    minor_dispositor_condition: Optional[DispositorCondition] = None
 
     if mercury_sign:
         major_dispositor, minor_dispositor = dispositors_for_sign(mercury_sign)
@@ -169,6 +245,14 @@ def merge_unknown_time_probes(
                 "across the birth date; omitted."
             )
 
+        major_dispositor_aspects, major_aspect_limits = _stable_planet_aspects_from_probes(
+            probes,
+            major_dispositor,
+            label="Major dispositor",
+        )
+        limitations.extend(major_aspect_limits)
+        major_dispositor_condition = summarize_dispositor_condition(major_dispositor_aspects)
+
         if minor_dispositor:
             minor_signs = [p.planet_signs[minor_dispositor] for p in probes]
             minor_dispositor_sign = _stable_value(minor_signs)
@@ -177,6 +261,13 @@ def merge_unknown_time_probes(
                     f"Minor dispositor ({minor_dispositor}) sign is not stable "
                     "across the birth date; omitted."
                 )
+            minor_dispositor_aspects, minor_aspect_limits = _stable_planet_aspects_from_probes(
+                probes,
+                minor_dispositor,
+                label="Minor dispositor",
+            )
+            limitations.extend(minor_aspect_limits)
+            minor_dispositor_condition = summarize_dispositor_condition(minor_dispositor_aspects)
     else:
         limitations.append("Dispositor names omitted because Mercury sign is not stable.")
 
@@ -195,6 +286,10 @@ def merge_unknown_time_probes(
         minor_dispositor_sign=minor_dispositor_sign,
         major_dispositor_house=None,
         minor_dispositor_house=None,
+        major_dispositor_aspects=major_dispositor_aspects,
+        minor_dispositor_aspects=minor_dispositor_aspects,
+        major_dispositor_condition=major_dispositor_condition,
+        minor_dispositor_condition=minor_dispositor_condition,
     )
     return factors, limitations
 
@@ -251,9 +346,20 @@ def compute_exact_time_facts(
         planet=PLANET_NAME_TO_SWE[major_dispositor],
         house_system=house_system,
     )
+    major_dispositor_aspects = _aspect_models(
+        planet_aspects_at(
+            utc_dt=utc_dt,
+            planet_name=major_dispositor,
+            include_moon=True,
+            include_orb=True,
+        )
+    )
+    major_dispositor_condition = summarize_dispositor_condition(major_dispositor_aspects)
 
     minor_dispositor_sign = None
     minor_dispositor_house = None
+    minor_dispositor_aspects: list[PlanetAspect] = []
+    minor_dispositor_condition = None
     if minor_dispositor:
         minor_dispositor_sign = calc_planet_sign(
             utc_dt=utc_dt,
@@ -266,6 +372,15 @@ def compute_exact_time_facts(
             planet=PLANET_NAME_TO_SWE[minor_dispositor],
             house_system=house_system,
         )
+        minor_dispositor_aspects = _aspect_models(
+            planet_aspects_at(
+                utc_dt=utc_dt,
+                planet_name=minor_dispositor,
+                include_moon=True,
+                include_orb=True,
+            )
+        )
+        minor_dispositor_condition = summarize_dispositor_condition(minor_dispositor_aspects)
 
     factors = MercurySourceFactors(
         birth_time_known=True,
@@ -282,5 +397,9 @@ def compute_exact_time_facts(
         minor_dispositor_sign=minor_dispositor_sign,
         major_dispositor_house=major_dispositor_house,
         minor_dispositor_house=minor_dispositor_house,
+        major_dispositor_aspects=major_dispositor_aspects,
+        minor_dispositor_aspects=minor_dispositor_aspects,
+        major_dispositor_condition=major_dispositor_condition,
+        minor_dispositor_condition=minor_dispositor_condition,
     )
     return factors, []
