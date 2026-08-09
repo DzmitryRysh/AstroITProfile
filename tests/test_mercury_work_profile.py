@@ -35,13 +35,13 @@ class MercuryWorkProfileExactTimeTests(unittest.TestCase):
         result = build_mercury_work_profile(payload)
         factors = result.source_factors
 
-        self.assertEqual(result.thinking, "")
-        self.assertEqual(result.learning, "")
-        self.assertEqual(result.communication, "")
-        self.assertEqual(result.strengths, [])
-        self.assertEqual(result.risks, [])
-        self.assertEqual(result.team_value, "")
-        self.assertEqual(result.possible_roles, [])
+        self.assertTrue(result.thinking)
+        self.assertTrue(result.learning)
+        self.assertTrue(result.communication)
+        self.assertTrue(result.strengths)
+        self.assertTrue(result.risks)
+        self.assertTrue(result.team_value)
+        self.assertTrue(result.possible_roles)
 
         self.assertTrue(factors.birth_time_known)
         self.assertIn(factors.mercury_sign, SIGNS)
@@ -108,9 +108,14 @@ class MercuryWorkProfileUnknownTimeTests(unittest.TestCase):
         self.assertIsNone(factors.major_dispositor_house)
         self.assertIsNone(factors.minor_dispositor_house)
 
-        self.assertEqual(result.thinking, "")
-        self.assertEqual(result.strengths, [])
-        self.assertEqual(result.possible_roles, [])
+        if factors.mercury_sign:
+            self.assertTrue(result.thinking)
+            self.assertTrue(result.strengths)
+            self.assertTrue(result.possible_roles)
+        else:
+            self.assertEqual(result.thinking, "")
+            self.assertEqual(result.strengths, [])
+            self.assertEqual(result.possible_roles, [])
 
         moon_aspects = [a for a in factors.aspects if a.planet == "Moon"]
         self.assertEqual(moon_aspects, [])
