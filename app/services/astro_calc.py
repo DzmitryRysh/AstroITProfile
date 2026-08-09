@@ -115,6 +115,29 @@ def calc_planet_lon(*, utc_dt: datetime, planet: int) -> float:
     return _planet_lon_ut(jd, planet)
 
 
+def sign_from_longitude(lon: float) -> str:
+    """Public wrapper: zodiac sign name from ecliptic longitude."""
+    return _sign_from_lon(lon)
+
+
+def calc_planet_lon_and_speed(*, utc_dt: datetime, planet: int) -> tuple[float, float]:
+    """
+    Additive helper: ecliptic longitude (0..360) and longitudinal speed.
+
+    Does not change calc_planet_lon / _planet_lon_ut contracts used by the MVP.
+    Speed < 0 means retrograde; speed >= 0 means direct.
+    """
+    jd = _julian_day_utc(utc_dt)
+    pos, _ = swe.calc_ut(jd, planet, swe.FLG_SWIEPH | swe.FLG_SPEED)
+    lon = float(pos[0]) % 360.0
+    speed = float(pos[3])
+    return lon, speed
+
+
+def motion_from_speed(speed: float) -> str:
+    return "retrograde" if speed < 0 else "direct"
+
+
 def calc_uranus_house(
         *, utc_dt: datetime, lat: float, lon: float, house_system: bytes = b'P'
 ) -> tuple[int, bytes]:
