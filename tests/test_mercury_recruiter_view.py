@@ -5,7 +5,7 @@ from collections import Counter
 
 from app.core.app import create_app
 from app.schemas.mercury_work_profile import MercuryAspect, MercuryWorkProfileRequest
-from app.services.mercury_recruiter_view import build_recruiter_view
+from app.services.mercury_recruiter_view import _risk_family, build_recruiter_view
 from app.services.mercury_rules import LABEL_THEME, SIGN_RULES
 from app.services.mercury_work_profile import (
     build_mercury_work_profile,
@@ -216,6 +216,34 @@ class RecruiterViewModifierTests(unittest.TestCase):
             aspects=[MercuryAspect(planet="Saturn", type="square", orb_deg=2.0)],
         )
         self.assertLessEqual(len(view.top_skills), 5)
+        self.assertLessEqual(len(view.key_risks), 4)
+
+    def test_scorpio_risk_families_stay_diverse_with_modifiers(self):
+        view, _ = _view(
+            "Scorpio",
+            "water",
+            house=9,
+            aspects=[
+                MercuryAspect(planet="Saturn", type="square", orb_deg=2.0),
+                MercuryAspect(planet="Sun", type="conjunction", orb_deg=1.0),
+                MercuryAspect(planet="Pluto", type="square", orb_deg=2.0),
+            ],
+        )
+        families = {_risk_family(item) for item in view.key_risks}
+        self.assertGreaterEqual(len(families), 3, view.key_risks)
+        self.assertFalse(
+            "Excessive Criticality" in view.key_risks
+            and "Harsh Judgments" in view.key_risks,
+            view.key_risks,
+        )
+        self.assertIn("Communication Inhibition", view.key_risks)
+        self.assertTrue(
+            any(
+                item in {"Over-investigation", "Over-Fixation", "Mental Pressure"}
+                for item in view.key_risks
+            ),
+            view.key_risks,
+        )
         self.assertLessEqual(len(view.key_risks), 4)
 
     def test_libra_baseline_dedupes_indecision_theme(self):

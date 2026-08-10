@@ -620,6 +620,200 @@ def _material_label_set(kind: str) -> set[str]:
     return labels
 
 
+# Recruiter-only risk families. Engine lists stay unchanged.
+RECRUITER_RISK_FAMILIES: dict[str, tuple[str, ...]] = {
+    "judgment": (
+        "Excessive Criticality",
+        "Harsh Judgments",
+        "Suspicion",
+        "Intolerance of Competing Ideas",
+    ),
+    "decision_hesitation": (
+        "Indecision",
+        "Endless Weighing of Alternatives",
+        "Difficulty Taking a Firm Position",
+    ),
+    "investigation_fixation": (
+        "Over-investigation",
+        "Over-Fixation",
+        "Over-Fixation on Hidden Problems",
+        "Mental Pressure",
+    ),
+    "inhibition": (
+        "Communication Inhibition",
+        "Self-Critical Communication",
+        "Public Expression Friction",
+        "Slower Spontaneous Response",
+        "Verbal Expression May Lag Behind Internal Thought",
+    ),
+    "listening": (
+        "Poor Active Listening",
+        "Poor Listening Under Pressure",
+        "Weak Listening",
+    ),
+    "conflict": (
+        "Conflict Escalation",
+        "Conflict-Prone Communication",
+        "Communication Intensity",
+    ),
+    "conflict_avoidance": ("Avoidance of Necessary Conflict",),
+    "haste": (
+        "Hasty Conclusions",
+        "Hasty Action",
+        "Premature Action Bias",
+        "Acting Before Discussion Is Complete",
+    ),
+    "verification": (
+        "Mental Fog",
+        "Fact-Assumption Confusion",
+        "Weak Fact Verification",
+        "Reduced Verification Discipline",
+        "Fact / Interpretation Confusion",
+    ),
+    "overload": ("Information Overload",),
+    "scatter": (
+        "Scattered Attention",
+        "Fragmented Attention",
+        "Too Many Parallel Threads",
+        "Mental Overstimulation",
+    ),
+    "expansion": ("Scope Inflation", "Over-expansion"),
+    "core_message": ("Loss of Core Message",),
+    "detail_precision": (
+        "Detail Neglect",
+        "Precision Errors",
+        "Excessive Detail",
+        "Losing the Big Picture",
+    ),
+    "rigidity": (
+        "Cognitive Rigidity",
+        "Difficulty Changing an Established View",
+        "Limited Communication Flexibility",
+        "Rigidity",
+    ),
+    "emotional_subjective": (
+        "Mood-Dependent Reasoning",
+        "Emotional Decision Noise",
+        "Subjective Filtering",
+        "Subjectivity",
+    ),
+    "abstraction": (
+        "Excessive Abstraction / Formality",
+        "Over-Processing Unnecessary Information",
+    ),
+}
+
+_RISK_FAMILY_BY_LABEL: dict[str, str] = {
+    label: family
+    for family, labels in RECRUITER_RISK_FAMILIES.items()
+    for label in labels
+}
+
+_VERIFICATION_PAIR = ("Mental Fog", "Fact-Assumption Confusion")
+
+
+def _risk_family(label: str) -> str:
+    return _RISK_FAMILY_BY_LABEL.get(label) or f"solo:{label}"
+
+
+def _family_representative(family: str, ordered: list[str]) -> Optional[str]:
+    active = set(ordered)
+    for label in RECRUITER_RISK_FAMILIES.get(family, ()):
+        if label in active:
+            return label
+    for item in ordered:
+        if _risk_family(item) == family:
+            return item
+    return None
+
+
+def _select_key_risks(
+    items: list[str],
+    *,
+    base_items: tuple[str, ...] | list[str],
+    limit: int = 4,
+) -> list[str]:
+    """Diverse recruiter risks: one family per slot, with a verification-pair exception."""
+    ordered = _dedupe_keep_order(list(items))
+    if not ordered:
+        return []
+
+    base_set = set(base_items)
+    material_set = _material_label_set("risks")
+    house_set = _house_label_set("risks")
+
+    family_order: list[str] = []
+    members: dict[str, list[str]] = {}
+    for item in ordered:
+        family = _risk_family(item)
+        members.setdefault(family, []).append(item)
+        if family not in family_order:
+            family_order.append(family)
+
+    def _family_has(family: str, pool: set[str]) -> bool:
+        return any(item in pool for item in members[family])
+
+    base_families = [family for family in family_order if _family_has(family, base_set)]
+    material_families = [
+        family
+        for family in family_order
+        if family not in base_families and _family_has(family, material_set - base_set)
+    ]
+    house_families = [
+        family
+        for family in family_order
+        if family not in base_families
+        and family not in material_families
+        and _family_has(family, house_set - base_set)
+    ]
+    other_families = [
+        family
+        for family in family_order
+        if family not in base_families
+        and family not in material_families
+        and family not in house_families
+    ]
+
+    selected: list[str] = []
+    seen_families: set[str] = set()
+
+    def add_family(family: str) -> bool:
+        if family in seen_families or len(selected) >= limit:
+            return False
+        representative = _family_representative(family, ordered)
+        if not representative or representative in selected:
+            return False
+        selected.append(representative)
+        seen_families.add(family)
+        return True
+
+    def add_verification_pair_if_open() -> None:
+        present_pair = [item for item in _VERIFICATION_PAIR if item in ordered]
+        if len(present_pair) < 2 or len(selected) >= limit:
+            return
+        for item in present_pair:
+            if item not in selected:
+                selected.append(item)
+                return
+
+    material_reserve = 1 if material_families else 0
+    base_take = min(len(base_families), max(limit - material_reserve, 0), 2)
+    for family in base_families[:base_take]:
+        add_family(family)
+    for family in material_families:
+        add_family(family)
+        if family == "verification":
+            add_verification_pair_if_open()
+    for family in base_families[base_take:]:
+        add_family(family)
+    for family in house_families:
+        add_family(family)
+    for family in other_families:
+        add_family(family)
+
+    return selected[:limit]
+
+
 def _select_salient_labels(
     items: list[str],
     *,
@@ -741,12 +935,9 @@ def build_recruiter_view(
             base_target=3,
             max_non_base=2,
         ),
-        key_risks=_select_salient_labels(
+        key_risks=_select_key_risks(
             narrative.risks,
             base_items=SIGN_RULES[mercury_sign].risks,
-            kind="risks",
-            limit=4,
-            base_target=2,
         ),
         team_function=team_function,
         team_contribution=_synthesize_team_contribution(mercury_sign, narrative.team_value),
