@@ -79,6 +79,9 @@ class RecruiterViewSignTests(unittest.TestCase):
         view, _ = _view("Virgo", "earth")
         self.assertEqual(view.team_function, "Precision Analyst / Validator")
         self.assertIn("detail", view.thinking_style.lower())
+        self.assertTrue(
+            any("precision" in s.lower() or "detail" in s.lower() for s in view.top_skills)
+        )
         joined = " ".join(view.onboarding_guidance).lower()
         self.assertTrue("structur" in joined or "document" in joined or "procedure" in joined)
         self.assertTrue("verif" in joined or "checklist" in joined or "diagram" in joined)
@@ -211,6 +214,58 @@ class RecruiterViewModifierTests(unittest.TestCase):
             "air",
             house=8,
             aspects=[MercuryAspect(planet="Saturn", type="square", orb_deg=2.0)],
+        )
+        self.assertLessEqual(len(view.top_skills), 5)
+        self.assertLessEqual(len(view.key_risks), 4)
+
+    def test_libra_baseline_dedupes_indecision_theme(self):
+        view, _ = _view("Libra", "air")
+        hesitation = {
+            "Indecision",
+            "Endless Weighing of Alternatives",
+            "Difficulty Taking a Firm Position",
+        }
+        self.assertLessEqual(sum(1 for item in view.key_risks if item in hesitation), 1)
+        self.assertIn("Indecision", view.key_risks)
+        self.assertLessEqual(len(view.key_risks), 4)
+
+    def test_libra_neptune_keeps_verification_risks(self):
+        view, _ = _view(
+            "Libra",
+            "air",
+            aspects=[MercuryAspect(planet="Neptune", type="square", orb_deg=2.0)],
+        )
+        self.assertIn("Mental Fog", view.key_risks)
+        self.assertIn("Fact-Assumption Confusion", view.key_risks)
+        libra_risks = set(SIGN_RULES["Libra"].risks)
+        self.assertGreaterEqual(sum(1 for item in view.key_risks if item in libra_risks), 1)
+        self.assertLessEqual(len(view.key_risks), 4)
+
+    def test_libra_house_9_neptune_keeps_identity_and_modifier_skill(self):
+        view, _ = _view(
+            "Libra",
+            "air",
+            house=9,
+            aspects=[MercuryAspect(planet="Neptune", type="square", orb_deg=2.0)],
+        )
+        libra_risks = set(SIGN_RULES["Libra"].risks)
+        self.assertGreaterEqual(sum(1 for item in view.key_risks if item in libra_risks), 1)
+        self.assertTrue(
+            "Mental Fog" in view.key_risks or "Fact-Assumption Confusion" in view.key_risks
+        )
+        libra_skills = set(SIGN_RULES["Libra"].strengths)
+        self.assertGreaterEqual(sum(1 for item in view.top_skills if item in libra_skills), 2)
+        self.assertTrue(
+            any(
+                item
+                in {
+                    "Conceptual Learning",
+                    "Theory Integration",
+                    "Knowledge Filtering",
+                    "Imaginative Association",
+                }
+                for item in view.top_skills
+            )
         )
         self.assertLessEqual(len(view.top_skills), 5)
         self.assertLessEqual(len(view.key_risks), 4)

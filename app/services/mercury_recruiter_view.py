@@ -9,7 +9,15 @@ import re
 from typing import Optional, Protocol
 
 from app.schemas.mercury_work_profile import RecruiterView
-from app.services.mercury_rules import ELEMENT_RULES, LABEL_THEME, SIGN_RULES
+from app.services.mercury_rules import (
+    ASPECT_RULES,
+    DISPOSITOR_FUNCTION_RULES,
+    ELEMENT_RULES,
+    HOUSE_RULES,
+    LABEL_THEME,
+    RETROGRADE_RULE,
+    SIGN_RULES,
+)
 
 
 class _NarrativeLike(Protocol):
@@ -534,64 +542,136 @@ def _synthesize_team_contribution(sign: str, team_value: str) -> str:
     return _join_trailing_clause(base, clause)
 
 
-def _label_theme(label: str) -> Optional[str]:
-    return LABEL_THEME.get(label)
+# Recruiter-only semantic groups. Does not change engine LABEL_THEME.
+RECRUITER_PRESENTATION_THEME: dict[str, str] = {
+    "Indecision": "decision_hesitation",
+    "Endless Weighing of Alternatives": "decision_hesitation",
+    "Difficulty Taking a Firm Position": "decision_hesitation",
+    "Poor Active Listening": "listening",
+    "Poor Listening Under Pressure": "listening",
+    "Weak Listening": "listening",
+    "Conflict Escalation": "conflict",
+    "Conflict-Prone Communication": "conflict",
+    "Avoidance of Necessary Conflict": "conflict_avoidance",
+    "Communication Inhibition": "inhibition",
+    "Slower Spontaneous Response": "inhibition",
+    "Public Expression Friction": "inhibition",
+    "Verbal Expression May Lag Behind Internal Thought": "inhibition",
+    "Scattered Attention": "scattered",
+    "Fragmented Attention": "scattered",
+    "Too Many Parallel Threads": "scattered",
+    "Excessive Abstraction / Formality": "abstraction",
+    "Over-Processing Unnecessary Information": "abstraction",
+    "Acting Before Discussion Is Complete": "haste",
+    "Perspective Integration": "integration",
+    "Information Synthesis": "integration",
+    "Perspective Exchange": "integration",
+    "Diplomatic Communication": "diplomacy",
+    "Social Calibration": "diplomacy",
+    "Tactful Expression": "diplomacy",
+    "Consensus Building": "diplomacy",
+    "Conceptual Learning": "conceptual",
+    "Theory Integration": "conceptual",
+    "Knowledge Filtering": "conceptual",
+    "Deep Investigation": "investigation",
+    "Investigative Depth": "investigation",
+    "Research Thinking": "investigation",
+    "Hidden-Pattern Analysis": "investigation",
+    "Research Persistence": "investigation",
+    "Hidden-Pattern Detection": "investigation",
+}
 
 
-def _distinct_modifier_labels(ordered: list[str], base_set: set[str]) -> list[str]:
-    base_themes = {_label_theme(item) for item in base_set if _label_theme(item)}
-    distinct: list[str] = []
-    seen_themes: set[str] = set()
-    for item in ordered:
-        if item in base_set:
+def _presentation_theme(label: str) -> str:
+    if label in RECRUITER_PRESENTATION_THEME:
+        return RECRUITER_PRESENTATION_THEME[label]
+    if label in LABEL_THEME:
+        return LABEL_THEME[label]
+    return f"label:{label}"
+
+
+def _collapse_distinct_themes(items: list[str]) -> list[str]:
+    selected: list[str] = []
+    seen: set[str] = set()
+    for item in _dedupe_keep_order(items):
+        theme = _presentation_theme(item)
+        if theme in seen:
             continue
-        theme = _label_theme(item)
-        if theme and (theme in base_themes or theme in seen_themes):
-            continue
-        if theme:
-            seen_themes.add(theme)
-        distinct.append(item)
-    return distinct
+        seen.add(theme)
+        selected.append(item)
+    return selected
 
 
-def _select_presented_labels(
+def _rule_labels(kind: str, rules) -> set[str]:
+    labels: set[str] = set()
+    for rule in rules:
+        labels.update(getattr(rule, kind, ()) or ())
+    return labels
+
+
+def _house_label_set(kind: str) -> set[str]:
+    return _rule_labels(kind, HOUSE_RULES.values())
+
+
+def _material_label_set(kind: str) -> set[str]:
+    labels = set(getattr(RETROGRADE_RULE, kind, ()) or ())
+    labels |= _rule_labels(kind, ASPECT_RULES.values())
+    labels |= _rule_labels(kind, DISPOSITOR_FUNCTION_RULES.values())
+    return labels
+
+
+def _select_salient_labels(
     items: list[str],
     *,
     base_items: tuple[str, ...] | list[str],
+    kind: str,
     limit: int,
-    modifier_slots: int = 1,
+    base_target: int,
+    max_non_base: Optional[int] = None,
 ) -> list[str]:
-    """Keep base identity dominant; reserve slots for distinct synthesis modifiers."""
-    ordered = _dedupe_keep_order(list(items))
+    """Pick informative distinct recruiter labels from existing synthesis."""
+    ordered = _collapse_distinct_themes(list(items))
     base_set = set(base_items)
-    base_ordered = [item for item in ordered if item in base_set]
-    modifiers = _distinct_modifier_labels(ordered, base_set)
+    house_set = _house_label_set(kind)
+    material_set = _material_label_set(kind)
 
-    reserve = min(max(modifier_slots, 0), len(modifiers), max(limit - 1, 0))
-    base_limit = limit - reserve
+    bases = [item for item in ordered if item in base_set]
+    materials = [
+        item for item in ordered if item not in base_set and item in material_set
+    ]
+    houses = [
+        item
+        for item in ordered
+        if item not in base_set and item not in material_set and item in house_set
+    ]
+    others = [
+        item
+        for item in ordered
+        if item not in base_set and item not in material_set and item not in house_set
+    ]
 
     selected: list[str] = []
-    seen_themes: set[str] = set()
 
-    def _take(candidates: list[str], remaining: int) -> None:
+    def take(candidates: list[str], cap: Optional[int] = None) -> int:
+        added = 0
         for item in candidates:
-            if remaining is not None and len(selected) >= remaining:
-                return
+            if len(selected) >= limit:
+                break
+            if cap is not None and added >= cap:
+                break
             if item in selected:
                 continue
-            theme = _label_theme(item)
-            if theme and theme in seen_themes:
-                continue
-            if theme:
-                seen_themes.add(theme)
             selected.append(item)
-            if len(selected) >= limit:
-                return
+            added += 1
+        return added
 
-    _take(base_ordered, base_limit)
-    _take(modifiers, limit)
-    if len(selected) < limit:
-        _take(base_ordered, limit)
+    material_reserve = 1 if materials else 0
+    take(bases, min(base_target, max(limit - material_reserve, 0)))
+    non_base_budget = max_non_base if max_non_base is not None else limit
+    non_base_taken = take(materials, non_base_budget)
+    take(houses, max(non_base_budget - non_base_taken, 0))
+    take(bases)
+    take(others)
     return selected[:limit]
 
 
@@ -653,15 +733,20 @@ def build_recruiter_view(
     team_function = RECRUITER_TEAM_FUNCTION[mercury_sign]
     view = RecruiterView(
         thinking_style=_thinking_style(mercury_sign, narrative.thinking),
-        top_skills=_select_presented_labels(
+        top_skills=_select_salient_labels(
             narrative.strengths,
             base_items=SIGN_RULES[mercury_sign].strengths,
+            kind="strengths",
             limit=5,
+            base_target=3,
+            max_non_base=2,
         ),
-        key_risks=_select_presented_labels(
+        key_risks=_select_salient_labels(
             narrative.risks,
             base_items=SIGN_RULES[mercury_sign].risks,
+            kind="risks",
             limit=4,
+            base_target=2,
         ),
         team_function=team_function,
         team_contribution=_synthesize_team_contribution(mercury_sign, narrative.team_value),
