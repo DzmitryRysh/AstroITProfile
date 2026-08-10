@@ -19,6 +19,7 @@
   "Minsk, Belarus": { "lat": 53.9006, "lon": 27.5590 },
 
   "Kyiv, Ukraine": { "lat": 50.4501, "lon": 30.5234 },
-  "Donetsk, Ukraine": { "lat": 48.0159, "lon": 37.8029 }
+  "Donetsk, Ukraine": { "lat": 48.0159, "lon": 37.8029 },
+  "Kingisepp, Russia": { "lat": 59.37331, "lon": 28.61343 }
 
 }
