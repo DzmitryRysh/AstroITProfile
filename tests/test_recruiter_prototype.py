@@ -73,5 +73,103 @@ class RecruiterPrototypeRouteTests(unittest.TestCase):
         self.assertIn("/health", paths)
 
 
+class RecruiterUxPolishTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.html = RECRUITER_INDEX.read_text(encoding="utf-8")
+        cls.css = RECRUITER_CSS.read_text(encoding="utf-8")
+        cls.js = RECRUITER_JS.read_text(encoding="utf-8")
+        cls.blob = f"{cls.html}\n{cls.css}\n{cls.js}"
+
+    def test_setup_forms_are_not_primary_visible_content(self):
+        self.assertIn('id="empty-state"', self.html)
+        self.assertIn('id="setup-overlay"', self.html)
+        self.assertIn("hidden", self.html.split('id="setup-overlay"', 1)[1].split(">", 1)[0])
+        empty_pos = self.html.find('id="empty-state"')
+        members_pos = self.html.find('id="members-list"')
+        self.assertLess(empty_pos, members_pos)
+        self.assertIn("setup-drawer", self.html)
+
+    def test_workspace_empty_state_exists(self):
+        self.assertIn("Build a team intelligence view", self.html)
+        self.assertIn("Load Demo Scenario", self.html)
+        self.assertIn("Set Up Team", self.html)
+
+    def test_edit_team_data_action_exists(self):
+        self.assertIn("Edit Team Data", self.html)
+        self.assertIn("Apply &amp; Analyze", self.html)
+
+    def test_load_demo_scenario_exists(self):
+        self.assertIn("Load Demo Scenario", self.html)
+        self.assertIn("loadDemoAndAnalyze", self.js)
+        self.assertIn("AI Platform Team", self.js)
+
+    def test_workflow_stage_ui_contains_lifecycle(self):
+        blob = f"{self.html}\n{self.js}\n{self.css}"
+        for stage in ("Explore", "Validate", "Productionize", "Connect"):
+            self.assertIn(stage, blob)
+        self.assertIn("workflow-strip", self.html)
+        self.assertIn("workflow-strip", self.css)
+        self.assertIn("renderWorkflowStrip", self.js)
+
+    def test_candidate_impact_preview_calls_existing_endpoint(self):
+        self.assertIn("loadImpactPreviews", self.js)
+        self.assertIn('/api/v1/candidate-team-impact', self.js)
+        self.assertIn("closed_missing_functions", self.js)
+        self.assertIn("CLOSES CURRENT GAP", self.js)
+        self.assertNotIn("inferTeamFunction", self.js)
+        self.assertNotIn("calculateGap", self.js)
+
+    def test_full_before_after_is_secondary(self):
+        self.assertIn("View Full Before / After", self.js)
+        self.assertIn("<details", self.js)
+        self.assertIn("ba-table", self.js)
+
+    def test_no_score_ranking_or_hire_ui(self):
+        lowered = self.blob.lower()
+        forbidden = [
+            "impact_score",
+            "fit_score",
+            "match_percentage",
+            "coverage_percentage",
+            "recommended_candidate",
+            "best candidate",
+            "hire recommendation",
+            "reject candidate",
+            "rank #",
+            "candidate_rank",
+        ]
+        for term in forbidden:
+            self.assertNotIn(term, lowered, term)
+
+    def test_no_astrology_engine_terms_in_main_workspace(self):
+        workspace_html = self.html.split("id=\"workspace\"", 1)[1].split("id=\"setup-overlay\"", 1)[0].lower()
+        empty_html = self.html.split("id=\"empty-state\"", 1)[1].split("id=\"workspace\"", 1)[0].lower()
+        for term in ("mercury", "zodiac", "aspect", "dispositor", "retrograde", "longitude", "house"):
+            self.assertNotIn(term, workspace_html, term)
+            self.assertNotIn(term, empty_html, term)
+
+    def test_workspace_header_is_single_compact_context(self):
+        self.assertIn('id="workspace-context"', self.html)
+        self.assertNotIn('id="workspace-summary"', self.html)
+        self.assertIn("renderWorkspaceHeader", self.js)
+        self.assertIn("shortlisted candidate", self.js)
+        self.assertNotIn("Target role:", self.js)
+
+    def test_workflow_gap_appears_once_under_coverage_strip(self):
+        self.assertEqual(self.html.count('id="gap-priority"'), 1)
+        self.assertIn("gap-priority", self.html.split('id="workflow-strip"', 1)[1])
+        self.assertNotIn("summary-gap", self.js)
+
+    def test_impact_delta_uses_before_after_labels_without_duplicate_status_text(self):
+        self.assertIn("statusTransitionHtml", self.js)
+        self.assertIn("delta-label", self.js)
+        self.assertIn(">Before<", self.js)
+        self.assertIn(">After<", self.js)
+        # Chips carry the status wording; do not repeat it as sibling strong text.
+        self.assertNotIn("${statusChip(\"missing\")}<strong>Missing</strong>", self.js)
+        self.assertNotIn("${statusChip(\"single_coverage\")}<strong>Single Coverage</strong>", self.js)
+
+
 if __name__ == "__main__":
     unittest.main()
