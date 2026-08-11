@@ -17,9 +17,12 @@
   "Yaroslavl, Russia": {"lat": 57.6261, "lon": 39.8845},
 
   "Minsk, Belarus": { "lat": 53.9006, "lon": 27.5590 },
+  "Zhodino, Belarus": { "lat": 54.0985, "lon": 28.3331 },
 
   "Kyiv, Ukraine": { "lat": 50.4501, "lon": 30.5234 },
   "Donetsk, Ukraine": { "lat": 48.0159, "lon": 37.8029 },
+  "Simferopol, Ukraine": { "lat": 44.95719, "lon": 34.11079 },
+  "Dnipro, Ukraine": { "lat": 48.46664, "lon": 35.04066 },
   "Kingisepp, Russia": { "lat": 59.37331, "lon": 28.61343 }
 
 }
