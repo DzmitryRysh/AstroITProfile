@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AstroIT · Team Intelligence</title>
+  <link rel="stylesheet" href="/recruiter/assets/styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="brand">
+      <p class="brand-name">AstroIT</p>
+      <h1 class="brand-title">Team Intelligence</h1>
+      <p class="brand-sub">Explore how different work styles contribute to technical teams.</p>
+    </div>
+  </header>
+
+  <main id="main" class="layout">
+    <section class="panel setup-panel" aria-labelledby="setup-heading">
+      <div class="panel-head">
+        <h2 id="setup-heading">Setup</h2>
+        <div class="actions">
+          <button type="button" id="load-demo" class="btn btn-secondary">Load Demo Scenario</button>
+          <button type="button" id="analyze-team" class="btn btn-primary">Analyze Team</button>
+        </div>
+      </div>
+
+      <div class="setup-grid">
+        <label class="field">
+          <span>Team Name</span>
+          <input id="team-name" type="text" autocomplete="organization" value="AI Platform Team" />
+        </label>
+        <label class="field">
+          <span>Coverage Profile</span>
+          <select id="coverage-profile">
+            <option value="ai_ml_product_delivery" selected>AI / ML Product Delivery</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Target Role</span>
+          <input id="target-role" type="text" value="ML Engineer" />
+        </label>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-head">
+          <h3>Current Team</h3>
+          <button type="button" id="add-member" class="btn btn-ghost">+ Add Team Member</button>
+        </div>
+        <div id="members-list" class="form-list"></div>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-head">
+          <h3>Shortlisted Candidates</h3>
+          <button type="button" id="add-candidate" class="btn btn-ghost">+ Add Candidate</button>
+        </div>
+        <div id="candidates-list" class="form-list"></div>
+      </div>
+
+      <p id="setup-status" class="status-line" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="panel" id="team-map-section" aria-labelledby="team-map-heading" hidden>
+      <div class="panel-head">
+        <h2 id="team-map-heading">Current Team</h2>
+      </div>
+      <h3 class="section-label">Team Map</h3>
+      <div id="team-map-status" class="status-line" role="status"></div>
+      <div id="team-map-cards" class="card-grid"></div>
+
+      <h3 class="section-label">Workflow Coverage</h3>
+      <div id="team-gap-status" class="status-line" role="status"></div>
+      <div id="workflow-coverage" class="coverage-grid"></div>
+
+      <h3 class="section-label">Current Gap</h3>
+      <div id="gap-summary" class="gap-summary"></div>
+    </section>
+
+    <section class="panel" id="compare-section" aria-labelledby="compare-heading" hidden>
+      <div class="panel-head">
+        <h2 id="compare-heading">Shortlist</h2>
+      </div>
+      <h3 class="section-label">Candidate Compare</h3>
+      <div id="compare-status" class="status-line" role="status"></div>
+      <div id="compare-cards" class="compare-grid"></div>
+    </section>
+
+    <section class="panel impact-panel" id="impact-section" aria-labelledby="impact-heading" hidden>
+      <div class="panel-head">
+        <h2 id="impact-heading">Candidate Impact</h2>
+      </div>
+      <div id="impact-status" class="status-line" role="status"></div>
+      <div id="impact-content"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>
+      AstroIT presents work-style hypotheses to support team discussion.
+      It does not replace CV review, interviews, technical assessment,
+      or human hiring judgment.
+    </p>
+  </footer>
+
+  <datalist id="places-list"></datalist>
+  <script src="/recruiter/assets/app.js"></script>
+</body>
+</html>
