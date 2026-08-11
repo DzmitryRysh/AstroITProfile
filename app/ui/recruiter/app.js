@@ -5,17 +5,21 @@
   const candidatesList = document.getElementById("candidates-list");
   const placesList = document.getElementById("places-list");
   const setupStatus = document.getElementById("setup-status");
-  const analyzeBtn = document.getElementById("analyze-team");
-  const loadDemoBtn = document.getElementById("load-demo");
-
-  const teamMapSection = document.getElementById("team-map-section");
-  const compareSection = document.getElementById("compare-section");
+  const setupOverlay = document.getElementById("setup-overlay");
+  const setupDrawer = document.getElementById("setup-drawer");
+  const emptyState = document.getElementById("empty-state");
+  const workspace = document.getElementById("workspace");
+  const headerActions = document.getElementById("header-actions");
+  const workspaceContext = document.getElementById("workspace-context");
   const impactSection = document.getElementById("impact-section");
+  const applyAnalyzeBtn = document.getElementById("apply-analyze");
 
   let memberSeq = 1;
   let candidateSeq = 1;
   let lastMembersPayload = [];
   let lastCandidatesPayload = [];
+  let impactByCandidateId = {};
+  let analyzed = false;
 
   const DEMO = {
     teamName: "AI Platform Team",
@@ -81,24 +85,10 @@
   }
 
   function setStatus(el, message, kind) {
+    if (!el) return;
     el.textContent = message || "";
     el.classList.remove("error", "loading");
     if (kind) el.classList.add(kind);
-  }
-
-  function emptyState(message) {
-    return `<p class="gap-empty">${escapeHtml(message)}</p>`;
-  }
-
-  function listBlock(title, items) {
-    if (!items || !items.length) return "";
-    const lis = items.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
-    return `<div class="field-block"><h5>${escapeHtml(title)}</h5><ul>${lis}</ul></div>`;
-  }
-
-  function textBlock(title, text) {
-    if (!text) return "";
-    return `<div class="field-block"><h5>${escapeHtml(title)}</h5><p>${escapeHtml(text)}</p></div>`;
   }
 
   function statusChip(status) {
@@ -111,11 +101,42 @@
     return `<span class="chip ${cls}">${escapeHtml(label)}</span>`;
   }
 
+  function listBlock(title, items) {
+    if (!items || !items.length) return "";
+    return `<div class="field-block"><h4>${escapeHtml(title)}</h4><ul>${
+      items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")
+    }</ul></div>`;
+  }
+
+  function textBlock(title, text) {
+    if (!text) return "";
+    return `<div class="field-block"><h4>${escapeHtml(title)}</h4><p>${escapeHtml(text)}</p></div>`;
+  }
+
+  function openSetup() {
+    setupOverlay.hidden = false;
+    setupDrawer.hidden = false;
+    document.body.style.overflow = "hidden";
+    const first = setupDrawer.querySelector("input, select, button");
+    if (first) first.focus();
+  }
+
+  function closeSetup() {
+    setupOverlay.hidden = true;
+    setupDrawer.hidden = true;
+    document.body.style.overflow = "";
+  }
+
+  function showWorkspaceShell() {
+    emptyState.hidden = true;
+    workspace.hidden = false;
+    headerActions.hidden = false;
+    workspaceContext.hidden = false;
+  }
+
   function createMemberCard(data = {}) {
-    const id = `member-${memberSeq++}`;
     const card = document.createElement("article");
     card.className = "person-card";
-    card.dataset.kind = "member";
     card.innerHTML = `
       <div class="person-card-head">
         <strong>Team Member</strong>
@@ -137,15 +158,13 @@
       }
       card.remove();
     });
-    card.dataset.uid = id;
+    memberSeq += 1;
     return card;
   }
 
   function createCandidateCard(data = {}) {
-    const id = `candidate-${candidateSeq++}`;
     const card = document.createElement("article");
     card.className = "person-card";
-    card.dataset.kind = "candidate";
     card.innerHTML = `
       <div class="person-card-head">
         <strong>Candidate</strong>
@@ -160,11 +179,11 @@
       </div>
     `;
     card.querySelector(".remove-item").addEventListener("click", () => card.remove());
-    card.dataset.uid = id;
+    candidateSeq += 1;
     return card;
   }
 
-  function readPersonFields(card) {
+  function readFields(card) {
     const get = (name) => {
       const el = card.querySelector(`[name="${name}"]`);
       return el ? el.value.trim() : "";
@@ -183,7 +202,7 @@
   function collectMembers() {
     const members = [];
     for (const card of membersList.querySelectorAll(".person-card")) {
-      const raw = readPersonFields(card);
+      const raw = readFields(card);
       if (!raw.member_id || !raw.display_name || !raw.birth_date || !raw.birth_place) {
         throw new Error("Each team member needs ID, name, birth date, and birth place.");
       }
@@ -203,7 +222,7 @@
   function collectCandidates() {
     const candidates = [];
     for (const card of candidatesList.querySelectorAll(".person-card")) {
-      const raw = readPersonFields(card);
+      const raw = readFields(card);
       if (!raw.candidate_id || !raw.display_name || !raw.birth_date || !raw.birth_place) {
         throw new Error("Each candidate needs ID, name, birth date, and birth place.");
       }
@@ -242,77 +261,231 @@
     return data;
   }
 
+  function fillDemoForms() {
+    document.getElementById("team-name").value = DEMO.teamName;
+    document.getElementById("coverage-profile").value = DEMO.coverageProfile;
+    document.getElementById("target-role").value = DEMO.targetRole;
+    membersList.innerHTML = "";
+    candidatesList.innerHTML = "";
+    DEMO.members.forEach((member) => membersList.appendChild(createMemberCard(member)));
+    DEMO.candidates.forEach((candidate) => candidatesList.appendChild(createCandidateCard(candidate)));
+  }
+
+  function renderWorkspaceHeader(teamMap, candidateCount) {
+    const teamName = document.getElementById("team-name").value.trim() || "Team";
+    const targetRole = document.getElementById("target-role").value.trim() || "—";
+    const teamCount = teamMap ? teamMap.member_count : lastMembersPayload.length;
+    const shortlistCount = typeof candidateCount === "number"
+      ? candidateCount
+      : lastCandidatesPayload.length;
+    document.getElementById("context-team-name").textContent = teamName;
+    document.getElementById("context-target-role").textContent =
+      `${targetRole} · ${teamCount} team member${teamCount === 1 ? "" : "s"} · ${shortlistCount} shortlisted candidate${shortlistCount === 1 ? "" : "s"}`;
+  }
+
+  function statusTransitionHtml(beforeStatus, afterStatus, afterExtra) {
+    return `
+      <div class="delta-flow" role="group" aria-label="Before and after coverage status">
+        <div class="delta-side">
+          <span class="delta-label">Before</span>
+          ${statusChip(beforeStatus)}
+        </div>
+        <div class="delta-arrow" aria-hidden="true">→</div>
+        <div class="delta-side">
+          <span class="delta-label">After</span>
+          ${statusChip(afterStatus)}
+          ${afterExtra ? `<span class="delta-extra">${escapeHtml(afterExtra)}</span>` : ""}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderWorkflowStrip(gap) {
+    const root = document.getElementById("workflow-strip");
+    const priority = document.getElementById("gap-priority");
+    if (!gap || !gap.required_functions) {
+      root.innerHTML = `<p class="meta">Coverage data unavailable.</p>`;
+      priority.innerHTML = "";
+      return;
+    }
+
+    const stages = gap.required_functions;
+    const parts = [];
+    stages.forEach((item, index) => {
+      const statusClass = item.status === "missing"
+        ? "is-missing"
+        : item.status === "single_coverage"
+          ? "is-single"
+          : "";
+      const memberNames = (item.member_ids || [])
+        .map((id) => {
+          const member = (lastMembersPayload || []).find((m) => m.member_id === id);
+          return member ? member.display_name : id;
+        })
+        .join(", ");
+      parts.push(`
+        <article class="workflow-stage ${statusClass}">
+          <h3>${escapeHtml(item.workflow_stage)}</h3>
+          <p class="fn">${escapeHtml(item.team_function)}</p>
+          ${statusChip(item.status)}
+          <p class="members">${memberNames ? escapeHtml(memberNames) : "—"}</p>
+        </article>
+      `);
+      if (index < stages.length - 1) {
+        parts.push(`<div class="workflow-arrow" aria-hidden="true">→</div>`);
+      }
+    });
+    root.innerHTML = parts.join("");
+
+    const missing = stages.filter((item) => item.status === "missing");
+    if (!missing.length) {
+      priority.className = "gap-priority is-clear";
+      priority.innerHTML = `
+        <h3>Current Workflow Gap</h3>
+        <p class="fn">No required workflow function is currently missing for this coverage profile.</p>
+      `;
+      return;
+    }
+
+    const first = missing[0];
+    priority.className = "gap-priority";
+    priority.innerHTML = `
+      <h3>Current Workflow Gap</h3>
+      <p class="stage">${escapeHtml(first.workflow_stage)}</p>
+      <p class="fn">${escapeHtml(first.team_function)}</p>
+      ${statusChip("missing")}
+      <p class="why">${escapeHtml(first.why_it_matters)}</p>
+    `;
+  }
+
   function renderTeamMap(data) {
     const root = document.getElementById("team-map-cards");
     if (!data || !data.members || !data.members.length) {
-      root.innerHTML = emptyState("No team members returned.");
+      root.innerHTML = `<p class="meta">No team members returned.</p>`;
       return;
     }
     root.innerHTML = data.members.map((member) => {
       if (!member.profile_available) {
         return `
           <article class="profile-card unavailable">
-            <h4>${escapeHtml(member.display_name)}</h4>
+            <h3>${escapeHtml(member.display_name)}</h3>
             <p class="meta">${escapeHtml(member.current_role || "—")}</p>
-            <p class="function-tag">Profile unavailable</p>
-            <p class="why">${escapeHtml(member.error || "No profile could be produced for this member.")}</p>
+            <div class="function-tag">Profile unavailable</div>
+            <p class="meta">${escapeHtml(member.error || "No profile could be produced for this member.")}</p>
           </article>
         `;
       }
+      const topSkills = (member.top_skills || []).slice(0, 3);
+      const keyRisks = (member.key_risks || []).slice(0, 2);
+      const restSkills = (member.top_skills || []).slice(3);
+      const restRisks = (member.key_risks || []).slice(2);
       return `
         <article class="profile-card">
-          <h4>${escapeHtml(member.display_name)}</h4>
+          <h3>${escapeHtml(member.display_name)}</h3>
           <p class="meta">${escapeHtml(member.current_role || "—")}</p>
           <div class="function-tag">${escapeHtml(member.team_function || "—")}</div>
-          ${textBlock("Thinking Style", member.thinking_style)}
-          ${listBlock("Top Skills", member.top_skills)}
-          ${listBlock("Key Risks", member.key_risks)}
-          ${textBlock("Team Contribution", member.team_contribution)}
+          ${listBlock("Top strengths", topSkills)}
+          ${listBlock("Key risks", keyRisks)}
+          <details class="more-details">
+            <summary>View details</summary>
+            ${textBlock("Thinking Style", member.thinking_style)}
+            ${textBlock("Team Contribution", member.team_contribution)}
+            ${listBlock("More strengths", restSkills)}
+            ${listBlock("More risks", restRisks)}
+            ${textBlock("Communication Style", member.communication_style)}
+            ${listBlock("Onboarding Guidance", member.onboarding_guidance)}
+            ${listBlock("Role Directions", member.role_directions)}
+          </details>
         </article>
       `;
     }).join("");
   }
 
-  function renderCoverage(gap) {
-    const root = document.getElementById("workflow-coverage");
-    const summary = document.getElementById("gap-summary");
-    if (!gap || !gap.required_functions) {
-      root.innerHTML = emptyState("Coverage data unavailable.");
-      summary.innerHTML = "";
-      return;
+  function classifyImpactPreview(impactResult) {
+    if (!impactResult || !impactResult.impact || !impactResult.impact.impact_available) {
+      return {
+        kind: "unavailable",
+        label: "TEAM IMPACT UNAVAILABLE",
+        detail: "",
+        sub: (impactResult && impactResult.candidate && impactResult.candidate.error) || "",
+        className: "unavailable",
+      };
     }
+    const impact = impactResult.impact;
+    const beforeByFn = {};
+    (impactResult.before.required_functions || []).forEach((item) => {
+      beforeByFn[item.team_function] = item;
+    });
 
-    root.innerHTML = gap.required_functions.map((item) => `
-      <article class="coverage-card">
-        <h4>${escapeHtml(item.workflow_stage)}</h4>
-        <p class="fn">${escapeHtml(item.team_function)}</p>
-        ${statusChip(item.status)}
-        <p class="count-line">${item.count} profiled member${item.count === 1 ? "" : "s"}${
-          item.member_ids && item.member_ids.length
-            ? ` · ${escapeHtml(item.member_ids.join(", "))}`
-            : ""
-        }</p>
-        <p class="why">${escapeHtml(item.why_it_matters)}</p>
-      </article>
-    `).join("");
-
-    const missing = gap.required_functions.filter((item) => item.status === "missing");
-    if (!missing.length) {
-      summary.innerHTML = `<p class="gap-empty">No required workflow functions are currently missing for this coverage profile.</p>`;
-      return;
+    if (impact.closed_missing_functions && impact.closed_missing_functions.length) {
+      const fn = impact.closed_missing_functions[0];
+      const stage = impact.closed_workflow_stages && impact.closed_workflow_stages[0]
+        ? impact.closed_workflow_stages[0]
+        : (beforeByFn[fn] && beforeByFn[fn].workflow_stage) || "";
+      return {
+        kind: "closes",
+        label: "CLOSES CURRENT GAP",
+        detail: stage,
+        sub: fn,
+        className: "closes",
+      };
     }
+    if (impact.strengthened_single_coverage_functions && impact.strengthened_single_coverage_functions.length) {
+      const fn = impact.strengthened_single_coverage_functions[0];
+      const stage = (beforeByFn[fn] && beforeByFn[fn].workflow_stage) || "";
+      return {
+        kind: "strengthens",
+        label: "STRENGTHENS SINGLE COVERAGE",
+        detail: stage,
+        sub: fn,
+        className: "strengthens",
+      };
+    }
+    if (impact.reinforced_represented_functions && impact.reinforced_represented_functions.length) {
+      const fn = impact.reinforced_represented_functions[0];
+      return {
+        kind: "reinforces",
+        label: "REINFORCES EXISTING FUNCTION",
+        detail: fn,
+        sub: "",
+        className: "adds",
+      };
+    }
+    if (impact.added_additional_functions && impact.added_additional_functions.length) {
+      const fn = impact.added_additional_functions[0];
+      return {
+        kind: "adds",
+        label: "ADDS ADDITIONAL FUNCTION",
+        detail: fn,
+        sub: "",
+        className: "adds",
+      };
+    }
+    if (impact.reinforced_additional_functions && impact.reinforced_additional_functions.length) {
+      const fn = impact.reinforced_additional_functions[0];
+      return {
+        kind: "reinforces-additional",
+        label: "REINFORCES ADDITIONAL FUNCTION",
+        detail: fn,
+        sub: "",
+        className: "adds",
+      };
+    }
+    return {
+      kind: "none",
+      label: "NO REQUIRED COVERAGE CHANGE",
+      detail: "",
+      sub: "",
+      className: "unavailable",
+    };
+  }
 
-    summary.innerHTML = `
-      <div class="gap-summary">
-        <p class="meta">Current Workflow Gaps</p>
-        ${missing.map((item) => `
-          <article class="gap-card">
-            <h4>${escapeHtml(item.workflow_stage)}</h4>
-            <p class="fn">${escapeHtml(item.team_function)}</p>
-            ${statusChip("missing")}
-            <p class="why">${escapeHtml(item.why_it_matters)}</p>
-          </article>
-        `).join("")}
+  function previewHtml(preview) {
+    return `
+      <div class="impact-preview ${escapeHtml(preview.className)}">
+        <p class="label">${escapeHtml(preview.label)}</p>
+        ${preview.detail ? `<p class="detail">${escapeHtml(preview.detail)}</p>` : ""}
+        ${preview.sub ? `<p class="sub">${escapeHtml(preview.sub)}</p>` : ""}
       </div>
     `;
   }
@@ -320,29 +493,57 @@
   function renderCompare(data) {
     const root = document.getElementById("compare-cards");
     if (!data || !data.candidates || !data.candidates.length) {
-      root.innerHTML = emptyState("No candidates to compare.");
+      if (lastCandidatesPayload.length === 1) {
+        const only = lastCandidatesPayload[0];
+        const impact = impactByCandidateId[only.candidate_id];
+        const preview = classifyImpactPreview(impact);
+        root.innerHTML = `
+          <article class="compare-card">
+            <h3>${escapeHtml(only.display_name)}</h3>
+            <p class="meta">Single shortlist candidate</p>
+            ${previewHtml(preview)}
+            <div class="compare-actions">
+              <button type="button" class="btn btn-primary view-impact" data-candidate-id="${escapeHtml(only.candidate_id)}">View Team Impact</button>
+            </div>
+          </article>
+        `;
+        bindImpactButtons(root);
+        return;
+      }
+      root.innerHTML = `<p class="meta">Add candidates to compare structural impact.</p>`;
       return;
     }
+
     root.innerHTML = data.candidates.map((candidate) => {
       if (!candidate.profile_available) {
         return `
           <article class="compare-card unavailable">
-            <h4>${escapeHtml(candidate.display_name)}</h4>
-            <p class="function-tag">Profile unavailable</p>
-            <p class="why">${escapeHtml(candidate.error || "Profile could not be produced.")}</p>
+            <h3>${escapeHtml(candidate.display_name)}</h3>
+            <div class="function-tag">Profile unavailable</div>
+            <p class="meta">${escapeHtml(candidate.error || "Profile could not be produced.")}</p>
           </article>
         `;
       }
+      const impact = impactByCandidateId[candidate.candidate_id];
+      const preview = classifyImpactPreview(impact);
+      const topSkills = (candidate.top_skills || []).slice(0, 3);
+      const keyRisks = (candidate.key_risks || []).slice(0, 2);
       return `
         <article class="compare-card">
-          <h4>${escapeHtml(candidate.display_name)}</h4>
+          <h3>${escapeHtml(candidate.display_name)}</h3>
           <div class="function-tag">${escapeHtml(candidate.team_function || "—")}</div>
-          ${textBlock("Thinking Style", candidate.thinking_style)}
-          ${listBlock("Top Skills", candidate.top_skills)}
-          ${listBlock("Key Risks", candidate.key_risks)}
-          ${textBlock("Team Contribution", candidate.team_contribution)}
-          ${listBlock("Role Directions", candidate.role_directions)}
-          <div class="actions">
+          ${previewHtml(preview)}
+          ${listBlock("Top Skills", topSkills)}
+          ${listBlock("Key Risks", keyRisks)}
+          <details class="more-details">
+            <summary>View profile details</summary>
+            ${textBlock("Thinking Style", candidate.thinking_style)}
+            ${textBlock("Team Contribution", candidate.team_contribution)}
+            ${listBlock("Role Directions", candidate.role_directions)}
+            ${listBlock("More skills", (candidate.top_skills || []).slice(3))}
+            ${listBlock("More risks", (candidate.key_risks || []).slice(2))}
+          </details>
+          <div class="compare-actions">
             <button
               type="button"
               class="btn btn-primary view-impact"
@@ -352,7 +553,10 @@
         </article>
       `;
     }).join("");
+    bindImpactButtons(root);
+  }
 
+  function bindImpactButtons(root) {
     root.querySelectorAll(".view-impact").forEach((btn) => {
       btn.addEventListener("click", () => {
         const candidateId = btn.getAttribute("data-candidate-id");
@@ -362,38 +566,11 @@
     });
   }
 
-  function renderSnapshotColumn(title, snapshot) {
-    const rows = (snapshot.required_functions || []).map((item) => {
-      const members = item.member_ids && item.member_ids.length
-        ? `<span class="meta"> · ${escapeHtml(item.member_ids.join(", "))}</span>`
-        : "";
-      return `
-        <div class="stage-row">
-          <div class="stage-name">${escapeHtml(item.workflow_stage)}</div>
-          <div class="meta">${escapeHtml(item.team_function)}</div>
-          <div>${statusChip(item.status)}${members}</div>
-        </div>
-      `;
-    }).join("");
-    return `
-      <div class="ba-column">
-        <h3>${escapeHtml(title)}</h3>
-        ${rows || emptyState("No coverage data.")}
-      </div>
-    `;
+  function findStatus(snapshot, teamFunction) {
+    return (snapshot.required_functions || []).find((item) => item.team_function === teamFunction);
   }
 
-  function impactBlock(title, items) {
-    if (!items || !items.length) return "";
-    return `
-      <article class="impact-summary-card">
-        <h4>${escapeHtml(title)}</h4>
-        <ul>${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
-      </article>
-    `;
-  }
-
-  function renderImpact(data) {
+  function renderImpactDetail(data) {
     const root = document.getElementById("impact-content");
     const name = data.candidate && data.candidate.display_name
       ? data.candidate.display_name
@@ -404,7 +581,7 @@
         <h3 class="impact-title">What changes if we add ${escapeHtml(name)}?</h3>
         <div class="impact-unavailable">
           <strong>Candidate impact unavailable</strong>
-          <p class="why">${escapeHtml(
+          <p class="meta">${escapeHtml(
             (data.candidate && data.candidate.error) ||
             "Candidate impact could not be determined because the candidate profile is unavailable."
           )}</p>
@@ -414,42 +591,159 @@
     }
 
     const impact = data.impact;
+    const preview = classifyImpactPreview(data);
+    let deltaBody = "";
+
+    if (impact.closed_missing_functions.length) {
+      const fn = impact.closed_missing_functions[0];
+      const stage = impact.closed_workflow_stages[0] || "";
+      const after = findStatus(data.after, fn);
+      const memberLabel = after && after.member_ids && after.member_ids.length
+        ? after.member_ids.map((id) => {
+          if (id === data.candidate.candidate_id) return data.candidate.display_name;
+          const member = lastMembersPayload.find((m) => m.member_id === id);
+          return member ? member.display_name : id;
+        }).join(", ")
+        : data.candidate.display_name;
+      deltaBody = `
+        <div class="delta-card">
+          <h3>Closes a current workflow gap</h3>
+          <p class="stage"><strong>${escapeHtml(stage)}</strong></p>
+          <p class="fn">${escapeHtml(fn)}</p>
+          ${statusTransitionHtml("missing", "single_coverage", memberLabel)}
+        </div>
+      `;
+    } else if (impact.strengthened_single_coverage_functions.length) {
+      const fn = impact.strengthened_single_coverage_functions[0];
+      const before = findStatus(data.before, fn);
+      const stage = before ? before.workflow_stage : "";
+      deltaBody = `
+        <div class="delta-card">
+          <h3>Strengthens a single-covered function</h3>
+          <p class="stage"><strong>${escapeHtml(stage)}</strong></p>
+          <p class="fn">${escapeHtml(fn)}</p>
+          ${statusTransitionHtml("single_coverage", "represented")}
+        </div>
+      `;
+    } else if (impact.added_additional_functions.length) {
+      deltaBody = `
+        <div class="delta-card">
+          <h3>Adds an additional team function</h3>
+          <p class="fn"><strong>${escapeHtml(impact.added_additional_functions[0])}</strong></p>
+          <p class="meta">Required workflow coverage unchanged.</p>
+        </div>
+      `;
+    } else if (impact.reinforced_represented_functions.length) {
+      deltaBody = `
+        <div class="delta-card">
+          <h3>Reinforces an already represented function</h3>
+          <p class="fn"><strong>${escapeHtml(impact.reinforced_represented_functions[0])}</strong></p>
+        </div>
+      `;
+    } else if (impact.reinforced_additional_functions.length) {
+      deltaBody = `
+        <div class="delta-card">
+          <h3>Reinforces an additional function</h3>
+          <p class="fn"><strong>${escapeHtml(impact.reinforced_additional_functions[0])}</strong></p>
+        </div>
+      `;
+    } else {
+      deltaBody = `
+        <div class="delta-card">
+          <h3>${escapeHtml(preview.label)}</h3>
+          <p class="meta">No required coverage state transition for this candidate.</p>
+        </div>
+      `;
+    }
+
+    const remaining = impact.remaining_missing_functions || [];
+    const remainingHtml = remaining.length
+      ? `<div class="remain-block"><strong>Workflow gaps that remain</strong><ul>${
+        remaining.map((fn) => {
+          const item = findStatus(data.after, fn);
+          const stage = item ? item.workflow_stage : "";
+          return `<li>${escapeHtml(stage)} · ${escapeHtml(fn)} · Missing</li>`;
+        }).join("")
+      }</ul></div>`
+      : `<div class="remain-block"><strong>Remaining workflow gaps:</strong> None</div>`;
+
+    const rows = (data.before.required_functions || []).map((beforeItem) => {
+      const afterItem = findStatus(data.after, beforeItem.team_function);
+      const changed = beforeItem.status !== (afterItem && afterItem.status);
+      const afterMembers = afterItem && afterItem.member_ids
+        ? afterItem.member_ids.map((id) => {
+          if (data.candidate && id === data.candidate.candidate_id) return data.candidate.display_name;
+          const member = lastMembersPayload.find((m) => m.member_id === id);
+          return member ? member.display_name : id;
+        }).join(", ")
+        : "";
+      const label = (status) => ({
+        missing: "Missing",
+        single_coverage: "Single",
+        represented: "Represented",
+      }[status] || status);
+      return `
+        <tr class="${changed ? "changed" : ""}">
+          <td>${escapeHtml(beforeItem.workflow_stage)}</td>
+          <td>${escapeHtml(label(beforeItem.status))}</td>
+          <td>${escapeHtml(label(afterItem && afterItem.status))}${
+            changed && afterMembers ? ` · ${escapeHtml(afterMembers)}` : ""
+          }</td>
+        </tr>
+      `;
+    }).join("");
+
     root.innerHTML = `
       <h3 class="impact-title">What changes if we add ${escapeHtml(name)}?</h3>
-      <div class="before-after">
-        ${renderSnapshotColumn("Before", data.before)}
-        <div class="ba-arrow" aria-hidden="true">→</div>
-        ${renderSnapshotColumn("After", data.after)}
-      </div>
-      <h3 class="section-label">Impact Summary</h3>
-      <div class="impact-blocks">
-        ${impactBlock("Closes a current workflow gap", impact.closed_missing_functions)}
-        ${impactBlock("Closed workflow stages", impact.closed_workflow_stages)}
-        ${impactBlock("Strengthens a single-covered function", impact.strengthened_single_coverage_functions)}
-        ${impactBlock("Reinforces an already represented function", impact.reinforced_represented_functions)}
-        ${impactBlock("Adds an additional team function", impact.added_additional_functions)}
-        ${impactBlock("Reinforces an additional function", impact.reinforced_additional_functions)}
-        ${impactBlock("Workflow gaps that remain", impact.remaining_missing_functions)}
-        ${impactBlock("Workflow stages that remain uncovered", impact.remaining_uncovered_workflow_stages)}
-      </div>
+      ${deltaBody}
+      ${remainingHtml}
+      <details class="more-details">
+        <summary>View Full Before / After</summary>
+        <div class="ba-table-wrap">
+          <table class="ba-table">
+            <thead>
+              <tr><th>Stage</th><th>Before</th><th>After</th></tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      </details>
     `;
   }
 
-  function loadDemo() {
-    document.getElementById("team-name").value = DEMO.teamName;
-    document.getElementById("coverage-profile").value = DEMO.coverageProfile;
-    document.getElementById("target-role").value = DEMO.targetRole;
-    membersList.innerHTML = "";
-    candidatesList.innerHTML = "";
-    DEMO.members.forEach((member) => membersList.appendChild(createMemberCard(member)));
-    DEMO.candidates.forEach((candidate) => candidatesList.appendChild(createCandidateCard(candidate)));
-    setStatus(setupStatus, "Demo scenario loaded. Click Analyze Team to continue.");
-    teamMapSection.hidden = true;
-    compareSection.hidden = true;
-    impactSection.hidden = true;
+  async function loadImpactPreviews(candidates) {
+    impactByCandidateId = {};
+    const teamName = document.getElementById("team-name").value.trim() || "Team";
+    const coverageProfile = document.getElementById("coverage-profile").value;
+    const targetRole = document.getElementById("target-role").value.trim() || null;
+
+    await Promise.all(candidates.map(async (candidate) => {
+      try {
+        const result = await apiPost("/api/v1/candidate-team-impact", {
+          team_name: teamName,
+          coverage_profile: coverageProfile,
+          target_role: targetRole,
+          members: lastMembersPayload,
+          candidate,
+        });
+        impactByCandidateId[candidate.candidate_id] = result;
+      } catch (_err) {
+        impactByCandidateId[candidate.candidate_id] = {
+          candidate: {
+            candidate_id: candidate.candidate_id,
+            display_name: candidate.display_name,
+            profile_available: false,
+            error: "Team impact unavailable",
+          },
+          impact: { impact_available: false },
+          before: { required_functions: [] },
+          after: { required_functions: [] },
+        };
+      }
+    }));
   }
 
-  async function analyzeTeam() {
+  async function analyzeTeam({ fromDemo = false } = {}) {
     setStatus(setupStatus, "");
     let members;
     let candidates;
@@ -458,103 +752,100 @@
       candidates = collectCandidates();
     } catch (err) {
       setStatus(setupStatus, err.message, "error");
+      if (!fromDemo) openSetup();
       return;
     }
 
     lastMembersPayload = members;
     lastCandidatesPayload = candidates;
+    impactByCandidateId = {};
 
     const teamName = document.getElementById("team-name").value.trim() || "Team";
     const coverageProfile = document.getElementById("coverage-profile").value;
     const targetRole = document.getElementById("target-role").value.trim() || null;
 
-    analyzeBtn.disabled = true;
-    loadDemoBtn.disabled = true;
+    applyAnalyzeBtn.disabled = true;
+    document.getElementById("load-demo").disabled = true;
+    document.getElementById("load-demo-empty").disabled = true;
     setStatus(setupStatus, "Analyzing team…", "loading");
 
-    teamMapSection.hidden = false;
-    compareSection.hidden = false;
+    showWorkspaceShell();
+    renderWorkspaceHeader(null, candidates.length);
     impactSection.hidden = true;
-    document.getElementById("team-map-cards").innerHTML = "";
-    document.getElementById("workflow-coverage").innerHTML = "";
-    document.getElementById("gap-summary").innerHTML = "";
-    document.getElementById("compare-cards").innerHTML = "";
+    document.getElementById("impact-content").innerHTML = "";
     setStatus(document.getElementById("team-map-status"), "Loading team map…", "loading");
     setStatus(document.getElementById("team-gap-status"), "Loading workflow coverage…", "loading");
     setStatus(document.getElementById("compare-status"), "", null);
 
-    const teamBody = {
-      team_name: teamName,
-      members,
-    };
-    const gapBody = {
-      team_name: teamName,
-      coverage_profile: coverageProfile,
-      members,
-    };
-
     try {
       const [mapResult, gapResult] = await Promise.allSettled([
-        apiPost("/api/v1/team-map", teamBody),
-        apiPost("/api/v1/team-gap", gapBody),
+        apiPost("/api/v1/team-map", { team_name: teamName, members }),
+        apiPost("/api/v1/team-gap", {
+          team_name: teamName,
+          coverage_profile: coverageProfile,
+          members,
+        }),
       ]);
 
-      if (mapResult.status === "fulfilled") {
+      const teamMap = mapResult.status === "fulfilled" ? mapResult.value : null;
+      const gap = gapResult.status === "fulfilled" ? gapResult.value : null;
+
+      if (teamMap) {
         setStatus(document.getElementById("team-map-status"), "");
-        renderTeamMap(mapResult.value);
+        renderTeamMap(teamMap);
       } else {
         setStatus(document.getElementById("team-map-status"), mapResult.reason.message, "error");
-        document.getElementById("team-map-cards").innerHTML = emptyState("Team map unavailable.");
+        document.getElementById("team-map-cards").innerHTML = `<p class="meta">Team map unavailable.</p>`;
       }
 
-      if (gapResult.status === "fulfilled") {
+      if (gap) {
         setStatus(document.getElementById("team-gap-status"), "");
-        renderCoverage(gapResult.value);
+        renderWorkflowStrip(gap);
       } else {
         setStatus(document.getElementById("team-gap-status"), gapResult.reason.message, "error");
-        document.getElementById("workflow-coverage").innerHTML = emptyState("Coverage unavailable.");
-        document.getElementById("gap-summary").innerHTML = "";
+        document.getElementById("workflow-strip").innerHTML = `<p class="meta">Coverage unavailable.</p>`;
+        document.getElementById("gap-priority").innerHTML = "";
       }
 
+      renderWorkspaceHeader(teamMap, candidates.length);
+
+      let compareData = null;
       if (candidates.length >= 2 && candidates.length <= 8) {
         setStatus(document.getElementById("compare-status"), "Comparing shortlist…", "loading");
         try {
-          const compare = await apiPost("/api/v1/candidate-compare", {
+          compareData = await apiPost("/api/v1/candidate-compare", {
             target_role: targetRole || "Role",
             candidates,
           });
+          setStatus(document.getElementById("compare-status"), "Loading candidate impact previews…", "loading");
+          await loadImpactPreviews(candidates);
           setStatus(document.getElementById("compare-status"), "");
-          renderCompare(compare);
+          renderCompare(compareData);
         } catch (err) {
           setStatus(document.getElementById("compare-status"), err.message, "error");
-          document.getElementById("compare-cards").innerHTML = emptyState("Candidate compare unavailable.");
+          document.getElementById("compare-cards").innerHTML = `<p class="meta">Candidate compare unavailable.</p>`;
         }
       } else if (candidates.length === 1) {
+        setStatus(document.getElementById("compare-status"), "Loading candidate impact preview…", "loading");
+        await loadImpactPreviews(candidates);
         setStatus(
           document.getElementById("compare-status"),
-          "Add at least two shortlisted candidates to run Candidate Compare. You can still view team impact for a single candidate after analysis.",
+          "Add a second shortlisted candidate for side-by-side compare. Impact preview is still available.",
         );
-        const only = candidates[0];
-        document.getElementById("compare-cards").innerHTML = `
-          <article class="compare-card">
-            <h4>${escapeHtml(only.display_name)}</h4>
-            <p class="meta">Single shortlist candidate</p>
-            <div class="actions">
-              <button type="button" class="btn btn-primary" id="single-impact">View Team Impact</button>
-            </div>
-          </article>
-        `;
-        document.getElementById("single-impact").addEventListener("click", () => viewImpact(only));
+        renderCompare(null);
       } else {
         setStatus(document.getElementById("compare-status"), "No shortlisted candidates yet.");
-        document.getElementById("compare-cards").innerHTML = emptyState("Add candidates to compare.");
+        document.getElementById("compare-cards").innerHTML = `<p class="meta">Add candidates in Edit Team Data.</p>`;
       }
 
+      analyzed = true;
       setStatus(setupStatus, "Team analysis complete.");
-      teamMapSection.scrollIntoView({ behavior: "smooth", block: "start" });
+      closeSetup();
+      document.getElementById("coverage-heading").scrollIntoView({ behavior: "smooth", block: "start" });
     } finally {
-      analyzeBtn.disabled = false;
-      loadDemoBtn.disabled = false;
+      applyAnalyzeBtn.disabled = false;
+      document.getElementById("load-demo").disabled = false;
+      document.getElementById("load-demo-empty").disabled = false;
     }
   }
 
@@ -565,28 +856,36 @@
     content.innerHTML = "";
     setStatus(status, `Loading impact for ${candidate.display_name}…`, "loading");
 
-    const teamName = document.getElementById("team-name").value.trim() || "Team";
-    const coverageProfile = document.getElementById("coverage-profile").value;
-    const targetRole = document.getElementById("target-role").value.trim() || null;
-
-    analyzeBtn.disabled = true;
-    try {
-      const result = await apiPost("/api/v1/candidate-team-impact", {
-        team_name: teamName,
-        coverage_profile: coverageProfile,
-        target_role: targetRole,
-        members: lastMembersPayload,
-        candidate,
-      });
-      setStatus(status, "");
-      renderImpact(result);
-      impactSection.scrollIntoView({ behavior: "smooth", block: "start" });
-    } catch (err) {
-      setStatus(status, err.message, "error");
-      content.innerHTML = emptyState("Impact request failed.");
-    } finally {
-      analyzeBtn.disabled = false;
+    let result = impactByCandidateId[candidate.candidate_id];
+    if (!result || !result.impact) {
+      const teamName = document.getElementById("team-name").value.trim() || "Team";
+      const coverageProfile = document.getElementById("coverage-profile").value;
+      const targetRole = document.getElementById("target-role").value.trim() || null;
+      try {
+        result = await apiPost("/api/v1/candidate-team-impact", {
+          team_name: teamName,
+          coverage_profile: coverageProfile,
+          target_role: targetRole,
+          members: lastMembersPayload,
+          candidate,
+        });
+        impactByCandidateId[candidate.candidate_id] = result;
+      } catch (err) {
+        setStatus(status, err.message, "error");
+        content.innerHTML = `<p class="meta">Impact request failed.</p>`;
+        return;
+      }
     }
+
+    setStatus(status, "");
+    renderImpactDetail(result);
+    impactSection.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  async function loadDemoAndAnalyze() {
+    fillDemoForms();
+    setStatus(setupStatus, "Loading demo scenario…", "loading");
+    await analyzeTeam({ fromDemo: true });
   }
 
   async function loadPlaces() {
@@ -599,7 +898,7 @@
         .map((place) => `<option value="${escapeHtml(place)}"></option>`)
         .join("");
     } catch (_err) {
-      // Text input remains usable without suggestions.
+      // Text input remains usable.
     }
   }
 
@@ -616,9 +915,21 @@
     }));
   });
 
-  loadDemoBtn.addEventListener("click", loadDemo);
-  analyzeBtn.addEventListener("click", analyzeTeam);
+  document.getElementById("setup-team").addEventListener("click", openSetup);
+  document.getElementById("edit-team-data").addEventListener("click", openSetup);
+  document.getElementById("load-demo-empty").addEventListener("click", loadDemoAndAnalyze);
+  document.getElementById("load-demo").addEventListener("click", loadDemoAndAnalyze);
+  applyAnalyzeBtn.addEventListener("click", () => analyzeTeam());
 
+  setupOverlay.querySelectorAll("[data-close-setup]").forEach((el) => {
+    el.addEventListener("click", closeSetup);
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !setupOverlay.hidden) closeSetup();
+  });
+
+  // Keep one blank member ready inside the secondary intake layer.
   membersList.appendChild(createMemberCard({
     member_id: "A",
     display_name: "",

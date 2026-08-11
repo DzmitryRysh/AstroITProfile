@@ -10,92 +10,136 @@
   <a class="skip-link" href="#main">Skip to content</a>
 
   <header class="site-header">
-    <div class="brand">
-      <p class="brand-name">AstroIT</p>
-      <h1 class="brand-title">Team Intelligence</h1>
-      <p class="brand-sub">Explore how different work styles contribute to technical teams.</p>
+    <div class="brand-row">
+      <div>
+        <p class="brand-name">AstroIT</p>
+        <h1 class="brand-title">Team Intelligence</h1>
+      </div>
+      <div class="header-actions" id="header-actions" hidden>
+        <button type="button" id="edit-team-data" class="btn btn-secondary">Edit Team Data</button>
+        <button type="button" id="load-demo" class="btn btn-ghost">Load Demo</button>
+      </div>
+    </div>
+    <div id="workspace-context" class="workspace-context" hidden>
+      <p class="context-team" id="context-team-name"></p>
+      <p class="context-role" id="context-target-role"></p>
     </div>
   </header>
 
   <main id="main" class="layout">
-    <section class="panel setup-panel" aria-labelledby="setup-heading">
-      <div class="panel-head">
-        <h2 id="setup-heading">Setup</h2>
-        <div class="actions">
-          <button type="button" id="load-demo" class="btn btn-secondary">Load Demo Scenario</button>
-          <button type="button" id="analyze-team" class="btn btn-primary">Analyze Team</button>
-        </div>
+    <section id="empty-state" class="panel empty-state" aria-labelledby="empty-heading">
+      <p class="eyebrow">Team Intelligence</p>
+      <h2 id="empty-heading">Build a team intelligence view</h2>
+      <p class="empty-copy">
+        Understand how a shortlisted candidate changes
+        the functional structure of an existing technical team.
+      </p>
+      <div class="actions">
+        <button type="button" id="load-demo-empty" class="btn btn-primary">Load Demo Scenario</button>
+        <button type="button" id="setup-team" class="btn btn-secondary">Set Up Team</button>
       </div>
-
-      <div class="setup-grid">
-        <label class="field">
-          <span>Team Name</span>
-          <input id="team-name" type="text" autocomplete="organization" value="AI Platform Team" />
-        </label>
-        <label class="field">
-          <span>Coverage Profile</span>
-          <select id="coverage-profile">
-            <option value="ai_ml_product_delivery" selected>AI / ML Product Delivery</option>
-          </select>
-        </label>
-        <label class="field">
-          <span>Target Role</span>
-          <input id="target-role" type="text" value="ML Engineer" />
-        </label>
-      </div>
-
-      <div class="subsection">
-        <div class="subsection-head">
-          <h3>Current Team</h3>
-          <button type="button" id="add-member" class="btn btn-ghost">+ Add Team Member</button>
-        </div>
-        <div id="members-list" class="form-list"></div>
-      </div>
-
-      <div class="subsection">
-        <div class="subsection-head">
-          <h3>Shortlisted Candidates</h3>
-          <button type="button" id="add-candidate" class="btn btn-ghost">+ Add Candidate</button>
-        </div>
-        <div id="candidates-list" class="form-list"></div>
-      </div>
-
-      <p id="setup-status" class="status-line" role="status" aria-live="polite"></p>
+      <p class="empty-note">
+        Profiles support team discussion and do not replace technical assessment.
+      </p>
     </section>
 
-    <section class="panel" id="team-map-section" aria-labelledby="team-map-heading" hidden>
-      <div class="panel-head">
-        <h2 id="team-map-heading">Current Team</h2>
-      </div>
-      <h3 class="section-label">Team Map</h3>
-      <div id="team-map-status" class="status-line" role="status"></div>
-      <div id="team-map-cards" class="card-grid"></div>
+    <section id="workspace" class="workspace" hidden>
+      <section class="panel" aria-labelledby="coverage-heading">
+        <div class="panel-head">
+          <h2 id="coverage-heading">Workflow Coverage</h2>
+        </div>
+        <div id="team-gap-status" class="status-line" role="status"></div>
+        <div id="workflow-strip" class="workflow-strip" aria-label="Explore Validate Productionize Connect"></div>
+        <div id="gap-priority" class="gap-priority"></div>
+      </section>
 
-      <h3 class="section-label">Workflow Coverage</h3>
-      <div id="team-gap-status" class="status-line" role="status"></div>
-      <div id="workflow-coverage" class="coverage-grid"></div>
+      <section class="panel" aria-labelledby="team-map-heading">
+        <div class="panel-head">
+          <h2 id="team-map-heading">Current Team</h2>
+        </div>
+        <div id="team-map-status" class="status-line" role="status"></div>
+        <div id="team-map-cards" class="card-grid"></div>
+      </section>
 
-      <h3 class="section-label">Current Gap</h3>
-      <div id="gap-summary" class="gap-summary"></div>
-    </section>
+      <section class="panel" aria-labelledby="compare-heading">
+        <div class="panel-head">
+          <h2 id="compare-heading">Shortlist</h2>
+        </div>
+        <div id="compare-status" class="status-line" role="status"></div>
+        <div id="compare-cards" class="compare-grid"></div>
+      </section>
 
-    <section class="panel" id="compare-section" aria-labelledby="compare-heading" hidden>
-      <div class="panel-head">
-        <h2 id="compare-heading">Shortlist</h2>
-      </div>
-      <h3 class="section-label">Candidate Compare</h3>
-      <div id="compare-status" class="status-line" role="status"></div>
-      <div id="compare-cards" class="compare-grid"></div>
-    </section>
-
-    <section class="panel impact-panel" id="impact-section" aria-labelledby="impact-heading" hidden>
-      <div class="panel-head">
-        <h2 id="impact-heading">Candidate Impact</h2>
-      </div>
-      <div id="impact-status" class="status-line" role="status"></div>
-      <div id="impact-content"></div>
+      <section class="panel impact-panel" id="impact-section" aria-labelledby="impact-heading" hidden>
+        <div class="panel-head">
+          <h2 id="impact-heading">Candidate Impact</h2>
+        </div>
+        <div id="impact-status" class="status-line" role="status"></div>
+        <div id="impact-content"></div>
+      </section>
     </section>
   </main>
+
+  <div id="setup-overlay" class="setup-overlay" hidden>
+    <div class="setup-backdrop" data-close-setup tabindex="-1"></div>
+    <aside
+      id="setup-drawer"
+      class="setup-drawer"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="setup-heading"
+      hidden
+    >
+      <div class="setup-drawer-head">
+        <div>
+          <p class="eyebrow">Data Intake</p>
+          <h2 id="setup-heading">Edit Team Data</h2>
+        </div>
+        <button type="button" class="btn btn-ghost" data-close-setup>Close</button>
+      </div>
+
+      <div class="setup-body">
+        <div class="setup-grid">
+          <label class="field">
+            <span>Team Name</span>
+            <input id="team-name" type="text" autocomplete="organization" value="AI Platform Team" />
+          </label>
+          <label class="field">
+            <span>Coverage Profile</span>
+            <select id="coverage-profile">
+              <option value="ai_ml_product_delivery" selected>AI / ML Product Delivery</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Target Role</span>
+            <input id="target-role" type="text" value="ML Engineer" />
+          </label>
+        </div>
+
+        <div class="subsection">
+          <div class="subsection-head">
+            <h3>Current Team</h3>
+            <button type="button" id="add-member" class="btn btn-ghost">+ Add Team Member</button>
+          </div>
+          <div id="members-list" class="form-list"></div>
+        </div>
+
+        <div class="subsection">
+          <div class="subsection-head">
+            <h3>Shortlisted Candidates</h3>
+            <button type="button" id="add-candidate" class="btn btn-ghost">+ Add Candidate</button>
+          </div>
+          <div id="candidates-list" class="form-list"></div>
+        </div>
+
+        <p id="setup-status" class="status-line" role="status" aria-live="polite"></p>
+      </div>
+
+      <div class="setup-footer">
+        <button type="button" class="btn btn-secondary" data-close-setup>Cancel</button>
+        <button type="button" id="apply-analyze" class="btn btn-primary">Apply &amp; Analyze</button>
+      </div>
+    </aside>
+  </div>
 
   <footer class="site-footer">
     <p>
