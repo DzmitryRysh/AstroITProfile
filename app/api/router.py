@@ -7,6 +7,7 @@ from app.api.routes.mercury_work_profile import router as mercury_work_profile_r
 from app.api.routes.profile import router as profile_router
 from app.api.routes.team_gap import router as team_gap_router
 from app.api.routes.team_map import router as team_map_router
+from app.api.routes.workspaces import router as workspaces_router
 
 api_router = APIRouter(prefix="/api/v1")
 api_router.include_router(health_router)
@@ -16,6 +17,7 @@ api_router.include_router(candidate_compare_router)
 api_router.include_router(team_map_router)
 api_router.include_router(team_gap_router)
 api_router.include_router(candidate_team_impact_router)
+api_router.include_router(workspaces_router)
 
 
 

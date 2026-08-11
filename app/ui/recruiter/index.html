@@ -16,6 +16,8 @@
         <h1 class="brand-title">Team Intelligence</h1>
       </div>
       <div class="header-actions" id="header-actions" hidden>
+        <button type="button" id="saved-workspaces" class="btn btn-ghost">Saved Workspaces</button>
+        <button type="button" id="save-workspace" class="btn btn-secondary">Save Workspace</button>
         <button type="button" id="edit-team-data" class="btn btn-secondary">Edit Team Data</button>
         <button type="button" id="load-demo" class="btn btn-ghost">Load Demo</button>
       </div>
@@ -23,6 +25,7 @@
     <div id="workspace-context" class="workspace-context" hidden>
       <p class="context-team" id="context-team-name"></p>
       <p class="context-role" id="context-target-role"></p>
+      <p id="workspace-save-status" class="status-line" role="status" aria-live="polite"></p>
     </div>
   </header>
 
@@ -37,6 +40,7 @@
       <div class="actions">
         <button type="button" id="load-demo-empty" class="btn btn-primary">Load Demo Scenario</button>
         <button type="button" id="setup-team" class="btn btn-secondary">Set Up Team</button>
+        <button type="button" id="saved-workspaces-empty" class="btn btn-ghost">Saved Workspaces</button>
       </div>
       <p class="empty-note">
         Profiles support team discussion and do not replace technical assessment.
@@ -137,6 +141,31 @@
       <div class="setup-footer">
         <button type="button" class="btn btn-secondary" data-close-setup>Cancel</button>
         <button type="button" id="apply-analyze" class="btn btn-primary">Apply &amp; Analyze</button>
+      </div>
+    </aside>
+  </div>
+
+  <div id="workspaces-overlay" class="setup-overlay" hidden>
+    <div class="setup-backdrop" data-close-workspaces tabindex="-1"></div>
+    <aside
+      id="workspaces-drawer"
+      class="setup-drawer"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="workspaces-heading"
+      hidden
+    >
+      <div class="setup-drawer-head">
+        <div>
+          <p class="eyebrow">Local Persistence</p>
+          <h2 id="workspaces-heading">Saved Workspaces</h2>
+        </div>
+        <button type="button" class="btn btn-ghost" data-close-workspaces>Close</button>
+      </div>
+      <div class="setup-body">
+        <p class="empty-note">Saved workspaces are stored locally in this prototype.</p>
+        <div id="workspaces-status" class="status-line" role="status" aria-live="polite"></div>
+        <div id="workspaces-list" class="form-list"></div>
       </div>
     </aside>
   </div>
