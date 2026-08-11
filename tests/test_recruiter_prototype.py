@@ -69,6 +69,7 @@ class RecruiterPrototypeRouteTests(unittest.TestCase):
         self.assertIn("/api/v1/team-map", paths)
         self.assertIn("/api/v1/team-gap", paths)
         self.assertIn("/api/v1/candidate-team-impact", paths)
+        self.assertIn("/api/v1/workspaces", paths)
         self.assertIn("/", paths)
         self.assertIn("/health", paths)
 
@@ -169,6 +170,28 @@ class RecruiterUxPolishTests(unittest.TestCase):
         # Chips carry the status wording; do not repeat it as sibling strong text.
         self.assertNotIn("${statusChip(\"missing\")}<strong>Missing</strong>", self.js)
         self.assertNotIn("${statusChip(\"single_coverage\")}<strong>Single Coverage</strong>", self.js)
+
+    def test_saved_workspaces_actions_exist_without_form_first_ux(self):
+        self.assertIn("Saved Workspaces", self.html)
+        self.assertIn("Save Workspace", self.html)
+        self.assertIn('id="workspaces-overlay"', self.html)
+        self.assertIn("hidden", self.html.split('id="workspaces-overlay"', 1)[1].split(">", 1)[0])
+        self.assertLess(self.html.find('id="empty-state"'), self.html.find('id="workspaces-overlay"'))
+
+    def test_workspace_persistence_api_usage_in_js(self):
+        self.assertIn('"/api/v1/workspaces"', self.js)
+        self.assertIn("`/api/v1/workspaces/${activeWorkspaceId}`", self.js)
+        self.assertIn("`/api/v1/workspaces/${workspaceId}`", self.js)
+        self.assertIn("method: \"POST\"", self.js)
+        self.assertIn("method: \"PUT\"", self.js)
+        self.assertIn("method: \"DELETE\"", self.js)
+        self.assertIn("method: \"GET\"", self.js)
+        self.assertIn("openWorkspace", self.js)
+        self.assertIn("analyzeTeam", self.js)
+        self.assertIn("Persist INPUT STATE only", self.js)
+        self.assertNotIn("team_map", self.js.split("collectWorkspacePayload", 1)[1].split("function ", 1)[0])
+        self.assertNotIn("closed_missing_functions", self.js.split("collectWorkspacePayload", 1)[1].split("function ", 1)[0])
+        self.assertNotIn("missing_required_functions", self.js.split("collectWorkspacePayload", 1)[1].split("function ", 1)[0])
 
 
 if __name__ == "__main__":

@@ -13,6 +13,12 @@
   const workspaceContext = document.getElementById("workspace-context");
   const impactSection = document.getElementById("impact-section");
   const applyAnalyzeBtn = document.getElementById("apply-analyze");
+  const saveWorkspaceBtn = document.getElementById("save-workspace");
+  const workspacesOverlay = document.getElementById("workspaces-overlay");
+  const workspacesDrawer = document.getElementById("workspaces-drawer");
+  const workspacesList = document.getElementById("workspaces-list");
+  const workspacesStatus = document.getElementById("workspaces-status");
+  const workspaceSaveStatus = document.getElementById("workspace-save-status");
 
   let memberSeq = 1;
   let candidateSeq = 1;
@@ -20,6 +26,7 @@
   let lastCandidatesPayload = [];
   let impactByCandidateId = {};
   let analyzed = false;
+  let activeWorkspaceId = null;
 
   const DEMO = {
     teamName: "AI Platform Team",
@@ -237,12 +244,12 @@
     return candidates;
   }
 
-  async function apiPost(path, body) {
+  async function apiRequest(path, options = {}) {
     const response = await fetch(path, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify(body),
+      headers: { Accept: "application/json", ...(options.body ? { "Content-Type": "application/json" } : {}) },
+      ...options,
     });
+    if (response.status === 204) return null;
     let data = null;
     try {
       data = await response.json();
@@ -259,6 +266,185 @@
       throw new Error(message);
     }
     return data;
+  }
+
+  async function apiPost(path, body) {
+    return apiRequest(path, { method: "POST", body: JSON.stringify(body) });
+  }
+
+  async function apiPut(path, body) {
+    return apiRequest(path, { method: "PUT", body: JSON.stringify(body) });
+  }
+
+  async function apiGet(path) {
+    return apiRequest(path, { method: "GET" });
+  }
+
+  async function apiDelete(path) {
+    return apiRequest(path, { method: "DELETE" });
+  }
+
+  function normalizeTimeValue(value) {
+    if (!value) return "";
+    return String(value).slice(0, 5);
+  }
+
+  function updateSaveButtonLabel() {
+    if (!saveWorkspaceBtn) return;
+    saveWorkspaceBtn.textContent = activeWorkspaceId ? "Save Changes" : "Save Workspace";
+  }
+
+  function collectWorkspacePayload() {
+    const members = collectMembers();
+    const candidates = collectCandidates();
+    return {
+      team_name: document.getElementById("team-name").value.trim() || "Team",
+      coverage_profile: document.getElementById("coverage-profile").value,
+      target_role: document.getElementById("target-role").value.trim() || null,
+      members,
+      candidates,
+    };
+  }
+
+  function fillWorkspaceForms(record) {
+    document.getElementById("team-name").value = record.team_name || "";
+    document.getElementById("coverage-profile").value = record.coverage_profile || "ai_ml_product_delivery";
+    document.getElementById("target-role").value = record.target_role || "";
+    membersList.innerHTML = "";
+    candidatesList.innerHTML = "";
+    (record.members || []).forEach((member) => {
+      membersList.appendChild(createMemberCard({
+        ...member,
+        birth_time: normalizeTimeValue(member.birth_time),
+      }));
+    });
+    (record.candidates || []).forEach((candidate) => {
+      candidatesList.appendChild(createCandidateCard({
+        ...candidate,
+        birth_time: normalizeTimeValue(candidate.birth_time),
+      }));
+    });
+    if (!membersList.children.length) {
+      membersList.appendChild(createMemberCard({
+        member_id: "A",
+        display_name: "",
+        current_role: "Engineer",
+      }));
+    }
+  }
+
+  function formatUpdatedAt(value) {
+    try {
+      return new Date(value).toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    } catch (_err) {
+      return value || "";
+    }
+  }
+
+  function openWorkspacesPanel() {
+    workspacesOverlay.hidden = false;
+    workspacesDrawer.hidden = false;
+    document.body.style.overflow = "hidden";
+    refreshWorkspacesList();
+  }
+
+  function closeWorkspacesPanel() {
+    workspacesOverlay.hidden = true;
+    workspacesDrawer.hidden = true;
+    document.body.style.overflow = "";
+  }
+
+  async function refreshWorkspacesList() {
+    setStatus(workspacesStatus, "Loading saved workspaces…", "loading");
+    workspacesList.innerHTML = "";
+    try {
+      const data = await apiGet("/api/v1/workspaces");
+      const items = (data && data.workspaces) || [];
+      if (!items.length) {
+        setStatus(workspacesStatus, "No saved workspaces yet.");
+        workspacesList.innerHTML = `<p class="meta">Save the current workspace to see it here.</p>`;
+        return;
+      }
+      setStatus(workspacesStatus, "");
+      workspacesList.innerHTML = items.map((item) => `
+        <article class="workspace-card" data-workspace-id="${escapeHtml(item.workspace_id)}">
+          <h3>${escapeHtml(item.team_name)}</h3>
+          <p class="meta">${escapeHtml(item.target_role || "—")}</p>
+          <p class="meta">${item.member_count} team member${item.member_count === 1 ? "" : "s"} · ${item.candidate_count} candidate${item.candidate_count === 1 ? "" : "s"}</p>
+          <p class="meta">Updated ${escapeHtml(formatUpdatedAt(item.updated_at))}</p>
+          <div class="compare-actions">
+            <button type="button" class="btn btn-primary open-workspace" data-workspace-id="${escapeHtml(item.workspace_id)}">Open</button>
+            <button type="button" class="btn btn-danger delete-workspace" data-workspace-id="${escapeHtml(item.workspace_id)}">Delete</button>
+          </div>
+        </article>
+      `).join("");
+      workspacesList.querySelectorAll(".open-workspace").forEach((btn) => {
+        btn.addEventListener("click", () => openWorkspace(btn.getAttribute("data-workspace-id")));
+      });
+      workspacesList.querySelectorAll(".delete-workspace").forEach((btn) => {
+        btn.addEventListener("click", () => deleteWorkspace(btn.getAttribute("data-workspace-id")));
+      });
+    } catch (err) {
+      setStatus(workspacesStatus, err.message, "error");
+    }
+  }
+
+  async function saveCurrentWorkspace() {
+    setStatus(workspaceSaveStatus, activeWorkspaceId ? "Saving changes…" : "Saving workspace…", "loading");
+    try {
+      const payload = collectWorkspacePayload();
+      // Persist INPUT STATE only — never Team Map / Gap / Impact responses.
+      let record;
+      if (activeWorkspaceId) {
+        record = await apiPut(`/api/v1/workspaces/${activeWorkspaceId}`, payload);
+      } else {
+        record = await apiPost("/api/v1/workspaces", payload);
+      }
+      activeWorkspaceId = record.workspace_id;
+      updateSaveButtonLabel();
+      setStatus(workspaceSaveStatus, "Workspace saved");
+      renderWorkspaceHeader(
+        { member_count: payload.members.length },
+        payload.candidates.length,
+      );
+    } catch (err) {
+      setStatus(workspaceSaveStatus, err.message, "error");
+    }
+  }
+
+  async function openWorkspace(workspaceId) {
+    setStatus(workspacesStatus, "Opening workspace…", "loading");
+    try {
+      const record = await apiGet(`/api/v1/workspaces/${workspaceId}`);
+      fillWorkspaceForms(record);
+      activeWorkspaceId = record.workspace_id;
+      updateSaveButtonLabel();
+      closeWorkspacesPanel();
+      setStatus(workspaceSaveStatus, "");
+      await analyzeTeam({ fromDemo: false });
+    } catch (err) {
+      setStatus(workspacesStatus, err.message, "error");
+    }
+  }
+
+  async function deleteWorkspace(workspaceId) {
+    if (!window.confirm("Delete this saved workspace?")) return;
+    setStatus(workspacesStatus, "Deleting…", "loading");
+    try {
+      await apiDelete(`/api/v1/workspaces/${workspaceId}`);
+      if (activeWorkspaceId === workspaceId) {
+        activeWorkspaceId = null;
+        updateSaveButtonLabel();
+        setStatus(workspaceSaveStatus, "Workspace deleted. Current view is unsaved.");
+      }
+      await refreshWorkspacesList();
+    } catch (err) {
+      setStatus(workspacesStatus, err.message, "error");
+    }
   }
 
   function fillDemoForms() {
@@ -883,6 +1069,9 @@
   }
 
   async function loadDemoAndAnalyze() {
+    activeWorkspaceId = null;
+    updateSaveButtonLabel();
+    setStatus(workspaceSaveStatus, "");
     fillDemoForms();
     setStatus(setupStatus, "Loading demo scenario…", "loading");
     await analyzeTeam({ fromDemo: true });
@@ -919,14 +1108,22 @@
   document.getElementById("edit-team-data").addEventListener("click", openSetup);
   document.getElementById("load-demo-empty").addEventListener("click", loadDemoAndAnalyze);
   document.getElementById("load-demo").addEventListener("click", loadDemoAndAnalyze);
+  document.getElementById("saved-workspaces").addEventListener("click", openWorkspacesPanel);
+  document.getElementById("saved-workspaces-empty").addEventListener("click", openWorkspacesPanel);
+  saveWorkspaceBtn.addEventListener("click", saveCurrentWorkspace);
   applyAnalyzeBtn.addEventListener("click", () => analyzeTeam());
 
   setupOverlay.querySelectorAll("[data-close-setup]").forEach((el) => {
     el.addEventListener("click", closeSetup);
   });
+  workspacesOverlay.querySelectorAll("[data-close-workspaces]").forEach((el) => {
+    el.addEventListener("click", closeWorkspacesPanel);
+  });
 
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && !setupOverlay.hidden) closeSetup();
+    if (event.key !== "Escape") return;
+    if (!setupOverlay.hidden) closeSetup();
+    if (!workspacesOverlay.hidden) closeWorkspacesPanel();
   });
 
   // Keep one blank member ready inside the secondary intake layer.
@@ -935,5 +1132,6 @@
     display_name: "",
     current_role: "Engineer",
   }));
+  updateSaveButtonLabel();
   loadPlaces();
 })();
