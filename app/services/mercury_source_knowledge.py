@@ -22,6 +22,9 @@ House Batch B1 (Lesson 7 only):
 
 House Batch B2 (Lesson 7 only):
 - Houses 5, 6, 7
+
+House Batch B3 (Lesson 7 only):
+- Houses 8, 11, 12
 """
 
 from __future__ import annotations
@@ -1597,7 +1600,20 @@ SUPPORTED_SIGN_KEYS = {
     "Aquarius",
     "Pisces",
 }
-SUPPORTED_HOUSE_KEYS = {"1", "2", "3", "4", "5", "6", "7", "9", "10"}
+SUPPORTED_HOUSE_KEYS = {
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "11",
+    "12",
+}
 SUPPORTED_MOTION_KEYS = {"retrograde"}
 SUPPORTED_ASPECT_KEYS = {
     "square_Pluto",
@@ -1641,6 +1657,12 @@ from app.services.mercury_source_knowledge_b2_houses import (  # noqa: E402
     HOUSE_6,
     HOUSE_7,
 )
+from app.services.mercury_source_knowledge_b3_houses import (  # noqa: E402
+    B3_HOUSE_PACKS,
+    HOUSE_8,
+    HOUSE_11,
+    HOUSE_12,
+)
 
 ALL_SOURCE_FACTS: tuple[SourceFactDef, ...] = (
     LEO_LESSON7
@@ -1668,6 +1690,7 @@ ALL_SOURCE_FACTS: tuple[SourceFactDef, ...] = (
     + A3_SIGN_PACKS
     + B1_HOUSE_PACKS
     + B2_HOUSE_PACKS
+    + B3_HOUSE_PACKS
 )
 
 # Repeated-signal definitions: SAME tag across distinct provenance keys only.

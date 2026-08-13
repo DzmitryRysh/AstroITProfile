@@ -39,15 +39,11 @@ def _house_keys_with_facts() -> set[str]:
 
 class HouseBatchB2CoverageTests(unittest.TestCase):
     def test_houses_5_6_7_supported(self):
-        self.assertEqual(
-            SUPPORTED_HOUSE_KEYS,
-            {"1", "2", "3", "4", "5", "6", "7", "9", "10"},
+        # Historical B2 subset guarantee: later batches may expand the set.
+        self.assertTrue(
+            {"1", "2", "3", "4", "5", "6", "7", "9", "10"}.issubset(SUPPORTED_HOUSE_KEYS)
         )
-        self.assertEqual(
-            _house_keys_with_facts(),
-            {"1", "2", "3", "4", "5", "6", "7", "9", "10"},
-        )
-        self.assertEqual(len(SUPPORTED_HOUSE_KEYS), 9)
+        self.assertTrue({"5", "6", "7"}.issubset(_house_keys_with_facts()))
 
     def test_b2_source_references_and_counts(self):
         self.assertEqual(len(HOUSE_5), 14)
