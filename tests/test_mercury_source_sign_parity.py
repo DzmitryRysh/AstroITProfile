@@ -320,7 +320,7 @@ class ParityRegressionTests(unittest.TestCase):
                 self.assertEqual(profile.coverage.status, "complete")
                 self.assertEqual(profile.coverage.missing_factors, [])
 
-    def test_andrey_still_partial(self):
+    def test_andrey_now_complete(self):
         profile = build_source_profile_from_factors(
             MercurySourceFactors(
                 birth_time_known=True,
@@ -334,10 +334,11 @@ class ParityRegressionTests(unittest.TestCase):
                 ],
             )
         )
-        self.assertEqual(profile.coverage.status, "partial")
+        self.assertEqual(profile.coverage.status, "complete")
         self.assertIn("house:5", profile.coverage.covered_factors)
         self.assertNotIn("house:5", profile.coverage.missing_factors)
-        self.assertEqual(profile.coverage.missing_factors, ["aspect:trine_Uranus"])
+        self.assertEqual(profile.coverage.missing_factors, [])
+        self.assertTrue(any(item.factor_key == "trine_Uranus" for item in profile.aspect_facts))
 
     def test_milka_like_still_complete(self):
         profile = build_source_profile_from_factors(

@@ -217,7 +217,7 @@ class SignBatchA1ActivationTests(unittest.TestCase):
         self.assertTrue(dep.unresolved)
         self.assertIn(dep.id, _ids(profile.conditional_unresolved))
 
-    def test_andrey_like_cancer_activates_with_partial_coverage(self):
+    def test_andrey_like_cancer_now_complete(self):
         profile = build_source_profile_from_factors(
             MercurySourceFactors(
                 birth_time_known=True,
@@ -231,12 +231,13 @@ class SignBatchA1ActivationTests(unittest.TestCase):
                 ],
             )
         )
-        self.assertEqual(profile.coverage.status, "partial")
+        self.assertEqual(profile.coverage.status, "complete")
         self.assertIn("sign:Cancer", profile.coverage.covered_factors)
         self.assertIn("house:5", profile.coverage.covered_factors)
         self.assertNotIn("house:5", profile.coverage.missing_factors)
-        self.assertEqual(profile.coverage.missing_factors, ["aspect:trine_Uranus"])
+        self.assertEqual(profile.coverage.missing_factors, [])
         self.assertIn("aspect:square_Pluto", profile.coverage.covered_factors)
+        self.assertIn("aspect:trine_Uranus", profile.coverage.covered_factors)
         self.assertGreater(len(profile.sign_facts), 0)
         self.assertTrue(any(item.id.startswith("cancer_l7_") for item in profile.sign_facts))
         self.assertTrue(any(item.id.startswith("cancer_bio_") for item in profile.sign_facts))
@@ -246,7 +247,7 @@ class SignBatchA1ActivationTests(unittest.TestCase):
         self.assertTrue(
             any(item.factor_key == "square_Pluto" for item in profile.aspect_facts)
         )
-        self.assertFalse(
+        self.assertTrue(
             any(item.factor_key == "trine_Uranus" for item in profile.aspect_facts)
         )
 

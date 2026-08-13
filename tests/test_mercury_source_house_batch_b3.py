@@ -194,7 +194,7 @@ class HouseBatchB3RegressionTests(unittest.TestCase):
                 self.assertEqual(profile.coverage.status, "complete")
                 self.assertEqual(profile.coverage.missing_factors, [])
 
-    def test_andrey_missing_only_trine_uranus(self):
+    def test_andrey_now_complete_with_trine_uranus(self):
         profile = build_source_profile_from_factors(
             MercurySourceFactors(
                 birth_time_known=True,
@@ -208,9 +208,10 @@ class HouseBatchB3RegressionTests(unittest.TestCase):
                 ],
             )
         )
-        self.assertEqual(profile.coverage.status, "partial")
-        self.assertEqual(profile.coverage.missing_factors, ["aspect:trine_Uranus"])
+        self.assertEqual(profile.coverage.status, "complete")
+        self.assertEqual(profile.coverage.missing_factors, [])
         self.assertIn("house:5", profile.coverage.covered_factors)
+        self.assertTrue(any(item.factor_key == "trine_Uranus" for item in profile.aspect_facts))
 
     def test_milka_like_still_complete(self):
         profile = build_source_profile_from_factors(

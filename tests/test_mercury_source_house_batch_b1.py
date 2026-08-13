@@ -199,7 +199,7 @@ class HouseBatchB1RegressionTests(unittest.TestCase):
                 self.assertEqual(profile.coverage.status, "complete")
                 self.assertEqual(profile.coverage.missing_factors, [])
 
-    def test_andrey_still_partial_for_trine_uranus_only(self):
+    def test_andrey_now_complete_with_trine_uranus(self):
         profile = build_source_profile_from_factors(
             MercurySourceFactors(
                 birth_time_known=True,
@@ -213,11 +213,12 @@ class HouseBatchB1RegressionTests(unittest.TestCase):
                 ],
             )
         )
-        self.assertEqual(profile.coverage.status, "partial")
+        self.assertEqual(profile.coverage.status, "complete")
         self.assertIn("house:5", profile.coverage.covered_factors)
         self.assertNotIn("house:5", profile.coverage.missing_factors)
-        self.assertEqual(profile.coverage.missing_factors, ["aspect:trine_Uranus"])
+        self.assertEqual(profile.coverage.missing_factors, [])
         self.assertGreater(len(profile.house_facts), 0)
+        self.assertTrue(any(item.factor_key == "trine_Uranus" for item in profile.aspect_facts))
 
     def test_unknown_birth_time_house_is_calculation_limitation(self):
         profile = build_mercury_source_profile(

@@ -25,6 +25,10 @@ House Batch B2 (Lesson 7 only):
 
 House Batch B3 (Lesson 7 only):
 - Houses 8, 11, 12
+
+Aspect Batch C1 (verified Bioastrology harmonious parity):
+- Moon / Jupiter / Saturn harmonious aliases
+- Uranus harmonious (trine/sextile) pack
 """
 
 from __future__ import annotations
@@ -1582,8 +1586,14 @@ URANUS_CONJUNCTION: tuple[SourceFactDef, ...] = (
 )
 
 # Aspect keys that reuse another pack's catalog definitions (shared source semantics).
+# Existing Mars alias plus C1 source-justified harmonious aliases
+# (pair-specific Bioastrology "трин/секстиль", not general astrology).
 ASPECT_PACK_ALIASES: dict[str, str] = {
     "sextile_Mars": "trine_Mars",
+    "trine_Moon": "sextile_Moon",
+    "trine_Jupiter": "sextile_Jupiter",
+    "sextile_Saturn": "trine_Saturn",
+    "sextile_Uranus": "trine_Uranus",
 }
 
 SUPPORTED_SIGN_KEYS = {
@@ -1618,12 +1628,17 @@ SUPPORTED_MOTION_KEYS = {"retrograde"}
 SUPPORTED_ASPECT_KEYS = {
     "square_Pluto",
     "trine_Saturn",
+    "sextile_Saturn",
     "sextile_Moon",
+    "trine_Moon",
     "square_Moon",
     "trine_Mars",
     "sextile_Mars",
     "sextile_Jupiter",
+    "trine_Jupiter",
     "conjunction_Uranus",
+    "trine_Uranus",
+    "sextile_Uranus",
 }
 
 # Late import: A1/A2/A3/B1 packs avoid circular imports via local SourceFactDef/_f.
@@ -1663,6 +1678,10 @@ from app.services.mercury_source_knowledge_b3_houses import (  # noqa: E402
     HOUSE_11,
     HOUSE_12,
 )
+from app.services.mercury_source_knowledge_c1_aspects import (  # noqa: E402
+    C1_ASPECT_PACKS,
+    URANUS_HARMONIOUS,
+)
 
 ALL_SOURCE_FACTS: tuple[SourceFactDef, ...] = (
     LEO_LESSON7
@@ -1691,6 +1710,7 @@ ALL_SOURCE_FACTS: tuple[SourceFactDef, ...] = (
     + B1_HOUSE_PACKS
     + B2_HOUSE_PACKS
     + B3_HOUSE_PACKS
+    + C1_ASPECT_PACKS
 )
 
 # Repeated-signal definitions: SAME tag across distinct provenance keys only.

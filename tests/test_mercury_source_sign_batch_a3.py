@@ -235,7 +235,7 @@ class SignBatchA3MilkaAndRegressionTests(unittest.TestCase):
                 self.assertEqual(profile.coverage.status, "complete")
                 self.assertEqual(profile.coverage.missing_factors, [])
 
-    def test_andrey_like_remains_partial_for_unsupported_house_and_aspect(self):
+    def test_andrey_like_now_complete_with_trine_uranus(self):
         profile = build_source_profile_from_factors(
             MercurySourceFactors(
                 birth_time_known=True,
@@ -249,13 +249,13 @@ class SignBatchA3MilkaAndRegressionTests(unittest.TestCase):
                 ],
             )
         )
-        self.assertEqual(profile.coverage.status, "partial")
+        self.assertEqual(profile.coverage.status, "complete")
         self.assertIn("sign:Cancer", profile.coverage.covered_factors)
         self.assertIn("aspect:square_Pluto", profile.coverage.covered_factors)
         self.assertIn("house:5", profile.coverage.covered_factors)
         self.assertNotIn("house:5", profile.coverage.missing_factors)
-        self.assertEqual(profile.coverage.missing_factors, ["aspect:trine_Uranus"])
-        self.assertFalse(
+        self.assertEqual(profile.coverage.missing_factors, [])
+        self.assertTrue(
             any(item.factor_key == "trine_Uranus" for item in profile.aspect_facts)
         )
 
