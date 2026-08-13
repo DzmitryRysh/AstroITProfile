@@ -16,6 +16,7 @@ from app.schemas.mercury_source_profile import (
 from app.schemas.mercury_work_profile import MercuryAspect, MercurySourceFactors
 from app.services.mercury_source_knowledge import (
     ALL_SOURCE_FACTS,
+    ASPECT_PACK_ALIASES,
     CONTRAST_PAIRS,
     REPEATED_SIGNAL_SPECS,
     SUPPORTED_ASPECT_KEYS,
@@ -37,11 +38,16 @@ def is_hard_aspected(aspects: list[MercuryAspect]) -> bool:
     return any(item.type in HARD_ASPECT_TYPES for item in aspects)
 
 
-def _to_fact(definition: SourceFactDef, *, activated: bool) -> SourceFact:
+def _to_fact(
+    definition: SourceFactDef,
+    *,
+    activated: bool,
+    factor_key_override: str | None = None,
+) -> SourceFact:
     return SourceFact(
         id=definition.id,
         factor_type=definition.factor_type,  # type: ignore[arg-type]
-        factor_key=definition.factor_key,
+        factor_key=factor_key_override or definition.factor_key,
         category=definition.category,
         text=definition.text,
         polarity=definition.polarity,  # type: ignore[arg-type]
@@ -59,21 +65,45 @@ def _match_definitions(
     factor_key: str,
     hard_aspected: bool,
 ) -> list[SourceFact]:
+    catalog_key = factor_key
+    factor_key_override: str | None = None
+    if factor_type == "aspect" and factor_key in ASPECT_PACK_ALIASES:
+        catalog_key = ASPECT_PACK_ALIASES[factor_key]
+        factor_key_override = factor_key
+
     selected: list[SourceFact] = []
     for definition in ALL_SOURCE_FACTS:
-        if definition.factor_type != factor_type or definition.factor_key != factor_key:
+        if definition.factor_type != factor_type or definition.factor_key != catalog_key:
             continue
         condition = definition.activation_condition
         if condition is None:
-            selected.append(_to_fact(definition, activated=True))
+            selected.append(
+                _to_fact(
+                    definition,
+                    activated=True,
+                    factor_key_override=factor_key_override,
+                )
+            )
             continue
         if condition == "hard_aspected":
             if hard_aspected:
-                selected.append(_to_fact(definition, activated=True))
+                selected.append(
+                    _to_fact(
+                        definition,
+                        activated=True,
+                        factor_key_override=factor_key_override,
+                    )
+                )
             continue
         if condition == "pluto_strength_unresolved":
             # Always include when this aspect factor is present; leave unresolved.
-            selected.append(_to_fact(definition, activated=True))
+            selected.append(
+                _to_fact(
+                    definition,
+                    activated=True,
+                    factor_key_override=factor_key_override,
+                )
+            )
             continue
     return selected
 

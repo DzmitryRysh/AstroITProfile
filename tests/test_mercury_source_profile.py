@@ -543,5 +543,133 @@ class MoonSextileSourcePackTests(unittest.TestCase):
         self.assertIn("aspect:sextile_Moon", signal.sources)
 
 
+class DzmitryGoldenCaseTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.profile = build_mercury_source_profile(
+            MercurySourceProfileRequest(
+                birth_date=date(1985, 11, 12),
+                birth_time=time(14, 15),
+                birth_place="Zhodino, Belarus",
+            )
+        )
+
+    def test_calculated_mercury_basics(self):
+        calc = self.profile.calculated
+        self.assertEqual(calc.mercury_sign, "Sagittarius")
+        self.assertEqual(calc.mercury_house, 10)
+        self.assertEqual(calc.mercury_motion, "direct")
+        self.assertFalse(calc.hard_aspected)
+
+    def test_required_aspects(self):
+        pairs = {(item.type, item.planet) for item in self.profile.calculated.aspects}
+        self.assertIn(("sextile", "Mars"), pairs)
+        self.assertIn(("sextile", "Jupiter"), pairs)
+        self.assertIn(("conjunction", "Uranus"), pairs)
+
+    def test_source_layers_activate(self):
+        self.assertTrue(all(item.factor_key == "Sagittarius" for item in self.profile.sign_facts))
+        self.assertTrue(all(item.factor_key == "10" for item in self.profile.house_facts))
+        self.assertEqual(self.profile.motion_facts, [])
+        aspect_keys = {item.factor_key for item in self.profile.aspect_facts}
+        self.assertEqual(aspect_keys, {"sextile_Mars", "sextile_Jupiter", "conjunction_Uranus"})
+        self.assertIn("sag_thinks_in_categories_globally", _ids(self.profile.sign_facts))
+        self.assertIn("h10_mission_informing_people", _ids(self.profile.house_facts))
+        self.assertIn("mars_tr_thinking_more_analytical", _ids(self.profile.aspect_facts))
+        self.assertTrue(
+            all(
+                item.factor_key == "sextile_Mars"
+                for item in self.profile.aspect_facts
+                if item.id.startswith("mars_tr_")
+            )
+        )
+        self.assertIn("jupiter_sx_oratory_and_persuasion", _ids(self.profile.aspect_facts))
+
+    def test_uranus_conjunction_required_facts(self):
+        uranus = [item for item in self.profile.aspect_facts if item.factor_key == "conjunction_Uranus"]
+        ids = _ids(uranus)
+        for required in (
+            "uranus_cj_genius_potential",
+            "uranus_cj_freshness_of_mind",
+            "uranus_cj_openness_of_mind",
+            "uranus_cj_distractibility_loss_of_focus",
+            "uranus_cj_adhd_like_attention_scatter",
+            "uranus_cj_impractical_thinking",
+            "uranus_cj_drifting_into_strange_concepts",
+            "uranus_cj_fast_speech",
+            "uranus_cj_speech_may_become_disjointed",
+            "uranus_cj_technical_talent",
+            "uranus_cj_rebellious_free_thinking",
+            "uranus_cj_interest_psychology",
+            "uranus_cj_interest_numerology",
+            "uranus_cj_interest_astrology",
+            "uranus_cj_claircognizance",
+            "uranus_cj_strong_sense_of_humor",
+            "uranus_cj_piercing_unusual_persuasiveness",
+            "uranus_cj_intellectual_chosenness_elitism",
+            "uranus_cj_comp_laugh_joke_satire",
+            "uranus_cj_intellect_of_the_future",
+            "uranus_cj_spontaneous_creativity",
+            "uranus_cj_antenna_with_cosmos",
+        ):
+            self.assertIn(required, ids)
+        adhd = next(item for item in uranus if item.id == "uranus_cj_adhd_like_attention_scatter")
+        self.assertIn("non-diagnostic", adhd.text.lower())
+        self.assertIn("not a medical conclusion", adhd.text.lower())
+        self.assertNotIn("uranus_sq_", "".join(ids))
+
+    def test_no_accidental_other_golden_packs(self):
+        all_facts = (
+            self.profile.sign_facts
+            + self.profile.house_facts
+            + self.profile.motion_facts
+            + self.profile.aspect_facts
+        )
+        ids = _ids(all_facts)
+        self.assertFalse(any(item_id.startswith("leo_") for item_id in ids))
+        self.assertFalse(any(item_id.startswith("taurus_") for item_id in ids))
+        self.assertFalse(any(item_id.startswith("h1_") for item_id in ids))
+        self.assertFalse(any(item_id.startswith("h9_") for item_id in ids))
+        self.assertFalse(any(item_id.startswith("rx_") for item_id in ids))
+        self.assertFalse(any(item_id.startswith("pluto_sq_") for item_id in ids))
+        self.assertFalse(any(item_id.startswith("saturn_tr_") for item_id in ids))
+        self.assertFalse(any(item_id.startswith("moon_") for item_id in ids))
+
+    def test_coverage_complete(self):
+        self.assertEqual(self.profile.coverage.status, "complete")
+        self.assertEqual(self.profile.coverage.missing_factors, [])
+        self.assertIn("sign:Sagittarius", self.profile.coverage.covered_factors)
+        self.assertIn("house:10", self.profile.coverage.covered_factors)
+        self.assertIn("aspect:sextile_Mars", self.profile.coverage.covered_factors)
+        self.assertIn("aspect:sextile_Jupiter", self.profile.coverage.covered_factors)
+        self.assertIn("aspect:conjunction_Uranus", self.profile.coverage.covered_factors)
+
+    def test_repeated_signals_strict_and_provenance(self):
+        persuasion = _signal(self.profile, "persuasion")
+        self.assertIsNotNone(persuasion)
+        self.assertIn("aspect:sextile_Mars", persuasion.sources)
+        self.assertIn("aspect:sextile_Jupiter", persuasion.sources)
+        self.assertIn("aspect:conjunction_Uranus", persuasion.sources)
+
+        teaching = _signal(self.profile, "teaching")
+        self.assertIsNotNone(teaching)
+        self.assertIn("sign:Sagittarius", teaching.sources)
+        self.assertIn("aspect:sextile_Jupiter", teaching.sources)
+
+        nonstandard = _signal(self.profile, "nonstandard_thinking")
+        self.assertIsNotNone(nonstandard)
+        self.assertIn("sign:Sagittarius", nonstandard.sources)
+        self.assertIn("aspect:conjunction_Uranus", nonstandard.sources)
+
+        # Fast speech must not create fake fast_thinking with Uranus.
+        fast = _signal(self.profile, "fast_thinking")
+        if fast is not None:
+            self.assertNotIn("aspect:conjunction_Uranus", fast.sources)
+
+        for signal in self.profile.repeated_signals:
+            for source in signal.sources:
+                self.assertRegex(source, r"^(sign|house|motion|aspect):")
+
+
 if __name__ == "__main__":
     unittest.main()
