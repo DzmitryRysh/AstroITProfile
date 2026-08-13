@@ -16,6 +16,9 @@ Sign Batch A3 dual-source packs (Lesson 7 + Bioastrology):
 
 Leo has Lesson 7 + Bioastrology.
 Taurus / Sagittarius have Lesson 7 + Bioastrology (dual-source parity complete).
+
+House Batch B1 (Lesson 7 only):
+- Houses 2, 3, 4
 """
 
 from __future__ import annotations
@@ -1591,7 +1594,7 @@ SUPPORTED_SIGN_KEYS = {
     "Aquarius",
     "Pisces",
 }
-SUPPORTED_HOUSE_KEYS = {"1", "9", "10"}
+SUPPORTED_HOUSE_KEYS = {"1", "2", "3", "4", "9", "10"}
 SUPPORTED_MOTION_KEYS = {"retrograde"}
 SUPPORTED_ASPECT_KEYS = {
     "square_Pluto",
@@ -1604,7 +1607,7 @@ SUPPORTED_ASPECT_KEYS = {
     "conjunction_Uranus",
 }
 
-# Late import: A1/A2/A3 packs avoid circular imports via local SourceFactDef/_f.
+# Late import: A1/A2/A3/B1 packs avoid circular imports via local SourceFactDef/_f.
 from app.services.mercury_source_knowledge_a1_signs import (  # noqa: E402
     A1_SIGN_PACKS,
     ARIES_ALL,
@@ -1622,6 +1625,12 @@ from app.services.mercury_source_knowledge_a3_signs import (  # noqa: E402
     AQUARIUS_ALL,
     CAPRICORN_ALL,
     PISCES_ALL,
+)
+from app.services.mercury_source_knowledge_b1_houses import (  # noqa: E402
+    B1_HOUSE_PACKS,
+    HOUSE_2,
+    HOUSE_3,
+    HOUSE_4,
 )
 
 ALL_SOURCE_FACTS: tuple[SourceFactDef, ...] = (
@@ -1648,6 +1657,7 @@ ALL_SOURCE_FACTS: tuple[SourceFactDef, ...] = (
     + A1_SIGN_PACKS
     + A2_SIGN_PACKS
     + A3_SIGN_PACKS
+    + B1_HOUSE_PACKS
 )
 
 # Repeated-signal definitions: SAME tag across distinct provenance keys only.

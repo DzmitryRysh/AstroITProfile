@@ -326,23 +326,23 @@ class AvdeyGoldenCaseTests(unittest.TestCase):
         self.assertEqual(self.profile.coverage.missing_factors, [])
 
     def test_unsupported_factor_returns_partial_coverage(self):
-        """After full sign coverage, exercise missing packs via house/aspect."""
+        """After B1 house coverage, exercise missing packs via house 5 / aspect."""
         factors = MercurySourceFactors(
             birth_time_known=True,
             mercury_sign="Leo",
             mercury_element="fire",
             mercury_motion="direct",
-            mercury_house=3,
+            mercury_house=5,
             aspects=[MercuryAspect(planet="Mars", type="square", orb_deg=2.0)],
         )
         profile = build_source_profile_from_factors(factors)
         self.assertEqual(profile.coverage.status, "partial")
         self.assertNotIn("sign:Leo", profile.coverage.missing_factors)
-        self.assertIn("house:3", profile.coverage.missing_factors)
+        self.assertIn("house:5", profile.coverage.missing_factors)
         self.assertIn("aspect:square_Mars", profile.coverage.missing_factors)
         self.assertNotIn("motion:direct", profile.coverage.missing_factors)
         self.assertGreater(len(profile.sign_facts), 0)
-        self.assertTrue(any("house 3" in item for item in profile.limitations))
+        self.assertTrue(any("house 5" in item for item in profile.limitations))
         self.assertTrue(any("square Mars" in item for item in profile.limitations))
 
     def test_route_registered(self):
