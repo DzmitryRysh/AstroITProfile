@@ -65,6 +65,7 @@ class RecruiterPrototypeRouteTests(unittest.TestCase):
         paths = {getattr(route, "path", None) for route in self.app.routes}
         self.assertIn("/api/v1/profile", paths)
         self.assertIn("/api/v1/mercury-work-profile", paths)
+        self.assertIn("/api/v1/mercury-source-profile", paths)
         self.assertIn("/api/v1/candidate-compare", paths)
         self.assertIn("/api/v1/team-map", paths)
         self.assertIn("/api/v1/team-gap", paths)
@@ -92,9 +93,79 @@ class RecruiterUxPolishTests(unittest.TestCase):
         self.assertIn("setup-drawer", self.html)
 
     def test_workspace_empty_state_exists(self):
-        self.assertIn("Build a team intelligence view", self.html)
+        self.assertIn("Explore Yourself", self.html)
+        self.assertIn("Understand how you think, communicate and learn", self.html)
         self.assertIn("Load Demo Scenario", self.html)
         self.assertIn("Set Up Team", self.html)
+
+    def test_explore_yourself_entry_and_self_profile_input(self):
+        self.assertIn('id="explore-yourself"', self.html)
+        self.assertIn('id="self-overlay"', self.html)
+        self.assertIn('id="self-drawer"', self.html)
+        self.assertIn('id="build-my-profile"', self.html)
+        self.assertIn("Build My Profile", self.html)
+        self.assertIn('id="self-birth-date"', self.html)
+        self.assertIn('id="self-birth-place"', self.html)
+        self.assertIn('list="places-list"', self.html.split('id="self-birth-place"', 1)[1].split(">", 1)[0])
+        self.assertIn('data-self-demo="avdey"', self.html)
+        self.assertIn('data-self-demo="vlad"', self.html)
+        self.assertIn('data-self-demo="dzmitry"', self.html)
+        self.assertIn("Back to Start", self.html)
+        self.assertIn("Build a Team", self.html)
+
+    def test_self_profile_calls_mercury_source_profile_endpoint(self):
+        self.assertIn('/api/v1/mercury-source-profile', self.js)
+        self.assertIn("buildMyProfile", self.js)
+        self.assertIn("renderSelfProfile", self.js)
+        self.assertIn("What repeats in your profile", self.js)
+        self.assertIn("Source layers", self.js)
+        self.assertIn("Tensions in the profile", self.js)
+        self.assertIn("Why AstroIT shows this", self.js)
+        self.assertIn("Source-Specific Claims", self.js)
+        self.assertIn("Risks / Possible Difficulties", self.js)
+        self.assertIn("fact-risk", self.js)
+        self.assertIn("motion-rx", self.js)
+        self.assertIn("Retrograde", self.js)
+        # Presentation only — preserve source wording; no euphemism layer.
+        self.assertIn("escapeHtml(fact.text)", self.js)
+        self.assertNotIn("communication challenge", self.js.lower())
+        self.assertNotIn("confidence risk", self.js.lower())
+        self.assertNotIn("red flags", self.js.lower())
+        self.assertNotIn("inferTeamFunction", self.js)
+        self.assertNotIn("hardcodedProfile", self.js)
+
+    def test_self_mode_title_and_presentation_hierarchy(self):
+        self.assertIn('SELF_BRAND_TITLE = "Your Mercury Profile"', self.js)
+        self.assertIn('DEFAULT_BRAND_TITLE = "Team Intelligence"', self.js)
+        self.assertIn("setBrandTitleMode", self.js)
+        self.assertIn('setBrandTitleMode("self")', self.js)
+        self.assertIn("Team Intelligence", self.html)
+        # Fact-count status is not the primary hierarchy; technical meta holds the count.
+        self.assertNotIn("Source profile ready ·", self.js)
+        self.assertIn("self-tech-meta", self.js)
+        self.assertIn("active source facts", self.js)
+        # Repeated Why collapsed by default (no open attribute on signal-why).
+        self.assertIn('class="signal-why"', self.js)
+        self.assertNotIn('class="signal-why" open', self.js)
+        self.assertNotIn("<details class=\"signal-why\" open", self.js)
+        # Factor accordions: first open, later closed.
+        self.assertIn('class="factor-card"', self.js)
+        self.assertIn('const openAttr = index === 0 ? " open" : ""', self.js)
+        self.assertIn("source statements", self.js)
+        self.assertIn("contributing factors", self.js)
+        self.assertNotIn("independent signals", self.js)
+        self.assertIn("compactProvenanceLabel", self.js)
+        self.assertIn("factor-summary-meta", self.js)
+        # Compact fact rows, quieter risks, collapsed source-specific + traceability.
+        self.assertIn("fact-bullet", self.js)
+        self.assertIn("risk-mark", self.js)
+        self.assertIn('class="source-specific-block"', self.js)
+        self.assertNotIn('class="source-specific-block" open', self.js)
+        self.assertIn('class="trace-details"', self.js)
+        self.assertNotIn('class="trace-details" open', self.js)
+        self.assertIn("contrast-sources", self.js)
+        # Team Intelligence product title remains the default HTML heading.
+        self.assertIn('<h1 class="brand-title">Team Intelligence</h1>', self.html)
 
     def test_edit_team_data_action_exists(self):
         self.assertIn("Edit Team Data", self.html)
@@ -145,10 +216,16 @@ class RecruiterUxPolishTests(unittest.TestCase):
 
     def test_no_astrology_engine_terms_in_main_workspace(self):
         workspace_html = self.html.split("id=\"workspace\"", 1)[1].split("id=\"setup-overlay\"", 1)[0].lower()
-        empty_html = self.html.split("id=\"empty-state\"", 1)[1].split("id=\"workspace\"", 1)[0].lower()
+        empty_html = self.html.split("id=\"empty-state\"", 1)[1].split("id=\"self-profile\"", 1)[0].lower()
         for term in ("mercury", "zodiac", "aspect", "dispositor", "retrograde", "longitude", "house"):
             self.assertNotIn(term, workspace_html, term)
             self.assertNotIn(term, empty_html, term)
+        # Self-exploration may show calculated Mercury factor names; keep it outside empty/workspace shells.
+        self.assertIn('id="self-profile"', self.html)
+        self.assertLess(self.html.find('id="empty-state"'), self.html.find('id="self-profile"'))
+        self.assertLess(self.html.find('id="self-profile"'), self.html.find('id="workspace"'))
+        self.assertIn("Mercury in", self.js)
+        self.assertIn("formatAspectChip", self.js)
 
     def test_workspace_header_is_single_compact_context(self):
         self.assertIn('id="workspace-context"', self.html)

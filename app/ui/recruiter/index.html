@@ -31,20 +31,30 @@
 
   <main id="main" class="layout">
     <section id="empty-state" class="panel empty-state" aria-labelledby="empty-heading">
-      <p class="eyebrow">Team Intelligence</p>
-      <h2 id="empty-heading">Build a team intelligence view</h2>
+      <p class="eyebrow">AstroIT</p>
+      <h2 id="empty-heading">Understand how you think, communicate and learn</h2>
       <p class="empty-copy">
-        Understand how a shortlisted candidate changes
-        the functional structure of an existing technical team.
+        then see how different thinking styles interact inside a team.
       </p>
       <div class="actions">
-        <button type="button" id="load-demo-empty" class="btn btn-primary">Load Demo Scenario</button>
+        <button type="button" id="explore-yourself" class="btn btn-primary">Explore Yourself</button>
         <button type="button" id="setup-team" class="btn btn-secondary">Set Up Team</button>
+        <button type="button" id="load-demo-empty" class="btn btn-ghost">Load Demo Scenario</button>
         <button type="button" id="saved-workspaces-empty" class="btn btn-ghost">Saved Workspaces</button>
       </div>
       <p class="empty-note">
         Profiles support team discussion and do not replace technical assessment.
       </p>
+    </section>
+
+    <section id="self-profile" class="self-profile" hidden aria-labelledby="self-profile-heading">
+      <div class="self-profile-nav actions">
+        <button type="button" id="self-back-start" class="btn btn-ghost">Back to Start</button>
+        <button type="button" id="self-build-team" class="btn btn-secondary">Build a Team</button>
+      </div>
+      <h2 id="self-profile-heading" class="visually-hidden">Your source-backed profile</h2>
+      <div id="self-profile-status" class="status-line" role="status" aria-live="polite"></div>
+      <div id="self-profile-content"></div>
     </section>
 
     <section id="workspace" class="workspace" hidden>
@@ -141,6 +151,57 @@
       <div class="setup-footer">
         <button type="button" class="btn btn-secondary" data-close-setup>Cancel</button>
         <button type="button" id="apply-analyze" class="btn btn-primary">Apply &amp; Analyze</button>
+      </div>
+    </aside>
+  </div>
+
+  <div id="self-overlay" class="setup-overlay" hidden>
+    <div class="setup-backdrop" data-close-self tabindex="-1"></div>
+    <aside
+      id="self-drawer"
+      class="setup-drawer"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="self-heading"
+      hidden
+    >
+      <div class="setup-drawer-head">
+        <div>
+          <p class="eyebrow">Self Exploration</p>
+          <h2 id="self-heading">Explore Yourself</h2>
+        </div>
+        <button type="button" class="btn btn-ghost" data-close-self>Close</button>
+      </div>
+      <div class="setup-body">
+        <div class="setup-grid">
+          <label class="field">
+            <span>Name (optional)</span>
+            <input id="self-name" type="text" autocomplete="name" />
+          </label>
+          <label class="field">
+            <span>Birth Date</span>
+            <input id="self-birth-date" type="date" required />
+          </label>
+          <label class="field">
+            <span>Birth Time (optional)</span>
+            <input id="self-birth-time" type="time" />
+          </label>
+          <label class="field">
+            <span>Birth Place</span>
+            <input id="self-birth-place" type="text" list="places-list" required />
+          </label>
+        </div>
+        <div class="demo-fills" aria-label="Prototype quick fills">
+          <span class="demo-fills-label">Quick fill</span>
+          <button type="button" class="btn btn-ghost" data-self-demo="avdey">Avdey</button>
+          <button type="button" class="btn btn-ghost" data-self-demo="vlad">Vlad</button>
+          <button type="button" class="btn btn-ghost" data-self-demo="dzmitry">Dzmitry</button>
+        </div>
+        <p id="self-setup-status" class="status-line" role="status" aria-live="polite"></p>
+      </div>
+      <div class="setup-footer">
+        <button type="button" class="btn btn-secondary" data-close-self>Cancel</button>
+        <button type="button" id="build-my-profile" class="btn btn-primary">Build My Profile</button>
       </div>
     </aside>
   </div>
