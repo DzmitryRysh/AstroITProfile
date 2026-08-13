@@ -167,6 +167,26 @@ class RecruiterUxPolishTests(unittest.TestCase):
         # Team Intelligence product title remains the default HTML heading.
         self.assertIn('<h1 class="brand-title">Team Intelligence</h1>', self.html)
 
+    def test_self_profile_partial_coverage_shows_calculated_factors(self):
+        self.assertIn("factor-unsupported", self.js)
+        self.assertIn("Source interpretation not yet available in this prototype.", self.js)
+        self.assertIn("Not yet available", self.js)
+        self.assertIn("Source coverage: partial", self.js)
+        self.assertIn("House not calculated — birth time required.", self.js)
+        self.assertIn("self-house-note", self.js)
+        self.assertIn("self-coverage-meta", self.js)
+        # Calculated factors drive layer list, not only active source packs.
+        self.assertIn("calc.mercury_sign", self.js)
+        self.assertIn("calc.birth_time_known", self.js)
+        self.assertIn('motion.toLowerCase() !== "direct"', self.js)
+        # No invented interpretation for unsupported packs.
+        self.assertNotIn("inventedInterpretation", self.js)
+        self.assertNotIn("guessSourceText", self.js)
+        # Supported factors still render statement counts / full texts.
+        self.assertIn("source statements", self.js)
+        self.assertIn("escapeHtml(fact.text)", self.js)
+        self.assertIn("factor-unsupported", self.css)
+
     def test_edit_team_data_action_exists(self):
         self.assertIn("Edit Team Data", self.html)
         self.assertIn("Apply &amp; Analyze", self.html)

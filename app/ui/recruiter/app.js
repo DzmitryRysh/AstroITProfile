@@ -328,29 +328,38 @@
   }
 
   function collectFactsByFactor(profile) {
+    const calc = profile.calculated || {};
     const layers = [];
-    const signFacts = profile.sign_facts || [];
-    if (signFacts.length) {
+
+    if (calc.mercury_sign) {
+      const signFacts = profile.sign_facts || [];
       layers.push({
         factor_type: "sign",
-        factor_key: signFacts[0].factor_key,
+        factor_key: calc.mercury_sign,
         facts: signFacts,
+        supported: signFacts.length > 0,
       });
     }
-    const houseFacts = profile.house_facts || [];
-    if (houseFacts.length) {
+
+    if (calc.birth_time_known && calc.mercury_house != null && calc.mercury_house !== "") {
+      const houseFacts = profile.house_facts || [];
       layers.push({
         factor_type: "house",
-        factor_key: houseFacts[0].factor_key,
+        factor_key: String(calc.mercury_house),
         facts: houseFacts,
+        supported: houseFacts.length > 0,
       });
     }
-    const motionFacts = profile.motion_facts || [];
-    if (motionFacts.length) {
+
+    const motion = calc.mercury_motion ? String(calc.mercury_motion) : "";
+    // Direct is the neutral calculated default — not an unsupported source pack.
+    if (motion && motion.toLowerCase() !== "direct") {
+      const motionFacts = profile.motion_facts || [];
       layers.push({
         factor_type: "motion",
-        factor_key: motionFacts[0].factor_key,
+        factor_key: motion,
         facts: motionFacts,
+        supported: motionFacts.length > 0,
       });
     }
 
@@ -361,20 +370,14 @@
       byKey.get(fact.factor_key).push(fact);
     });
 
-    const orderedKeys = [];
-    (profile.calculated?.aspects || []).forEach((aspect) => {
+    (calc.aspects || []).forEach((aspect) => {
       const key = `${aspect.type}_${aspect.planet}`;
-      if (byKey.has(key) && !orderedKeys.includes(key)) orderedKeys.push(key);
-    });
-    byKey.forEach((_facts, key) => {
-      if (!orderedKeys.includes(key)) orderedKeys.push(key);
-    });
-
-    orderedKeys.forEach((key) => {
+      const facts = byKey.get(key) || [];
       layers.push({
         factor_type: "aspect",
         factor_key: key,
-        facts: byKey.get(key) || [],
+        facts,
+        supported: facts.length > 0,
       });
     });
 
@@ -470,24 +473,54 @@
   }
 
   function renderSourceLayers(profile) {
+    const calc = profile.calculated || {};
     const layers = collectFactsByFactor(profile);
+    const coverageStatus = profile.coverage && profile.coverage.status;
+    const coverageHtml = coverageStatus === "partial"
+      ? `<p class="self-coverage-meta">Source coverage: partial</p>`
+      : "";
+    const houseNote = calc.birth_time_known
+      ? ""
+      : `<p class="self-house-note">House not calculated — birth time required.</p>`;
+
     if (!layers.length) {
-      return `<section class="panel"><div class="panel-head"><h2>Source layers</h2></div><p class="meta">No source layers activated.</p></section>`;
+      return `<section class="panel">
+        <div class="panel-head"><h2>Source layers</h2></div>
+        ${coverageHtml}
+        ${houseNote}
+        <p class="meta">No calculated Mercury factors to display.</p>
+      </section>`;
     }
+
     const cards = layers.map((layer, index) => {
       const openAttr = index === 0 ? " open" : "";
+      const title = factorCardTitle(layer.factor_type, layer.factor_key);
+      if (!layer.supported) {
+        return `<details class="factor-card factor-unsupported"${openAttr}>
+          <summary>
+            <span class="factor-summary-main">${escapeHtml(title)}</span>
+            <span class="factor-summary-meta">Not yet available</span>
+          </summary>
+          <div class="factor-body">
+            <p class="factor-unavailable">Source interpretation not yet available in this prototype.</p>
+          </div>
+        </details>`;
+      }
       const count = layer.facts.length;
       const countLabel = count === 1 ? "1 source statement" : `${count} source statements`;
       return `<details class="factor-card"${openAttr}>
         <summary>
-          <span class="factor-summary-main">${escapeHtml(factorCardTitle(layer.factor_type, layer.factor_key))}</span>
+          <span class="factor-summary-main">${escapeHtml(title)}</span>
           <span class="factor-summary-meta">${escapeHtml(countLabel)}</span>
         </summary>
         <div class="factor-body">${renderFactGroups(layer.facts)}</div>
       </details>`;
     }).join("");
+
     return `<section class="panel">
       <div class="panel-head"><h2>Source layers</h2></div>
+      ${coverageHtml}
+      ${houseNote}
       ${cards}
     </section>`;
   }

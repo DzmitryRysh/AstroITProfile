@@ -967,6 +967,27 @@ details.more-details > summary::-webkit-details-marker {
   border-bottom: 1px solid var(--border);
 }
 
+.factor-card.factor-unsupported {
+  opacity: 0.92;
+}
+
+.factor-card.factor-unsupported > summary {
+  background: var(--bg);
+}
+
+.factor-unavailable {
+  margin: 0;
+  color: var(--text-faint);
+  font-size: 0.9rem;
+}
+
+.self-coverage-meta,
+.self-house-note {
+  margin: 0 0 0.65rem;
+  color: var(--text-faint);
+  font-size: 0.82rem;
+}
+
 .factor-body {
   padding: 0.7rem 1rem 0.9rem;
   display: grid;
