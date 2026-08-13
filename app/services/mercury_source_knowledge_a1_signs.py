@@ -456,7 +456,7 @@ GEMINI_BIOASTROLOGY: tuple[SourceFactDef, ...] = (
        source_reference=REF_GEMINI_BIO),
     _f("gemini_bio_driving_ability", "sign", "Gemini", "work_application",
        "Driving ability/potential (source-described tendency).",
-       "strength", "driving",
+       "strength", "driving_ability",
        source_reference=REF_GEMINI_BIO),
     _f("gemini_bio_foreign_language_polyglot", "sign", "Gemini", "learning",
        "Foreign-language / polyglot potential (source-described tendency).",
