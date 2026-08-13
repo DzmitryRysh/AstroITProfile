@@ -78,18 +78,20 @@ def _match_definitions(
     return selected
 
 
+def _provenance_key(fact: SourceFact) -> str:
+    return f"{fact.factor_type}:{fact.factor_key}"
+
+
 def detect_repeated_signals(facts: list[SourceFact]) -> list[RepeatedSignal]:
     active = [item for item in facts if item.activated and not item.unresolved]
     signals: list[RepeatedSignal] = []
 
     for spec in REPEATED_SIGNAL_SPECS:
-        tags = {spec["tag"]}
-        if spec.get("also_accept_tag"):
-            tags.add(spec["also_accept_tag"])
+        tag = spec["tag"]
         by_factor: dict[str, list[SourceFact]] = defaultdict(list)
         for fact in active:
-            if tags.intersection(fact.tags):
-                by_factor[fact.factor_key].append(fact)
+            if tag in fact.tags:
+                by_factor[_provenance_key(fact)].append(fact)
         if len(by_factor) < int(spec["min_factor_keys"]):
             continue
         sources = sorted(by_factor.keys())
@@ -147,8 +149,8 @@ def _coverage_for(factors: MercurySourceFactors) -> SourceCoverage:
         if factors.mercury_motion in SUPPORTED_MOTION_KEYS:
             covered.append(key)
         elif factors.mercury_motion == "direct":
-            # Direct motion has no dedicated source pack in v2; mark explicit gap.
-            missing.append(key)
+            # Direct is the neutral default calculated state, not a missing source pack.
+            pass
         else:
             missing.append(key)
 
