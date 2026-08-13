@@ -252,8 +252,9 @@ class SignBatchA3MilkaAndRegressionTests(unittest.TestCase):
         self.assertEqual(profile.coverage.status, "partial")
         self.assertIn("sign:Cancer", profile.coverage.covered_factors)
         self.assertIn("aspect:square_Pluto", profile.coverage.covered_factors)
-        self.assertIn("house:5", profile.coverage.missing_factors)
-        self.assertIn("aspect:trine_Uranus", profile.coverage.missing_factors)
+        self.assertIn("house:5", profile.coverage.covered_factors)
+        self.assertNotIn("house:5", profile.coverage.missing_factors)
+        self.assertEqual(profile.coverage.missing_factors, ["aspect:trine_Uranus"])
         self.assertFalse(
             any(item.factor_key == "trine_Uranus" for item in profile.aspect_facts)
         )

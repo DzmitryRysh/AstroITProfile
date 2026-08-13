@@ -19,6 +19,9 @@ Taurus / Sagittarius have Lesson 7 + Bioastrology (dual-source parity complete).
 
 House Batch B1 (Lesson 7 only):
 - Houses 2, 3, 4
+
+House Batch B2 (Lesson 7 only):
+- Houses 5, 6, 7
 """
 
 from __future__ import annotations
@@ -1594,7 +1597,7 @@ SUPPORTED_SIGN_KEYS = {
     "Aquarius",
     "Pisces",
 }
-SUPPORTED_HOUSE_KEYS = {"1", "2", "3", "4", "9", "10"}
+SUPPORTED_HOUSE_KEYS = {"1", "2", "3", "4", "5", "6", "7", "9", "10"}
 SUPPORTED_MOTION_KEYS = {"retrograde"}
 SUPPORTED_ASPECT_KEYS = {
     "square_Pluto",
@@ -1632,6 +1635,12 @@ from app.services.mercury_source_knowledge_b1_houses import (  # noqa: E402
     HOUSE_3,
     HOUSE_4,
 )
+from app.services.mercury_source_knowledge_b2_houses import (  # noqa: E402
+    B2_HOUSE_PACKS,
+    HOUSE_5,
+    HOUSE_6,
+    HOUSE_7,
+)
 
 ALL_SOURCE_FACTS: tuple[SourceFactDef, ...] = (
     LEO_LESSON7
@@ -1658,6 +1667,7 @@ ALL_SOURCE_FACTS: tuple[SourceFactDef, ...] = (
     + A2_SIGN_PACKS
     + A3_SIGN_PACKS
     + B1_HOUSE_PACKS
+    + B2_HOUSE_PACKS
 )
 
 # Repeated-signal definitions: SAME tag across distinct provenance keys only.

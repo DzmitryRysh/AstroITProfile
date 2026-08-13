@@ -39,9 +39,11 @@ def _house_keys_with_facts() -> set[str]:
 
 class HouseBatchB1CoverageTests(unittest.TestCase):
     def test_houses_2_3_4_supported(self):
-        self.assertEqual(SUPPORTED_HOUSE_KEYS, {"1", "2", "3", "4", "9", "10"})
-        self.assertEqual(_house_keys_with_facts(), {"1", "2", "3", "4", "9", "10"})
-        self.assertEqual(len(SUPPORTED_HOUSE_KEYS), 6)
+        # Historical B1 subset guarantee: later batches may expand the set.
+        self.assertTrue(
+            {"1", "2", "3", "4", "9", "10"}.issubset(SUPPORTED_HOUSE_KEYS)
+        )
+        self.assertTrue({"2", "3", "4"}.issubset(_house_keys_with_facts()))
 
     def test_b1_source_references_and_counts(self):
         self.assertEqual(len(HOUSE_2), 20)
@@ -197,7 +199,7 @@ class HouseBatchB1RegressionTests(unittest.TestCase):
                 self.assertEqual(profile.coverage.status, "complete")
                 self.assertEqual(profile.coverage.missing_factors, [])
 
-    def test_andrey_still_partial_for_house_5_and_trine_uranus(self):
+    def test_andrey_still_partial_for_trine_uranus_only(self):
         profile = build_source_profile_from_factors(
             MercurySourceFactors(
                 birth_time_known=True,
@@ -212,9 +214,10 @@ class HouseBatchB1RegressionTests(unittest.TestCase):
             )
         )
         self.assertEqual(profile.coverage.status, "partial")
-        self.assertIn("house:5", profile.coverage.missing_factors)
-        self.assertIn("aspect:trine_Uranus", profile.coverage.missing_factors)
-        self.assertEqual(len(profile.house_facts), 0)
+        self.assertIn("house:5", profile.coverage.covered_factors)
+        self.assertNotIn("house:5", profile.coverage.missing_factors)
+        self.assertEqual(profile.coverage.missing_factors, ["aspect:trine_Uranus"])
+        self.assertGreater(len(profile.house_facts), 0)
 
     def test_unknown_birth_time_house_is_calculation_limitation(self):
         profile = build_mercury_source_profile(

@@ -335,8 +335,9 @@ class ParityRegressionTests(unittest.TestCase):
             )
         )
         self.assertEqual(profile.coverage.status, "partial")
-        self.assertIn("house:5", profile.coverage.missing_factors)
-        self.assertIn("aspect:trine_Uranus", profile.coverage.missing_factors)
+        self.assertIn("house:5", profile.coverage.covered_factors)
+        self.assertNotIn("house:5", profile.coverage.missing_factors)
+        self.assertEqual(profile.coverage.missing_factors, ["aspect:trine_Uranus"])
 
     def test_milka_like_still_complete(self):
         profile = build_source_profile_from_factors(
