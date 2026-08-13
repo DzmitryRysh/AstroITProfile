@@ -10,6 +10,9 @@ Sign Batch A1 dual-source packs (Lesson 7 + Bioastrology):
 
 Sign Batch A2 dual-source packs (Lesson 7 + Bioastrology):
 - Virgo, Libra, Scorpio
+
+Sign Batch A3 dual-source packs (Lesson 7 + Bioastrology):
+- Capricorn, Aquarius, Pisces
 """
 
 from __future__ import annotations
@@ -1227,6 +1230,9 @@ SUPPORTED_SIGN_KEYS = {
     "Libra",
     "Scorpio",
     "Sagittarius",
+    "Capricorn",
+    "Aquarius",
+    "Pisces",
 }
 SUPPORTED_HOUSE_KEYS = {"1", "9", "10"}
 SUPPORTED_MOTION_KEYS = {"retrograde"}
@@ -1241,7 +1247,7 @@ SUPPORTED_ASPECT_KEYS = {
     "conjunction_Uranus",
 }
 
-# Late import: A1/A2 packs avoid circular imports via local SourceFactDef/_f.
+# Late import: A1/A2/A3 packs avoid circular imports via local SourceFactDef/_f.
 from app.services.mercury_source_knowledge_a1_signs import (  # noqa: E402
     A1_SIGN_PACKS,
     ARIES_ALL,
@@ -1253,6 +1259,12 @@ from app.services.mercury_source_knowledge_a2_signs import (  # noqa: E402
     LIBRA_ALL,
     SCORPIO_ALL,
     VIRGO_ALL,
+)
+from app.services.mercury_source_knowledge_a3_signs import (  # noqa: E402
+    A3_SIGN_PACKS,
+    AQUARIUS_ALL,
+    CAPRICORN_ALL,
+    PISCES_ALL,
 )
 
 ALL_SOURCE_FACTS: tuple[SourceFactDef, ...] = (
@@ -1273,6 +1285,7 @@ ALL_SOURCE_FACTS: tuple[SourceFactDef, ...] = (
     + URANUS_CONJUNCTION
     + A1_SIGN_PACKS
     + A2_SIGN_PACKS
+    + A3_SIGN_PACKS
 )
 
 # Repeated-signal definitions: SAME tag across distinct provenance keys only.

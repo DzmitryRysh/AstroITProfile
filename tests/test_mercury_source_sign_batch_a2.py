@@ -41,8 +41,7 @@ def _ids(facts) -> set[str]:
 
 class SignBatchA2CatalogTests(unittest.TestCase):
     def test_supported_signs_cover_nine(self):
-        self.assertEqual(
-            SUPPORTED_SIGN_KEYS,
+        self.assertTrue(
             {
                 "Aries",
                 "Taurus",
@@ -53,9 +52,9 @@ class SignBatchA2CatalogTests(unittest.TestCase):
                 "Libra",
                 "Scorpio",
                 "Sagittarius",
-            },
+            }.issubset(SUPPORTED_SIGN_KEYS)
         )
-        self.assertEqual(len(SUPPORTED_SIGN_KEYS), 9)
+        self.assertGreaterEqual(len(SUPPORTED_SIGN_KEYS), 9)
 
     def test_all_ids_unique(self):
         ids = [item.id for item in ALL_SOURCE_FACTS]
