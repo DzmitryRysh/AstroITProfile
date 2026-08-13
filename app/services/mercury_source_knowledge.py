@@ -4,6 +4,9 @@ v2 coverage includes golden cases:
 - Avdey: Leo, House 1, Retrograde, square Pluto, trine Saturn, sextile Moon
 - Vlad: Taurus, House 9, square Moon, trine Mars, sextile Jupiter
 - Dzmitry: Sagittarius, House 10, sextile Mars, sextile Jupiter, conjunction Uranus
+
+Sign Batch A1 dual-source packs (Lesson 7 + Bioastrology):
+- Aries, Gemini, Cancer
 """
 
 from __future__ import annotations
@@ -1211,7 +1214,7 @@ ASPECT_PACK_ALIASES: dict[str, str] = {
     "sextile_Mars": "trine_Mars",
 }
 
-SUPPORTED_SIGN_KEYS = {"Leo", "Taurus", "Sagittarius"}
+SUPPORTED_SIGN_KEYS = {"Aries", "Taurus", "Gemini", "Cancer", "Leo", "Sagittarius"}
 SUPPORTED_HOUSE_KEYS = {"1", "9", "10"}
 SUPPORTED_MOTION_KEYS = {"retrograde"}
 SUPPORTED_ASPECT_KEYS = {
@@ -1224,6 +1227,14 @@ SUPPORTED_ASPECT_KEYS = {
     "sextile_Jupiter",
     "conjunction_Uranus",
 }
+
+# Late import: A1 packs depend on SourceFactDef/_f defined above.
+from app.services.mercury_source_knowledge_a1_signs import (  # noqa: E402
+    A1_SIGN_PACKS,
+    ARIES_ALL,
+    CANCER_ALL,
+    GEMINI_ALL,
+)
 
 ALL_SOURCE_FACTS: tuple[SourceFactDef, ...] = (
     LEO_GENERAL
@@ -1241,6 +1252,7 @@ ALL_SOURCE_FACTS: tuple[SourceFactDef, ...] = (
     + SAGITTARIUS_GENERAL
     + HOUSE_10
     + URANUS_CONJUNCTION
+    + A1_SIGN_PACKS
 )
 
 # Repeated-signal definitions: SAME tag across distinct provenance keys only.
