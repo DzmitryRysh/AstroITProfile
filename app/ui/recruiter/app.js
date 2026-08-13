@@ -9,6 +9,13 @@
   const setupDrawer = document.getElementById("setup-drawer");
   const emptyState = document.getElementById("empty-state");
   const workspace = document.getElementById("workspace");
+  const selfProfile = document.getElementById("self-profile");
+  const selfProfileContent = document.getElementById("self-profile-content");
+  const selfProfileStatus = document.getElementById("self-profile-status");
+  const selfOverlay = document.getElementById("self-overlay");
+  const selfDrawer = document.getElementById("self-drawer");
+  const selfSetupStatus = document.getElementById("self-setup-status");
+  const brandTitle = document.querySelector(".brand-title");
   const headerActions = document.getElementById("header-actions");
   const workspaceContext = document.getElementById("workspace-context");
   const impactSection = document.getElementById("impact-section");
@@ -19,6 +26,8 @@
   const workspacesList = document.getElementById("workspaces-list");
   const workspacesStatus = document.getElementById("workspaces-status");
   const workspaceSaveStatus = document.getElementById("workspace-save-status");
+  const DEFAULT_BRAND_TITLE = "Team Intelligence";
+  const SELF_BRAND_TITLE = "Your Mercury Profile";
 
   let memberSeq = 1;
   let candidateSeq = 1;
@@ -134,11 +143,508 @@
     document.body.style.overflow = "";
   }
 
+  function setBrandTitleMode(mode) {
+    if (!brandTitle) return;
+    brandTitle.textContent = mode === "self" ? SELF_BRAND_TITLE : DEFAULT_BRAND_TITLE;
+  }
+
   function showWorkspaceShell() {
     emptyState.hidden = true;
+    if (selfProfile) selfProfile.hidden = true;
     workspace.hidden = false;
     headerActions.hidden = false;
     workspaceContext.hidden = false;
+    setBrandTitleMode("team");
+  }
+
+  function showEmptyShell() {
+    if (selfProfile) selfProfile.hidden = true;
+    workspace.hidden = true;
+    headerActions.hidden = true;
+    workspaceContext.hidden = true;
+    emptyState.hidden = false;
+    setBrandTitleMode("team");
+  }
+
+  function showSelfProfileShell() {
+    emptyState.hidden = true;
+    workspace.hidden = true;
+    headerActions.hidden = true;
+    workspaceContext.hidden = true;
+    selfProfile.hidden = false;
+    setBrandTitleMode("self");
+  }
+
+  const SELF_DEMOS = {
+    avdey: {
+      display_name: "Avdey",
+      birth_date: "1986-07-14",
+      birth_time: "07:10",
+      birth_place: "Simferopol, Ukraine",
+    },
+    vlad: {
+      display_name: "Vlad",
+      birth_date: "1986-05-16",
+      birth_time: "15:00",
+      birth_place: "Dnipro, Ukraine",
+    },
+    dzmitry: {
+      display_name: "Dzmitry",
+      birth_date: "1985-11-12",
+      birth_time: "14:15",
+      birth_place: "Zhodino, Belarus",
+    },
+  };
+
+  const CATEGORY_LABELS = {
+    thinking: "Thinking",
+    communication: "Communication",
+    learning: "Learning",
+    strength: "Strengths / Potential",
+    risk: "Risks / Possible Difficulties",
+    work_application: "Work / Application",
+    environment: "Environment / Mobility",
+    mobility: "Environment / Mobility",
+    compensation: "Compensation",
+    secondary_gain: "Secondary Gain",
+    source_specific: "Source-Specific",
+    focus: "Focus",
+    memory: "Memory",
+  };
+
+  const CATEGORY_ORDER = [
+    "thinking",
+    "communication",
+    "learning",
+    "strength",
+    "risk",
+    "work_application",
+    "environment",
+    "mobility",
+    "compensation",
+    "secondary_gain",
+    "focus",
+    "memory",
+  ];
+
+  function openSelfDrawer() {
+    selfOverlay.hidden = false;
+    selfDrawer.hidden = false;
+    document.body.style.overflow = "hidden";
+    const first = selfDrawer.querySelector("input, button");
+    if (first) first.focus();
+  }
+
+  function closeSelfDrawer() {
+    selfOverlay.hidden = true;
+    selfDrawer.hidden = true;
+    document.body.style.overflow = "";
+  }
+
+  function fillSelfDemo(key) {
+    const demo = SELF_DEMOS[key];
+    if (!demo) return;
+    document.getElementById("self-name").value = demo.display_name;
+    document.getElementById("self-birth-date").value = demo.birth_date;
+    document.getElementById("self-birth-time").value = demo.birth_time;
+    document.getElementById("self-birth-place").value = demo.birth_place;
+    setStatus(selfSetupStatus, `Filled ${demo.display_name}. Click Build My Profile to call the API.`);
+  }
+
+  function titleCaseSignal(value) {
+    return String(value || "")
+      .split("_")
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
+  }
+
+  function categoryLabel(category) {
+    if (CATEGORY_LABELS[category]) return CATEGORY_LABELS[category];
+    return titleCaseSignal(category);
+  }
+
+  function aspectPhrase(type, planet) {
+    const map = {
+      conjunction: "conjunct",
+      opposition: "opposite",
+      square: "square",
+      trine: "trine",
+      sextile: "sextile",
+    };
+    return map[String(type || "").toLowerCase()] || String(type || "");
+  }
+
+  function factorCardTitle(factorType, factorKey) {
+    if (factorType === "sign") return `Mercury in ${factorKey}`;
+    if (factorType === "house") return `Mercury in House ${factorKey}`;
+    if (factorType === "motion") {
+      if (String(factorKey).toLowerCase() === "retrograde") return "Retrograde Mercury";
+      return `Mercury ${titleCaseSignal(factorKey)}`;
+    }
+    if (factorType === "aspect") {
+      const [type, ...rest] = String(factorKey).split("_");
+      const planet = rest.join("_");
+      return `Mercury ${aspectPhrase(type, planet)} ${planet}`;
+    }
+    return `${factorType}:${factorKey}`;
+  }
+
+  function formatOrb(orb) {
+    if (orb == null || Number.isNaN(Number(orb))) return "";
+    return `${Number(orb).toFixed(2)}°`;
+  }
+
+  function formatAspectChip(aspect) {
+    const type = titleCaseSignal(aspect.type);
+    const orb = formatOrb(aspect.orb_deg);
+    return orb ? `${type} ${aspect.planet} · ${orb}` : `${type} ${aspect.planet}`;
+  }
+
+  function provenanceLabel(sourceKey) {
+    const [type, ...rest] = String(sourceKey).split(":");
+    const key = rest.join(":");
+    if (type === "sign") return key;
+    if (type === "house") return `House ${key}`;
+    if (type === "motion") return titleCaseSignal(key);
+    if (type === "aspect") {
+      const [aspectType, ...planetParts] = key.split("_");
+      return `${titleCaseSignal(aspectType)} ${planetParts.join("_")}`;
+    }
+    return sourceKey;
+  }
+
+  function compactProvenanceLabel(sourceKey) {
+    const [type, ...rest] = String(sourceKey).split(":");
+    const key = rest.join(":");
+    if (type === "sign") return key;
+    if (type === "house") return `House ${key}`;
+    if (type === "motion") return titleCaseSignal(key);
+    if (type === "aspect") {
+      const parts = key.split("_");
+      return parts.slice(1).join("_") || key;
+    }
+    return provenanceLabel(sourceKey);
+  }
+
+  function collectFactsByFactor(profile) {
+    const layers = [];
+    const signFacts = profile.sign_facts || [];
+    if (signFacts.length) {
+      layers.push({
+        factor_type: "sign",
+        factor_key: signFacts[0].factor_key,
+        facts: signFacts,
+      });
+    }
+    const houseFacts = profile.house_facts || [];
+    if (houseFacts.length) {
+      layers.push({
+        factor_type: "house",
+        factor_key: houseFacts[0].factor_key,
+        facts: houseFacts,
+      });
+    }
+    const motionFacts = profile.motion_facts || [];
+    if (motionFacts.length) {
+      layers.push({
+        factor_type: "motion",
+        factor_key: motionFacts[0].factor_key,
+        facts: motionFacts,
+      });
+    }
+
+    const aspectFacts = profile.aspect_facts || [];
+    const byKey = new Map();
+    aspectFacts.forEach((fact) => {
+      if (!byKey.has(fact.factor_key)) byKey.set(fact.factor_key, []);
+      byKey.get(fact.factor_key).push(fact);
+    });
+
+    const orderedKeys = [];
+    (profile.calculated?.aspects || []).forEach((aspect) => {
+      const key = `${aspect.type}_${aspect.planet}`;
+      if (byKey.has(key) && !orderedKeys.includes(key)) orderedKeys.push(key);
+    });
+    byKey.forEach((_facts, key) => {
+      if (!orderedKeys.includes(key)) orderedKeys.push(key);
+    });
+
+    orderedKeys.forEach((key) => {
+      layers.push({
+        factor_type: "aspect",
+        factor_key: key,
+        facts: byKey.get(key) || [],
+      });
+    });
+
+    return layers;
+  }
+
+  function countActiveSourceFacts(profile) {
+    return [
+      ...(profile.sign_facts || []),
+      ...(profile.house_facts || []),
+      ...(profile.motion_facts || []),
+      ...(profile.aspect_facts || []),
+    ].length;
+  }
+
+  function renderFactItem(fact) {
+    const isRisk = fact.polarity === "risk" || fact.category === "risk";
+    const nonDiagnostic = /non-diagnostic|not a medical conclusion/i.test(fact.text || "");
+    const marker = isRisk
+      ? `<span class="risk-mark" title="Possible difficulty">Risk</span>`
+      : `<span class="fact-bullet" aria-hidden="true">•</span>`;
+    const badge = nonDiagnostic
+      ? `<span class="fact-note">Source wording — non-diagnostic</span>`
+      : "";
+    return `<li class="fact-item${isRisk ? " fact-risk" : ""}">${marker}<span class="fact-text">${escapeHtml(fact.text)}</span>${badge}</li>`;
+  }
+
+  function renderFactGroups(facts) {
+    const sourceSpecific = facts.filter((f) => f.category === "source_specific");
+    const regular = facts.filter((f) => f.category !== "source_specific");
+    const byCategory = new Map();
+    regular.forEach((fact) => {
+      const key = fact.category || "other";
+      if (!byCategory.has(key)) byCategory.set(key, []);
+      byCategory.get(key).push(fact);
+    });
+
+    const ordered = [
+      ...CATEGORY_ORDER.filter((key) => byCategory.has(key)),
+      ...[...byCategory.keys()].filter((key) => !CATEGORY_ORDER.includes(key)),
+    ];
+
+    const groups = ordered.map((key) => {
+      const items = byCategory.get(key) || [];
+      const heading = key === "risk" ? "Risks / Possible Difficulties" : categoryLabel(key);
+      return `<div class="fact-group">
+        <h4>${escapeHtml(heading)}</h4>
+        <ul class="fact-list">${items.map(renderFactItem).join("")}</ul>
+      </div>`;
+    }).join("");
+
+    let sourceBlock = "";
+    if (sourceSpecific.length) {
+      sourceBlock = `<details class="source-specific-block">
+        <summary>Source-Specific Claims <span class="factor-summary-meta">${sourceSpecific.length}</span></summary>
+        <div class="source-specific-body">
+          <p class="source-specific-note">Shown because this wording exists in the source framework; it is not treated as a scientifically validated professional ability.</p>
+          <ul class="fact-list">${sourceSpecific.map(renderFactItem).join("")}</ul>
+        </div>
+      </details>`;
+    }
+
+    return `${groups}${sourceBlock}`;
+  }
+
+  function renderRepeatedSignals(signals) {
+    if (!signals || !signals.length) {
+      return `<section class="panel"><div class="panel-head"><h2>What repeats in your profile</h2></div><p class="meta">No repeated signals for this profile.</p></section>`;
+    }
+    const rows = signals.map((signal) => {
+      const factors = (signal.sources || []).map(compactProvenanceLabel).join(" · ");
+      const why = (signal.sources || []).map((src) => escapeHtml(src)).join("<br />");
+      const factIds = (signal.fact_ids || []).map((id) => escapeHtml(id)).join(", ");
+      return `<article class="signal-row">
+        <div class="signal-row-main">
+          <strong class="signal-label">${escapeHtml(titleCaseSignal(signal.signal))}</strong>
+          <span class="signal-meta">${escapeHtml(String(signal.source_count))} contributing factors</span>
+          <span class="signal-factors">${escapeHtml(factors)}</span>
+        </div>
+        <details class="signal-why">
+          <summary>Why?</summary>
+          <div class="signal-why-body">
+            <p class="meta">${why}</p>
+            ${factIds ? `<p class="meta">Fact IDs: ${factIds}</p>` : ""}
+          </div>
+        </details>
+      </article>`;
+    }).join("");
+    return `<section class="panel">
+      <div class="panel-head"><h2>What repeats in your profile</h2></div>
+      <div class="signal-list">${rows}</div>
+    </section>`;
+  }
+
+  function renderSourceLayers(profile) {
+    const layers = collectFactsByFactor(profile);
+    if (!layers.length) {
+      return `<section class="panel"><div class="panel-head"><h2>Source layers</h2></div><p class="meta">No source layers activated.</p></section>`;
+    }
+    const cards = layers.map((layer, index) => {
+      const openAttr = index === 0 ? " open" : "";
+      const count = layer.facts.length;
+      const countLabel = count === 1 ? "1 source statement" : `${count} source statements`;
+      return `<details class="factor-card"${openAttr}>
+        <summary>
+          <span class="factor-summary-main">${escapeHtml(factorCardTitle(layer.factor_type, layer.factor_key))}</span>
+          <span class="factor-summary-meta">${escapeHtml(countLabel)}</span>
+        </summary>
+        <div class="factor-body">${renderFactGroups(layer.facts)}</div>
+      </details>`;
+    }).join("");
+    return `<section class="panel">
+      <div class="panel-head"><h2>Source layers</h2></div>
+      ${cards}
+    </section>`;
+  }
+
+  function factLookup(profile) {
+    const map = new Map();
+    [
+      ...(profile.sign_facts || []),
+      ...(profile.house_facts || []),
+      ...(profile.motion_facts || []),
+      ...(profile.aspect_facts || []),
+      ...(profile.conditional_unresolved || []),
+    ].forEach((fact) => map.set(fact.id, fact));
+    return map;
+  }
+
+  function renderContrasts(profile) {
+    const pairs = profile.contrasting_signals || [];
+    if (!pairs.length) return "";
+    const lookup = factLookup(profile);
+    const rows = pairs.map((pair) => {
+      const keysA = [...new Set((pair.facts_a || []).map((id) => {
+        const fact = lookup.get(id);
+        return fact ? `${fact.factor_type}:${fact.factor_key}` : id;
+      }))];
+      const keysB = [...new Set((pair.facts_b || []).map((id) => {
+        const fact = lookup.get(id);
+        return fact ? `${fact.factor_type}:${fact.factor_key}` : id;
+      }))];
+      const provA = keysA.map(provenanceLabel).join(" · ");
+      const provB = keysB.map(provenanceLabel).join(" · ");
+      const techA = keysA.map((src) => escapeHtml(src)).join(", ");
+      const techB = keysB.map((src) => escapeHtml(src)).join(", ");
+      return `<div class="contrast-row">
+        <div class="contrast-pair">
+          <div class="contrast-side">
+            <h4>${escapeHtml(titleCaseSignal(pair.tag_a))}</h4>
+          </div>
+          <div class="contrast-arrow" aria-hidden="true">↕</div>
+          <div class="contrast-side">
+            <h4>${escapeHtml(titleCaseSignal(pair.tag_b))}</h4>
+          </div>
+        </div>
+        <details class="contrast-sources">
+          <summary>Sources</summary>
+          <p class="meta">${escapeHtml(provA)} · ${escapeHtml(provB)}</p>
+          <p class="meta">${techA} ↔ ${techB}</p>
+        </details>
+      </div>`;
+    }).join("");
+    return `<section class="panel">
+      <div class="panel-head"><h2>Tensions in the profile</h2></div>
+      ${rows}
+    </section>`;
+  }
+
+  function renderTraceability(profile, displayName, factCount) {
+    const calc = profile.calculated || {};
+    const layers = collectFactsByFactor(profile);
+    const lines = [];
+    lines.push(`Display name: ${displayName || "(not supplied)"}`);
+    lines.push(`Active source facts: ${factCount}`);
+    lines.push(`Mercury sign: ${calc.mercury_sign || "—"}`);
+    lines.push(`Mercury house: ${calc.mercury_house ?? "—"}`);
+    lines.push(`Mercury motion: ${calc.mercury_motion || "—"}`);
+    lines.push(`Birth time known: ${calc.birth_time_known ? "yes" : "no"}`);
+    lines.push(`Hard aspected: ${calc.hard_aspected ? "yes" : "no"}`);
+    lines.push("");
+    lines.push("Aspects:");
+    (calc.aspects || []).forEach((aspect) => {
+      lines.push(`  - ${aspect.type} ${aspect.planet} · orb ${formatOrb(aspect.orb_deg)}`);
+    });
+    lines.push("");
+    lines.push("Factor provenance + source references + fact IDs:");
+    layers.forEach((layer) => {
+      lines.push(`  ${layer.factor_type}:${layer.factor_key}`);
+      layer.facts.forEach((fact) => {
+        lines.push(`    ${fact.id} | ${fact.source_reference} | ${fact.category}/${fact.polarity}`);
+      });
+    });
+    if ((profile.repeated_signals || []).length) {
+      lines.push("");
+      lines.push("Repeated signals:");
+      profile.repeated_signals.forEach((signal) => {
+        lines.push(`  ${signal.signal} (${signal.source_count}) ← ${(signal.sources || []).join(", ")}`);
+        lines.push(`    facts: ${(signal.fact_ids || []).join(", ")}`);
+      });
+    }
+    return `<section class="panel trace-block">
+      <p class="self-tech-meta">${escapeHtml(String(factCount))} active source facts</p>
+      <details class="trace-details">
+        <summary>Why AstroIT shows this</summary>
+        <pre class="trace-pre">${escapeHtml(lines.join("\n"))}</pre>
+      </details>
+    </section>`;
+  }
+
+  function renderSelfProfile(profile, displayName) {
+    const calc = profile.calculated || {};
+    const motion = String(calc.mercury_motion || "");
+    const motionHtml = motion.toLowerCase() === "retrograde"
+      ? `<span class="motion-rx">Retrograde</span>`
+      : escapeHtml(titleCaseSignal(motion) || "—");
+    const aspectList = (calc.aspects || [])
+      .map((aspect) => `<li>${escapeHtml(formatAspectChip(aspect))}</li>`)
+      .join("");
+    const factCount = countActiveSourceFacts(profile);
+
+    const headerTitle = displayName
+      ? escapeHtml(displayName)
+      : "Your Mercury Profile";
+
+    selfProfileContent.innerHTML = `
+      <section class="panel self-header">
+        <h2>${headerTitle}</h2>
+        <p class="self-calc-line">Mercury in ${escapeHtml(calc.mercury_sign || "—")} · House ${escapeHtml(String(calc.mercury_house ?? "—"))} · ${motionHtml}</p>
+        ${aspectList ? `<ul class="self-aspect-list">${aspectList}</ul>` : `<p class="meta">No calculated aspects in orb.</p>`}
+      </section>
+      ${renderRepeatedSignals(profile.repeated_signals)}
+      ${renderSourceLayers(profile)}
+      ${renderContrasts(profile)}
+      ${renderTraceability(profile, displayName, factCount)}
+    `;
+  }
+
+  async function buildMyProfile() {
+    const displayName = document.getElementById("self-name").value.trim();
+    const birthDate = document.getElementById("self-birth-date").value.trim();
+    const birthTime = document.getElementById("self-birth-time").value.trim();
+    const birthPlace = document.getElementById("self-birth-place").value.trim();
+
+    if (!birthDate || !birthPlace) {
+      setStatus(selfSetupStatus, "Birth date and birth place are required.", "error");
+      return;
+    }
+
+    const payload = {
+      birth_date: birthDate,
+      birth_place: birthPlace,
+    };
+    if (birthTime) payload.birth_time = birthTime;
+
+    setStatus(selfSetupStatus, "Building source-backed profile…", "loading");
+    setStatus(selfProfileStatus, "Building source-backed profile…", "loading");
+    showSelfProfileShell();
+    selfProfileContent.innerHTML = "";
+
+    try {
+      const profile = await apiPost("/api/v1/mercury-source-profile", payload);
+      closeSelfDrawer();
+      renderSelfProfile(profile, displayName);
+      setStatus(selfProfileStatus, "");
+      setStatus(selfSetupStatus, "");
+    } catch (err) {
+      setStatus(selfSetupStatus, err.message, "error");
+      setStatus(selfProfileStatus, err.message, "error");
+    }
   }
 
   function createMemberCard(data = {}) {
@@ -1106,6 +1612,16 @@
 
   document.getElementById("setup-team").addEventListener("click", openSetup);
   document.getElementById("edit-team-data").addEventListener("click", openSetup);
+  document.getElementById("explore-yourself").addEventListener("click", openSelfDrawer);
+  document.getElementById("build-my-profile").addEventListener("click", buildMyProfile);
+  document.getElementById("self-back-start").addEventListener("click", showEmptyShell);
+  document.getElementById("self-build-team").addEventListener("click", () => {
+    closeSelfDrawer();
+    openSetup();
+  });
+  document.querySelectorAll("[data-self-demo]").forEach((btn) => {
+    btn.addEventListener("click", () => fillSelfDemo(btn.getAttribute("data-self-demo")));
+  });
   document.getElementById("load-demo-empty").addEventListener("click", loadDemoAndAnalyze);
   document.getElementById("load-demo").addEventListener("click", loadDemoAndAnalyze);
   document.getElementById("saved-workspaces").addEventListener("click", openWorkspacesPanel);
@@ -1116,6 +1632,9 @@
   setupOverlay.querySelectorAll("[data-close-setup]").forEach((el) => {
     el.addEventListener("click", closeSetup);
   });
+  selfOverlay.querySelectorAll("[data-close-self]").forEach((el) => {
+    el.addEventListener("click", closeSelfDrawer);
+  });
   workspacesOverlay.querySelectorAll("[data-close-workspaces]").forEach((el) => {
     el.addEventListener("click", closeWorkspacesPanel);
   });
@@ -1123,6 +1642,7 @@
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") return;
     if (!setupOverlay.hidden) closeSetup();
+    if (!selfOverlay.hidden) closeSelfDrawer();
     if (!workspacesOverlay.hidden) closeWorkspacesPanel();
   });
 
