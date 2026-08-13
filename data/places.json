@@ -15,6 +15,8 @@
   "Penza, Russia": {"lat": 53.1959, "lon": 45.0183},
   "Murmansk, Russia": {"lat": 68.9585, "lon": 33.0827},
   "Yaroslavl, Russia": {"lat": 57.6261, "lon": 39.8845},
+  "Taganrog, Russia": { "lat": 47.227304, "lon": 38.890803 },
+  "Perm, Russia": { "lat": 58.01389, "lon": 56.24889 },
 
   "Minsk, Belarus": { "lat": 53.9006, "lon": 27.5590 },
   "Zhodino, Belarus": { "lat": 54.0985, "lon": 28.3331 },
