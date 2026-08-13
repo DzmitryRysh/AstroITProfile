@@ -7,6 +7,9 @@ v2 coverage includes golden cases:
 
 Sign Batch A1 dual-source packs (Lesson 7 + Bioastrology):
 - Aries, Gemini, Cancer
+
+Sign Batch A2 dual-source packs (Lesson 7 + Bioastrology):
+- Virgo, Libra, Scorpio
 """
 
 from __future__ import annotations
@@ -1214,7 +1217,17 @@ ASPECT_PACK_ALIASES: dict[str, str] = {
     "sextile_Mars": "trine_Mars",
 }
 
-SUPPORTED_SIGN_KEYS = {"Aries", "Taurus", "Gemini", "Cancer", "Leo", "Sagittarius"}
+SUPPORTED_SIGN_KEYS = {
+    "Aries",
+    "Taurus",
+    "Gemini",
+    "Cancer",
+    "Leo",
+    "Virgo",
+    "Libra",
+    "Scorpio",
+    "Sagittarius",
+}
 SUPPORTED_HOUSE_KEYS = {"1", "9", "10"}
 SUPPORTED_MOTION_KEYS = {"retrograde"}
 SUPPORTED_ASPECT_KEYS = {
@@ -1228,12 +1241,18 @@ SUPPORTED_ASPECT_KEYS = {
     "conjunction_Uranus",
 }
 
-# Late import: A1 packs depend on SourceFactDef/_f defined above.
+# Late import: A1/A2 packs avoid circular imports via local SourceFactDef/_f.
 from app.services.mercury_source_knowledge_a1_signs import (  # noqa: E402
     A1_SIGN_PACKS,
     ARIES_ALL,
     CANCER_ALL,
     GEMINI_ALL,
+)
+from app.services.mercury_source_knowledge_a2_signs import (  # noqa: E402
+    A2_SIGN_PACKS,
+    LIBRA_ALL,
+    SCORPIO_ALL,
+    VIRGO_ALL,
 )
 
 ALL_SOURCE_FACTS: tuple[SourceFactDef, ...] = (
@@ -1253,6 +1272,7 @@ ALL_SOURCE_FACTS: tuple[SourceFactDef, ...] = (
     + HOUSE_10
     + URANUS_CONJUNCTION
     + A1_SIGN_PACKS
+    + A2_SIGN_PACKS
 )
 
 # Repeated-signal definitions: SAME tag across distinct provenance keys only.

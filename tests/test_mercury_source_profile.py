@@ -333,7 +333,7 @@ class AvdeyGoldenCaseTests(unittest.TestCase):
     def test_unsupported_sign_returns_partial_coverage(self):
         factors = MercurySourceFactors(
             birth_time_known=True,
-            mercury_sign="Virgo",
+            mercury_sign="Capricorn",
             mercury_element="earth",
             mercury_motion="direct",
             mercury_house=3,
@@ -341,12 +341,12 @@ class AvdeyGoldenCaseTests(unittest.TestCase):
         )
         profile = build_source_profile_from_factors(factors)
         self.assertEqual(profile.coverage.status, "partial")
-        self.assertIn("sign:Virgo", profile.coverage.missing_factors)
+        self.assertIn("sign:Capricorn", profile.coverage.missing_factors)
         self.assertIn("house:3", profile.coverage.missing_factors)
         self.assertIn("aspect:square_Mars", profile.coverage.missing_factors)
         self.assertNotIn("motion:direct", profile.coverage.missing_factors)
         self.assertEqual(profile.sign_facts, [])
-        self.assertTrue(any("Virgo" in item for item in profile.limitations))
+        self.assertTrue(any("Capricorn" in item for item in profile.limitations))
 
     def test_route_registered(self):
         app = create_app()

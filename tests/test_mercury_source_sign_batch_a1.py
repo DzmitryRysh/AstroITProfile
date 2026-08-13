@@ -41,9 +41,10 @@ def _refs(facts) -> set[str]:
 
 class SignBatchA1CatalogTests(unittest.TestCase):
     def test_supported_signs_include_a1(self):
-        self.assertEqual(
-            SUPPORTED_SIGN_KEYS,
-            {"Aries", "Taurus", "Gemini", "Cancer", "Leo", "Sagittarius"},
+        self.assertTrue(
+            {"Aries", "Taurus", "Gemini", "Cancer", "Leo", "Sagittarius"}.issubset(
+                SUPPORTED_SIGN_KEYS
+            )
         )
 
     def test_aries_split_and_source_refs(self):
