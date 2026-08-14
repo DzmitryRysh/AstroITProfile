@@ -33,8 +33,8 @@ def _refs(facts) -> set[str]:
 
 
 class AspectBatchC1CoverageTests(unittest.TestCase):
-    def test_supported_public_aspect_count_is_thirteen(self):
-        self.assertEqual(len(SUPPORTED_ASPECT_KEYS), 13)
+    def test_c1_public_aspect_keys_remain_supported(self):
+        # Historical C1 batch: subset guarantee only. Exact public count owned by C2+.
         self.assertTrue(
             {
                 "trine_Moon",

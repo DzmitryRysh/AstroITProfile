@@ -29,6 +29,10 @@ House Batch B3 (Lesson 7 only):
 Aspect Batch C1 (verified Bioastrology harmonious parity):
 - Moon / Jupiter / Saturn harmonious aliases
 - Uranus harmonious (trine/sextile) pack
+
+Aspect Batch C2 (verified Bioastrology square coverage):
+- square_Mars
+- square_Saturn
 """
 
 from __future__ import annotations
@@ -1629,11 +1633,13 @@ SUPPORTED_ASPECT_KEYS = {
     "square_Pluto",
     "trine_Saturn",
     "sextile_Saturn",
+    "square_Saturn",
     "sextile_Moon",
     "trine_Moon",
     "square_Moon",
     "trine_Mars",
     "sextile_Mars",
+    "square_Mars",
     "sextile_Jupiter",
     "trine_Jupiter",
     "conjunction_Uranus",
@@ -1682,6 +1688,11 @@ from app.services.mercury_source_knowledge_c1_aspects import (  # noqa: E402
     C1_ASPECT_PACKS,
     URANUS_HARMONIOUS,
 )
+from app.services.mercury_source_knowledge_c2_aspects import (  # noqa: E402
+    C2_ASPECT_PACKS,
+    MARS_SQUARE,
+    SATURN_SQUARE,
+)
 
 ALL_SOURCE_FACTS: tuple[SourceFactDef, ...] = (
     LEO_LESSON7
@@ -1711,6 +1722,7 @@ ALL_SOURCE_FACTS: tuple[SourceFactDef, ...] = (
     + B2_HOUSE_PACKS
     + B3_HOUSE_PACKS
     + C1_ASPECT_PACKS
+    + C2_ASPECT_PACKS
 )
 
 # Repeated-signal definitions: SAME tag across distinct provenance keys only.
