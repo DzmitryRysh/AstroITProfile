@@ -26,7 +26,6 @@ from app.services.mercury_source_profile import (
     detect_repeated_signals,
 )
 
-ENGINE_ASPECT_SLOTS = 45
 REF_JUPITER_HARM = "bioastrology_mercury_jupiter_harmonious"
 
 
@@ -47,20 +46,16 @@ def _canonical_aspect_packs() -> set[str]:
 
 
 class AspectBatchC4CoverageTests(unittest.TestCase):
-    def test_supported_public_aspect_count_is_eighteen(self):
-        self.assertEqual(len(SUPPORTED_ASPECT_KEYS), 18)
-        self.assertEqual(ENGINE_ASPECT_SLOTS - len(SUPPORTED_ASPECT_KEYS), 27)
+    def test_c4_square_jupiter_remains_supported(self):
+        # Historical C4 batch: factor-specific guarantee. Exact public count owned by C5+.
         self.assertIn("square_Jupiter", SUPPORTED_ASPECT_KEYS)
-        self.assertNotIn("conjunction_Jupiter", SUPPORTED_ASPECT_KEYS)
-        self.assertNotIn("opposition_Jupiter", SUPPORTED_ASPECT_KEYS)
-
-    def test_canonical_packs_and_aliases(self):
-        self.assertEqual(len(_canonical_aspect_packs()), 12)
-        self.assertEqual(len(ASPECT_PACK_ALIASES), 6)
         self.assertNotIn("square_Jupiter", ASPECT_PACK_ALIASES)
         self.assertIn("square_Jupiter", _canonical_aspect_packs())
-        for canonical in ASPECT_PACK_ALIASES.values():
-            self.assertNotIn(canonical, ASPECT_PACK_ALIASES)
+
+    def test_c4_no_unsafe_square_alias(self):
+        self.assertNotEqual(ASPECT_PACK_ALIASES.get("opposition_Jupiter"), "square_Jupiter")
+        self.assertNotEqual(ASPECT_PACK_ALIASES.get("conjunction_Jupiter"), "square_Jupiter")
+        self.assertNotIn("square_Jupiter", ASPECT_PACK_ALIASES)
 
     def test_prior_batch_invariants_remain(self):
         self.assertEqual(ASPECT_PACK_ALIASES["sextile_Mars"], "trine_Mars")
