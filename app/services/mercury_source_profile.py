@@ -95,9 +95,13 @@ def _match_definitions(
                     )
                 )
             continue
-        if condition in {"pluto_strength_unresolved", "strength_unresolved"}:
+        if condition in {
+            "pluto_strength_unresolved",
+            "strength_unresolved",
+            "creative_core_strength_unresolved",
+        }:
             # Always include when this aspect factor is present; leave unresolved.
-            # No strength / winner resolver is applied in this prototype.
+            # No strength / winner / creative-core resolver is applied in this prototype.
             selected.append(
                 _to_fact(
                     definition,

@@ -26,7 +26,6 @@ from app.services.mercury_source_profile import (
     detect_repeated_signals,
 )
 
-ENGINE_ASPECT_SLOTS = 45
 JUPITER_PUBLIC_FAMILY = {
     "conjunction_Jupiter",
     "sextile_Jupiter",
@@ -62,14 +61,9 @@ def _synthetic(aspect_type: str):
 
 
 class AspectBatchC5CoverageTests(unittest.TestCase):
-    def test_supported_public_aspect_count_is_twenty(self):
-        self.assertEqual(len(SUPPORTED_ASPECT_KEYS), 20)
-        self.assertEqual(ENGINE_ASPECT_SLOTS - len(SUPPORTED_ASPECT_KEYS), 25)
+    def test_c5_jupiter_family_remains_complete(self):
+        # Historical C5 batch: factor-specific guarantee. Exact public count owned by C6+.
         self.assertTrue(JUPITER_PUBLIC_FAMILY.issubset(SUPPORTED_ASPECT_KEYS))
-        self.assertEqual(len(_canonical_aspect_packs()), 14)
-        self.assertEqual(len(ASPECT_PACK_ALIASES), 6)
-
-    def test_jupiter_family_is_complete_without_new_aliases(self):
         self.assertIn("opposition_Jupiter", SUPPORTED_ASPECT_KEYS)
         self.assertIn("conjunction_Jupiter", SUPPORTED_ASPECT_KEYS)
         self.assertNotIn("opposition_Jupiter", ASPECT_PACK_ALIASES)
