@@ -36,6 +36,9 @@ Aspect Batch C2 (verified Bioastrology square coverage):
 
 Aspect Batch C3 (verified Bioastrology Pluto harmonious parity):
 - trine_Pluto / sextile_Pluto (pair-specific "трин/секстиль")
+
+Aspect Batch C4 (verified Bioastrology Jupiter square):
+- square_Jupiter
 """
 
 from __future__ import annotations
@@ -1648,6 +1651,7 @@ SUPPORTED_ASPECT_KEYS = {
     "square_Mars",
     "sextile_Jupiter",
     "trine_Jupiter",
+    "square_Jupiter",
     "conjunction_Uranus",
     "trine_Uranus",
     "sextile_Uranus",
@@ -1703,6 +1707,10 @@ from app.services.mercury_source_knowledge_c3_aspects import (  # noqa: E402
     C3_ASPECT_PACKS,
     PLUTO_HARMONIOUS,
 )
+from app.services.mercury_source_knowledge_c4_aspects import (  # noqa: E402
+    C4_ASPECT_PACKS,
+    JUPITER_SQUARE,
+)
 
 ALL_SOURCE_FACTS: tuple[SourceFactDef, ...] = (
     LEO_LESSON7
@@ -1734,6 +1742,7 @@ ALL_SOURCE_FACTS: tuple[SourceFactDef, ...] = (
     + C1_ASPECT_PACKS
     + C2_ASPECT_PACKS
     + C3_ASPECT_PACKS
+    + C4_ASPECT_PACKS
 )
 
 # Repeated-signal definitions: SAME tag across distinct provenance keys only.

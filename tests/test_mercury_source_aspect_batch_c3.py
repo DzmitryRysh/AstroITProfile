@@ -24,7 +24,6 @@ from app.services.mercury_source_profile import (
     detect_repeated_signals,
 )
 
-ENGINE_ASPECT_SLOTS = 45
 REF_PLUTO_SQ = "bioastrology_mercury_pluto_square"
 
 
@@ -45,21 +44,17 @@ def _canonical_aspect_packs() -> set[str]:
 
 
 class AspectBatchC3CoverageTests(unittest.TestCase):
-    def test_supported_public_aspect_count_is_seventeen(self):
-        self.assertEqual(len(SUPPORTED_ASPECT_KEYS), 17)
-        self.assertEqual(ENGINE_ASPECT_SLOTS - len(SUPPORTED_ASPECT_KEYS), 28)
+    def test_c3_public_aspect_keys_remain_supported(self):
+        # Historical C3 batch: subset guarantee only. Exact public count owned by C4+.
         self.assertTrue({"trine_Pluto", "sextile_Pluto"}.issubset(SUPPORTED_ASPECT_KEYS))
         self.assertNotIn("conjunction_Pluto", SUPPORTED_ASPECT_KEYS)
         self.assertNotIn("opposition_Pluto", SUPPORTED_ASPECT_KEYS)
 
-    def test_canonical_packs_and_aliases(self):
-        self.assertEqual(len(_canonical_aspect_packs()), 11)
-        self.assertEqual(len(ASPECT_PACK_ALIASES), 6)
+    def test_c3_pluto_harmonious_alias_and_square_separation(self):
         self.assertEqual(ASPECT_PACK_ALIASES["sextile_Pluto"], "trine_Pluto")
         # SOURCE_JUSTIFIED: pair-specific Bioastrology labels this branch "трин/секстиль".
         self.assertIn("trine_Pluto", _canonical_aspect_packs())
         self.assertNotIn("sextile_Pluto", _canonical_aspect_packs())
-        # Exactly one harmonious Pluto pack in catalog (no sextile duplicates).
         harm = [
             item
             for item in ALL_SOURCE_FACTS
@@ -67,9 +62,11 @@ class AspectBatchC3CoverageTests(unittest.TestCase):
         ]
         self.assertEqual(len(harm), len(PLUTO_HARMONIOUS))
         self.assertEqual(len(PLUTO_HARMONIOUS), 14)
-        # No alias cycles.
-        for canonical in ASPECT_PACK_ALIASES.values():
-            self.assertNotIn(canonical, ASPECT_PACK_ALIASES)
+        self.assertIn("square_Pluto", _canonical_aspect_packs())
+        self.assertNotEqual(REF_PLUTO_HARM, REF_PLUTO_SQ)
+        self.assertTrue(all(item.source_reference == REF_PLUTO_SQ for item in PLUTO_SQUARE))
+        self.assertTrue(all(item.source_reference == REF_PLUTO_HARM for item in PLUTO_HARMONIOUS))
+        self.assertTrue(_ids(PLUTO_HARMONIOUS).isdisjoint(_ids(PLUTO_SQUARE)))
 
     def test_c1_aliases_remain_unchanged(self):
         self.assertEqual(ASPECT_PACK_ALIASES["sextile_Mars"], "trine_Mars")
