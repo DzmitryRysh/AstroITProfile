@@ -32,7 +32,6 @@ from app.services.mercury_source_profile import (
     detect_repeated_signals,
 )
 
-ENGINE_ASPECT_SLOTS = 45
 MARS_PUBLIC_FAMILY = {
     "conjunction_Mars",
     "sextile_Mars",
@@ -82,16 +81,13 @@ def _synthetic_mars(aspect_type: str):
 
 
 class AspectBatchC7CoverageTests(unittest.TestCase):
-    def test_supported_public_aspect_count_is_twenty_four(self):
-        self.assertEqual(len(SUPPORTED_ASPECT_KEYS), 24)
-        self.assertEqual(ENGINE_ASPECT_SLOTS - len(SUPPORTED_ASPECT_KEYS), 21)
-        self.assertEqual(len(_canonical_aspect_packs()), 18)
-        self.assertEqual(len(ASPECT_PACK_ALIASES), 6)
-        self.assertEqual(len(SUPPORTED_SIGN_KEYS), 12)
-        self.assertEqual(len(SUPPORTED_HOUSE_KEYS), 12)
+    def test_c7_mars_family_remains_complete(self):
+        # Historical C7 batch: factor-specific guarantee. Exact public count owned by C8+.
+        self.assertTrue(MARS_PUBLIC_FAMILY.issubset(SUPPORTED_ASPECT_KEYS))
         self.assertTrue(JUPITER_PUBLIC_FAMILY.issubset(SUPPORTED_ASPECT_KEYS))
         self.assertTrue(SATURN_PUBLIC_FAMILY.issubset(SUPPORTED_ASPECT_KEYS))
-        self.assertTrue(MARS_PUBLIC_FAMILY.issubset(SUPPORTED_ASPECT_KEYS))
+        self.assertEqual(len(SUPPORTED_SIGN_KEYS), 12)
+        self.assertEqual(len(SUPPORTED_HOUSE_KEYS), 12)
 
     def test_mars_family_is_exactly_five_of_five(self):
         self.assertIn("conjunction_Mars", SUPPORTED_ASPECT_KEYS)
