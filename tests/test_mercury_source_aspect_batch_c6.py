@@ -30,7 +30,6 @@ from app.services.mercury_source_profile import (
     detect_repeated_signals,
 )
 
-ENGINE_ASPECT_SLOTS = 45
 SATURN_PUBLIC_FAMILY = {
     "conjunction_Saturn",
     "sextile_Saturn",
@@ -73,15 +72,12 @@ def _synthetic_saturn(aspect_type: str):
 
 
 class AspectBatchC6CoverageTests(unittest.TestCase):
-    def test_supported_public_aspect_count_is_twenty_two(self):
-        self.assertEqual(len(SUPPORTED_ASPECT_KEYS), 22)
-        self.assertEqual(ENGINE_ASPECT_SLOTS - len(SUPPORTED_ASPECT_KEYS), 23)
-        self.assertEqual(len(_canonical_aspect_packs()), 16)
-        self.assertEqual(len(ASPECT_PACK_ALIASES), 6)
+    def test_c6_saturn_family_remains_complete(self):
+        # Historical C6 batch: factor-specific guarantee. Exact public count owned by C7+.
+        self.assertTrue(SATURN_PUBLIC_FAMILY.issubset(SUPPORTED_ASPECT_KEYS))
+        self.assertTrue(JUPITER_PUBLIC_FAMILY.issubset(SUPPORTED_ASPECT_KEYS))
         self.assertEqual(len(SUPPORTED_SIGN_KEYS), 12)
         self.assertEqual(len(SUPPORTED_HOUSE_KEYS), 12)
-        self.assertTrue(JUPITER_PUBLIC_FAMILY.issubset(SUPPORTED_ASPECT_KEYS))
-        self.assertTrue(SATURN_PUBLIC_FAMILY.issubset(SUPPORTED_ASPECT_KEYS))
 
     def test_saturn_family_is_exactly_five_of_five(self):
         self.assertIn("conjunction_Saturn", SUPPORTED_ASPECT_KEYS)

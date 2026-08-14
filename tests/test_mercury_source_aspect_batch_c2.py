@@ -68,14 +68,14 @@ class AspectBatchC2CoverageTests(unittest.TestCase):
             }.issubset(SUPPORTED_ASPECT_KEYS)
         )
 
-    def test_c2_square_packs_are_not_aliases_and_mars_opposition_conjunction_remain_unsupported(self):
+    def test_c2_square_packs_are_not_aliases_and_mars_opposition_conjunction_not_aliased_to_square(self):
         # Historical C2: square Mars/Saturn are exact packs, not aliases.
         self.assertNotIn("square_Mars", ASPECT_PACK_ALIASES)
         self.assertNotIn("square_Saturn", ASPECT_PACK_ALIASES)
-        # Mars opposition/conjunction still unsupported after C2; Saturn family
-        # completion is owned by later batches and must not alias to square.
-        self.assertNotIn("opposition_Mars", SUPPORTED_ASPECT_KEYS)
-        self.assertNotIn("conjunction_Mars", SUPPORTED_ASPECT_KEYS)
+        # Later batches may support Mars/Saturn opposition/conjunction, but must
+        # not alias them to the C2 square packs.
+        self.assertNotEqual(ASPECT_PACK_ALIASES.get("opposition_Mars"), "square_Mars")
+        self.assertNotEqual(ASPECT_PACK_ALIASES.get("conjunction_Mars"), "square_Mars")
         self.assertNotEqual(ASPECT_PACK_ALIASES.get("opposition_Saturn"), "square_Saturn")
         self.assertNotEqual(ASPECT_PACK_ALIASES.get("conjunction_Saturn"), "square_Saturn")
 

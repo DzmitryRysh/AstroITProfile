@@ -251,13 +251,13 @@ class HouseBatchB3RegressionTests(unittest.TestCase):
                 mercury_element="fire",
                 mercury_motion="direct",
                 mercury_house=8,
-                aspects=[MercuryAspect(planet="Mars", type="opposition", orb_deg=2.0)],
+                aspects=[MercuryAspect(planet="Neptune", type="conjunction", orb_deg=2.0)],
             )
         )
         self.assertEqual(profile.coverage.status, "partial")
         self.assertIn("house:8", profile.coverage.covered_factors)
         self.assertNotIn("house:8", profile.coverage.missing_factors)
-        self.assertEqual(profile.coverage.missing_factors, ["aspect:opposition_Mars"])
+        self.assertEqual(profile.coverage.missing_factors, ["aspect:conjunction_Neptune"])
 
 
 if __name__ == "__main__":

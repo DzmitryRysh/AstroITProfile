@@ -47,6 +47,10 @@ Aspect Batch C5 (verified Bioastrology Jupiter opposition / conjunction):
 Aspect Batch C6 (verified Bioastrology Saturn opposition / conjunction):
 - opposition_Saturn
 - conjunction_Saturn
+
+Aspect Batch C7 (verified Bioastrology Mars opposition / conjunction):
+- opposition_Mars
+- conjunction_Mars
 """
 
 from __future__ import annotations
@@ -1659,6 +1663,8 @@ SUPPORTED_ASPECT_KEYS = {
     "trine_Mars",
     "sextile_Mars",
     "square_Mars",
+    "opposition_Mars",
+    "conjunction_Mars",
     "sextile_Jupiter",
     "trine_Jupiter",
     "square_Jupiter",
@@ -1733,6 +1739,11 @@ from app.services.mercury_source_knowledge_c6_aspects import (  # noqa: E402
     SATURN_CONJUNCTION,
     SATURN_OPPOSITION,
 )
+from app.services.mercury_source_knowledge_c7_aspects import (  # noqa: E402
+    C7_ASPECT_PACKS,
+    MARS_CONJUNCTION,
+    MARS_OPPOSITION,
+)
 
 ALL_SOURCE_FACTS: tuple[SourceFactDef, ...] = (
     LEO_LESSON7
@@ -1767,6 +1778,7 @@ ALL_SOURCE_FACTS: tuple[SourceFactDef, ...] = (
     + C4_ASPECT_PACKS
     + C5_ASPECT_PACKS
     + C6_ASPECT_PACKS
+    + C7_ASPECT_PACKS
 )
 
 # Repeated-signal definitions: SAME tag across distinct provenance keys only.
