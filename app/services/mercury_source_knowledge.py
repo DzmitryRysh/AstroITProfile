@@ -33,6 +33,9 @@ Aspect Batch C1 (verified Bioastrology harmonious parity):
 Aspect Batch C2 (verified Bioastrology square coverage):
 - square_Mars
 - square_Saturn
+
+Aspect Batch C3 (verified Bioastrology Pluto harmonious parity):
+- trine_Pluto / sextile_Pluto (pair-specific "трин/секстиль")
 """
 
 from __future__ import annotations
@@ -1590,7 +1593,7 @@ URANUS_CONJUNCTION: tuple[SourceFactDef, ...] = (
 )
 
 # Aspect keys that reuse another pack's catalog definitions (shared source semantics).
-# Existing Mars alias plus C1 source-justified harmonious aliases
+# Mars alias plus C1/C3 source-justified harmonious aliases
 # (pair-specific Bioastrology "трин/секстиль", not general astrology).
 ASPECT_PACK_ALIASES: dict[str, str] = {
     "sextile_Mars": "trine_Mars",
@@ -1598,6 +1601,7 @@ ASPECT_PACK_ALIASES: dict[str, str] = {
     "trine_Jupiter": "sextile_Jupiter",
     "sextile_Saturn": "trine_Saturn",
     "sextile_Uranus": "trine_Uranus",
+    "sextile_Pluto": "trine_Pluto",
 }
 
 SUPPORTED_SIGN_KEYS = {
@@ -1631,6 +1635,8 @@ SUPPORTED_HOUSE_KEYS = {
 SUPPORTED_MOTION_KEYS = {"retrograde"}
 SUPPORTED_ASPECT_KEYS = {
     "square_Pluto",
+    "trine_Pluto",
+    "sextile_Pluto",
     "trine_Saturn",
     "sextile_Saturn",
     "square_Saturn",
@@ -1693,6 +1699,10 @@ from app.services.mercury_source_knowledge_c2_aspects import (  # noqa: E402
     MARS_SQUARE,
     SATURN_SQUARE,
 )
+from app.services.mercury_source_knowledge_c3_aspects import (  # noqa: E402
+    C3_ASPECT_PACKS,
+    PLUTO_HARMONIOUS,
+)
 
 ALL_SOURCE_FACTS: tuple[SourceFactDef, ...] = (
     LEO_LESSON7
@@ -1723,6 +1733,7 @@ ALL_SOURCE_FACTS: tuple[SourceFactDef, ...] = (
     + B3_HOUSE_PACKS
     + C1_ASPECT_PACKS
     + C2_ASPECT_PACKS
+    + C3_ASPECT_PACKS
 )
 
 # Repeated-signal definitions: SAME tag across distinct provenance keys only.

@@ -59,15 +59,16 @@ class AspectBatchC1CoverageTests(unittest.TestCase):
         )
 
     def test_aliases_are_source_justified_and_acyclic(self):
-        expected = {
+        # Historical C1: C1 aliases remain; exact full alias map owned by latest batch.
+        c1_aliases = {
             "sextile_Mars": "trine_Mars",
             "trine_Moon": "sextile_Moon",
             "trine_Jupiter": "sextile_Jupiter",
             "sextile_Saturn": "trine_Saturn",
             "sextile_Uranus": "trine_Uranus",
         }
-        self.assertEqual(ASPECT_PACK_ALIASES, expected)
-        for alias, canonical in ASPECT_PACK_ALIASES.items():
+        for alias, canonical in c1_aliases.items():
+            self.assertEqual(ASPECT_PACK_ALIASES.get(alias), canonical)
             self.assertIn(alias, SUPPORTED_ASPECT_KEYS)
             self.assertIn(canonical, SUPPORTED_ASPECT_KEYS)
             self.assertNotIn(canonical, ASPECT_PACK_ALIASES)
@@ -78,6 +79,9 @@ class AspectBatchC1CoverageTests(unittest.TestCase):
                 ),
                 canonical,
             )
+        # No alias cycles among destinations.
+        for canonical in ASPECT_PACK_ALIASES.values():
+            self.assertNotIn(canonical, ASPECT_PACK_ALIASES)
 
     def test_catalog_integrity(self):
         ids = [item.id for item in ALL_SOURCE_FACTS]

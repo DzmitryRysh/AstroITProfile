@@ -32,8 +32,6 @@ from app.services.mercury_source_profile import (
     detect_repeated_signals,
 )
 
-ENGINE_ASPECT_SLOTS = 45
-
 
 def _ids(facts) -> set[str]:
     return {item.id for item in facts}
@@ -48,14 +46,29 @@ def _canonical_aspect_packs() -> set[str]:
 
 
 class AspectBatchC2CoverageTests(unittest.TestCase):
-    def test_supported_public_aspect_count_is_fifteen(self):
-        self.assertEqual(len(SUPPORTED_ASPECT_KEYS), 15)
-        self.assertEqual(ENGINE_ASPECT_SLOTS - len(SUPPORTED_ASPECT_KEYS), 30)
+    def test_c2_public_aspect_keys_remain_supported(self):
+        # Historical C2 batch: subset guarantee only. Exact public count owned by C3+.
         self.assertTrue({"square_Mars", "square_Saturn"}.issubset(SUPPORTED_ASPECT_KEYS))
+        # Pre-C2 public aspect keys remain supported.
+        self.assertTrue(
+            {
+                "sextile_Moon",
+                "square_Moon",
+                "trine_Mars",
+                "sextile_Mars",
+                "sextile_Jupiter",
+                "trine_Jupiter",
+                "trine_Saturn",
+                "sextile_Saturn",
+                "trine_Moon",
+                "conjunction_Uranus",
+                "trine_Uranus",
+                "sextile_Uranus",
+                "square_Pluto",
+            }.issubset(SUPPORTED_ASPECT_KEYS)
+        )
 
-    def test_canonical_packs_and_aliases(self):
-        self.assertEqual(len(_canonical_aspect_packs()), 10)
-        self.assertEqual(len(ASPECT_PACK_ALIASES), 5)
+    def test_c2_no_mars_saturn_aliases_and_tense_remain_unsupported(self):
         self.assertNotIn("square_Mars", ASPECT_PACK_ALIASES)
         self.assertNotIn("square_Saturn", ASPECT_PACK_ALIASES)
         self.assertNotIn("opposition_Mars", SUPPORTED_ASPECT_KEYS)
@@ -84,6 +97,9 @@ class AspectBatchC2CoverageTests(unittest.TestCase):
         self.assertTrue(all(item.unresolved for item in SATURN_SQUARE_MERCURY_WINS))
         self.assertTrue(all(item.unresolved for item in SATURN_SQUARE_SATURN_WINS))
         self.assertTrue(all(not item.unresolved for item in SATURN_SQUARE_COMMON))
+        # C2 packs remain present as distinct catalog keys.
+        self.assertIn("square_Mars", _canonical_aspect_packs())
+        self.assertIn("square_Saturn", _canonical_aspect_packs())
 
 
 class AspectBatchC2MarsActivationTests(unittest.TestCase):
