@@ -15,7 +15,6 @@ from app.services.mercury_aspect_reachability import (
 )
 from app.services.mercury_aspects import MERCURY_ASPECT_TARGETS
 from app.services.mercury_source_knowledge import (
-    ASPECT_PACK_ALIASES,
     SUPPORTED_ASPECT_KEYS,
 )
 
@@ -31,14 +30,9 @@ EXPECTED_IMPOSSIBLE = frozenset(
     }
 )
 
-# Still-missing reachable keys after Venus completion; exact ownership is C12+.
+# Still-missing reachable keys after Neptune completion; exact ownership is C13+.
 EXPECTED_STILL_MISSING_REACHABLE = frozenset(
     {
-        "conjunction_Neptune",
-        "sextile_Neptune",
-        "square_Neptune",
-        "trine_Neptune",
-        "opposition_Neptune",
         "conjunction_Pluto",
         "opposition_Pluto",
     }
@@ -95,7 +89,7 @@ class NatalAspectReachabilityTests(unittest.TestCase):
         self.assertTrue(frozenset(SUPPORTED_ASPECT_KEYS) <= REACHABLE_NATAL_ASPECT_KEYS)
 
     def test_current_supported_and_missing_reachable_counts(self):
-        # Source-snapshot counts are owned by the latest aspect batch (C12+).
+        # Source-snapshot counts are owned by the latest aspect batch (C13+).
         # C10 verifies geometry + that supported keys remain reachable-only.
         self.assertTrue(frozenset(SUPPORTED_ASPECT_KEYS) <= REACHABLE_NATAL_ASPECT_KEYS)
         missing_reachable = REACHABLE_NATAL_ASPECT_KEYS - frozenset(SUPPORTED_ASPECT_KEYS)
@@ -107,11 +101,10 @@ class NatalAspectReachabilityTests(unittest.TestCase):
         self.assertTrue(IMPOSSIBLE_NATAL_ASPECT_KEYS.isdisjoint(SUPPORTED_ASPECT_KEYS))
 
     def test_raw_geometry_denominator_unchanged(self):
-        # Geometry constants remain fixed; raw source totals are owned by C12+.
+        # Geometry constants remain fixed; raw source totals / alias count owned by C13+.
         self.assertEqual(len(RAW_NATAL_ASPECT_KEYS), 45)
         self.assertEqual(len(REACHABLE_NATAL_ASPECT_KEYS), 38)
         self.assertEqual(len(IMPOSSIBLE_NATAL_ASPECT_KEYS), 7)
-        self.assertEqual(len(ASPECT_PACK_ALIASES), 6)
 
     def test_summary_helper_geometry_fields(self):
         summary = natal_aspect_reachability_summary(SUPPORTED_ASPECT_KEYS)
@@ -123,11 +116,19 @@ class NatalAspectReachabilityTests(unittest.TestCase):
             summary["supported_reachable"] + summary["missing_reachable"],
             summary["reachable_total"],
         )
-        # Sun/Venus reachable factors are supported; exact missing set owned by C12+.
+        # Sun/Venus/Neptune reachable factors are supported; exact missing set owned by C13+.
         self.assertNotIn("conjunction_Sun", summary["missing_reachable_keys"])
         self.assertIn("conjunction_Sun", summary["supported_reachable_keys"])
         self.assertNotIn("conjunction_Venus", summary["missing_reachable_keys"])
         self.assertNotIn("sextile_Venus", summary["missing_reachable_keys"])
+        for key in (
+            "conjunction_Neptune",
+            "sextile_Neptune",
+            "square_Neptune",
+            "trine_Neptune",
+            "opposition_Neptune",
+        ):
+            self.assertNotIn(key, summary["missing_reachable_keys"])
         self.assertTrue(EXPECTED_STILL_MISSING_REACHABLE <= summary["missing_reachable_keys"])
 
 

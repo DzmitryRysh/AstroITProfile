@@ -115,10 +115,11 @@ def _match_definitions(
             "female_chart_context_unresolved",
             "intellectual_work_context_unresolved",
             "external_affliction_context_unresolved",
+            "multiple_affliction_context_unresolved",
         }:
             # Always include when this aspect factor is present; leave unresolved.
             # No strength / winner / creative-core / gender / intellectual-work /
-            # external-affliction resolver is applied.
+            # external-affliction / multiple-affliction resolver is applied.
             selected.append(
                 _to_fact(
                     definition,

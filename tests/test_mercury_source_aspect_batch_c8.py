@@ -321,7 +321,7 @@ class AspectBatchC8ActivationTests(unittest.TestCase):
         self.assertFalse(any(item.id.startswith("uranus_sq_") for item in trine.aspect_facts))
         self.assertFalse(any(item.id.startswith("uranus_opp_") for item in sextile.aspect_facts))
 
-    def test_unsupported_probe_remains_conjunction_neptune(self):
+    def test_unsupported_probe_remains_conjunction_Pluto(self):
         profile = build_source_profile_from_factors(
             MercurySourceFactors(
                 birth_time_known=True,
@@ -329,14 +329,14 @@ class AspectBatchC8ActivationTests(unittest.TestCase):
                 mercury_element="fire",
                 mercury_motion="direct",
                 mercury_house=1,
-                aspects=[MercuryAspect(planet="Neptune", type="conjunction", orb_deg=2.0)],
+                aspects=[MercuryAspect(planet="Pluto", type="conjunction", orb_deg=2.0)],
             )
         )
         self.assertEqual(profile.coverage.status, "partial")
-        self.assertEqual(profile.coverage.missing_factors, ["aspect:conjunction_Neptune"])
+        self.assertEqual(profile.coverage.missing_factors, ["aspect:conjunction_Pluto"])
         self.assertIn("square_Uranus", SUPPORTED_ASPECT_KEYS)
         self.assertIn("opposition_Uranus", SUPPORTED_ASPECT_KEYS)
-        self.assertNotIn("conjunction_Neptune", SUPPORTED_ASPECT_KEYS)
+        self.assertNotIn("conjunction_Pluto", SUPPORTED_ASPECT_KEYS)
 
 
 class AspectBatchC8RegressionTests(unittest.TestCase):

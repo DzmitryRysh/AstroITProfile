@@ -66,6 +66,12 @@ Aspect Batch C11 (verified Bioastrology Sun conjunction):
 Aspect Batch C12 (verified Bioastrology Venus reachable family):
 - sextile_Venus
 - conjunction_Venus
+
+Aspect Batch C13 (verified Bioastrology Neptune reachable family):
+- trine_Neptune / sextile_Neptune (harmonious alias)
+- square_Neptune
+- opposition_Neptune
+- conjunction_Neptune
 """
 
 from __future__ import annotations
@@ -1632,6 +1638,7 @@ ASPECT_PACK_ALIASES: dict[str, str] = {
     "sextile_Saturn": "trine_Saturn",
     "sextile_Uranus": "trine_Uranus",
     "sextile_Pluto": "trine_Pluto",
+    "sextile_Neptune": "trine_Neptune",
 }
 
 SUPPORTED_SIGN_KEYS = {
@@ -1680,6 +1687,11 @@ SUPPORTED_ASPECT_KEYS = {
     "conjunction_Sun",
     "sextile_Venus",
     "conjunction_Venus",
+    "trine_Neptune",
+    "sextile_Neptune",
+    "square_Neptune",
+    "opposition_Neptune",
+    "conjunction_Neptune",
     "trine_Mars",
     "sextile_Mars",
     "square_Mars",
@@ -1785,6 +1797,13 @@ from app.services.mercury_source_knowledge_c12_aspects import (  # noqa: E402
     VENUS_CONJUNCTION,
     VENUS_SEXTILE,
 )
+from app.services.mercury_source_knowledge_c13_aspects import (  # noqa: E402
+    C13_ASPECT_PACKS,
+    NEPTUNE_CONJUNCTION,
+    NEPTUNE_HARMONIOUS,
+    NEPTUNE_OPPOSITION,
+    NEPTUNE_SQUARE,
+)
 
 ALL_SOURCE_FACTS: tuple[SourceFactDef, ...] = (
     LEO_LESSON7
@@ -1824,6 +1843,7 @@ ALL_SOURCE_FACTS: tuple[SourceFactDef, ...] = (
     + C9_ASPECT_PACKS
     + C11_ASPECT_PACKS
     + C12_ASPECT_PACKS
+    + C13_ASPECT_PACKS
 )
 
 # Repeated-signal definitions: SAME tag across distinct provenance keys only.

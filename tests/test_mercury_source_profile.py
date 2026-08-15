@@ -333,18 +333,18 @@ class AvdeyGoldenCaseTests(unittest.TestCase):
             mercury_element="fire",
             mercury_motion="direct",
             mercury_house=1,
-            aspects=[MercuryAspect(planet="Neptune", type="conjunction", orb_deg=2.0)],
+            aspects=[MercuryAspect(planet="Pluto", type="conjunction", orb_deg=2.0)],
         )
         profile = build_source_profile_from_factors(factors)
         self.assertEqual(profile.coverage.status, "partial")
         self.assertNotIn("sign:Leo", profile.coverage.missing_factors)
         self.assertNotIn("house:1", profile.coverage.missing_factors)
         self.assertIn("house:1", profile.coverage.covered_factors)
-        self.assertEqual(profile.coverage.missing_factors, ["aspect:conjunction_Neptune"])
+        self.assertEqual(profile.coverage.missing_factors, ["aspect:conjunction_Pluto"])
         self.assertNotIn("motion:direct", profile.coverage.missing_factors)
         self.assertGreater(len(profile.sign_facts), 0)
         self.assertGreater(len(profile.house_facts), 0)
-        self.assertTrue(any("conjunction Neptune" in item for item in profile.limitations))
+        self.assertTrue(any("conjunction Pluto" in item for item in profile.limitations))
 
     def test_route_registered(self):
         app = create_app()

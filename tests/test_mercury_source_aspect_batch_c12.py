@@ -36,11 +36,6 @@ from app.services.mercury_source_profile import (
 ENGINE_ASPECT_SLOTS = 45
 EXPECTED_MISSING_REACHABLE = frozenset(
     {
-        "conjunction_Neptune",
-        "sextile_Neptune",
-        "square_Neptune",
-        "trine_Neptune",
-        "opposition_Neptune",
         "conjunction_Pluto",
         "opposition_Pluto",
     }
@@ -117,11 +112,8 @@ def _synthetic_venus(aspect_type: str, orb_deg: float = 2.0):
 
 
 class AspectBatchC12CoverageTests(unittest.TestCase):
-    def test_supported_public_aspect_count_is_thirty_one(self):
-        self.assertEqual(len(SUPPORTED_ASPECT_KEYS), 31)
-        self.assertEqual(ENGINE_ASPECT_SLOTS - len(SUPPORTED_ASPECT_KEYS), 14)
-        self.assertEqual(len(_canonical_aspect_packs()), 25)
-        self.assertEqual(len(ASPECT_PACK_ALIASES), 6)
+    def test_c12_venus_family_and_catalog_guarantees(self):
+        # Exact raw/reachable totals are owned by the latest aspect batch (C13+).
         self.assertEqual(len(SUPPORTED_SIGN_KEYS), 12)
         self.assertEqual(len(SUPPORTED_HOUSE_KEYS), 12)
         self.assertTrue(MOON_PUBLIC_FAMILY.issubset(SUPPORTED_ASPECT_KEYS))
@@ -142,20 +134,16 @@ class AspectBatchC12CoverageTests(unittest.TestCase):
             self.assertNotIn(key, SUPPORTED_ASPECT_KEYS)
             self.assertNotIn(key, _canonical_aspect_packs())
             self.assertIn(key, IMPOSSIBLE_NATAL_ASPECT_KEYS)
-            self.assertNotIn(key, EXPECTED_MISSING_REACHABLE)
 
-    def test_reachable_snapshot_after_c12(self):
+    def test_reachable_geometry_unchanged_after_c12(self):
         summary = natal_aspect_reachability_summary(SUPPORTED_ASPECT_KEYS)
         self.assertEqual(summary["reachable_total"], 38)
-        self.assertEqual(summary["supported_reachable"], 31)
-        self.assertEqual(summary["missing_reachable"], 7)
         self.assertEqual(summary["impossible_total"], 7)
-        self.assertEqual(summary["missing_reachable_keys"], EXPECTED_MISSING_REACHABLE)
-        self.assertTrue(IMPOSSIBLE_NATAL_ASPECT_KEYS.isdisjoint(EXPECTED_MISSING_REACHABLE))
+        self.assertIn("conjunction_Venus", summary["supported_reachable_keys"])
+        self.assertIn("sextile_Venus", summary["supported_reachable_keys"])
+        self.assertNotIn("conjunction_Venus", summary["missing_reachable_keys"])
+        self.assertNotIn("sextile_Venus", summary["missing_reachable_keys"])
         self.assertTrue(frozenset(SUPPORTED_ASPECT_KEYS) <= REACHABLE_NATAL_ASPECT_KEYS)
-        self.assertEqual(VENUS_REACHABLE_FAMILY, frozenset(SUPPORTED_ASPECT_KEYS) & frozenset(
-            k for k in REACHABLE_NATAL_ASPECT_KEYS if k.endswith("_Venus")
-        ))
 
     def test_shared_ref_and_pack_sizes(self):
         self.assertEqual(REF_VENUS_SX_CJ, "bioastrology_mercury_venus_sextile_conjunction")
@@ -272,7 +260,7 @@ class AspectBatchC12ActivationTests(unittest.TestCase):
                 self.assertEqual(detect_repeated_signals(activated), [])
                 self.assertTrue(_ids(pack).issubset(_ids(activated)))
 
-    def test_unsupported_probe_remains_conjunction_neptune(self):
+    def test_unsupported_probe_remains_conjunction_pluto(self):
         profile = build_source_profile_from_factors(
             MercurySourceFactors(
                 birth_time_known=True,
@@ -280,14 +268,14 @@ class AspectBatchC12ActivationTests(unittest.TestCase):
                 mercury_element="fire",
                 mercury_motion="direct",
                 mercury_house=1,
-                aspects=[MercuryAspect(planet="Neptune", type="conjunction", orb_deg=2.0)],
+                aspects=[MercuryAspect(planet="Pluto", type="conjunction", orb_deg=2.0)],
             )
         )
         self.assertEqual(profile.coverage.status, "partial")
-        self.assertEqual(profile.coverage.missing_factors, ["aspect:conjunction_Neptune"])
+        self.assertEqual(profile.coverage.missing_factors, ["aspect:conjunction_Pluto"])
         self.assertIn("conjunction_Venus", SUPPORTED_ASPECT_KEYS)
         self.assertIn("sextile_Venus", SUPPORTED_ASPECT_KEYS)
-        self.assertNotIn("conjunction_Neptune", SUPPORTED_ASPECT_KEYS)
+        self.assertNotIn("conjunction_Pluto", SUPPORTED_ASPECT_KEYS)
 
 
 class AspectBatchC12RegressionTests(unittest.TestCase):
