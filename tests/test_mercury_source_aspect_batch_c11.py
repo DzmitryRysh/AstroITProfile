@@ -34,20 +34,6 @@ from app.services.mercury_source_profile import (
     detect_repeated_signals,
 )
 
-ENGINE_ASPECT_SLOTS = 45
-EXPECTED_MISSING_REACHABLE = frozenset(
-    {
-        "conjunction_Venus",
-        "sextile_Venus",
-        "conjunction_Neptune",
-        "sextile_Neptune",
-        "square_Neptune",
-        "trine_Neptune",
-        "opposition_Neptune",
-        "conjunction_Pluto",
-        "opposition_Pluto",
-    }
-)
 MOON_PUBLIC_FAMILY = {
     "conjunction_Moon",
     "sextile_Moon",
@@ -111,10 +97,8 @@ def _synthetic_sun(orb_deg: float):
 
 
 class AspectBatchC11CoverageTests(unittest.TestCase):
-    def test_supported_public_aspect_count_is_twenty_nine(self):
-        self.assertEqual(len(SUPPORTED_ASPECT_KEYS), 29)
-        self.assertEqual(ENGINE_ASPECT_SLOTS - len(SUPPORTED_ASPECT_KEYS), 16)
-        self.assertEqual(len(_canonical_aspect_packs()), 23)
+    def test_c11_sun_family_and_catalog_guarantees(self):
+        # Exact raw/reachable totals are owned by the latest aspect batch (C12+).
         self.assertEqual(len(ASPECT_PACK_ALIASES), 6)
         self.assertEqual(len(SUPPORTED_SIGN_KEYS), 12)
         self.assertEqual(len(SUPPORTED_HOUSE_KEYS), 12)
@@ -136,14 +120,12 @@ class AspectBatchC11CoverageTests(unittest.TestCase):
             self.assertNotIn(key, _canonical_aspect_packs())
             self.assertIn(key, IMPOSSIBLE_NATAL_ASPECT_KEYS)
 
-    def test_reachable_snapshot_after_c11(self):
+    def test_reachable_geometry_unchanged_after_c11(self):
         summary = natal_aspect_reachability_summary(SUPPORTED_ASPECT_KEYS)
         self.assertEqual(summary["reachable_total"], 38)
-        self.assertEqual(summary["supported_reachable"], 29)
-        self.assertEqual(summary["missing_reachable"], 9)
         self.assertEqual(summary["impossible_total"], 7)
-        self.assertEqual(summary["missing_reachable_keys"], EXPECTED_MISSING_REACHABLE)
-        self.assertTrue(IMPOSSIBLE_NATAL_ASPECT_KEYS.isdisjoint(EXPECTED_MISSING_REACHABLE))
+        self.assertIn("conjunction_Sun", summary["supported_reachable_keys"])
+        self.assertNotIn("conjunction_Sun", summary["missing_reachable_keys"])
         self.assertTrue(frozenset(SUPPORTED_ASPECT_KEYS) <= REACHABLE_NATAL_ASPECT_KEYS)
 
     def test_distinct_ref_and_catalog_identity(self):

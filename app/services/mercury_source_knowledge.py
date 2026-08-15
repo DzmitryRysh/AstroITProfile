@@ -62,6 +62,10 @@ Aspect Batch C9 (verified Bioastrology Moon opposition / conjunction):
 
 Aspect Batch C11 (verified Bioastrology Sun conjunction):
 - conjunction_Sun
+
+Aspect Batch C12 (verified Bioastrology Venus reachable family):
+- sextile_Venus
+- conjunction_Venus
 """
 
 from __future__ import annotations
@@ -1674,6 +1678,8 @@ SUPPORTED_ASPECT_KEYS = {
     "opposition_Moon",
     "conjunction_Moon",
     "conjunction_Sun",
+    "sextile_Venus",
+    "conjunction_Venus",
     "trine_Mars",
     "sextile_Mars",
     "square_Mars",
@@ -1774,6 +1780,11 @@ from app.services.mercury_source_knowledge_c11_aspects import (  # noqa: E402
     C11_ASPECT_PACKS,
     SUN_CONJUNCTION,
 )
+from app.services.mercury_source_knowledge_c12_aspects import (  # noqa: E402
+    C12_ASPECT_PACKS,
+    VENUS_CONJUNCTION,
+    VENUS_SEXTILE,
+)
 
 ALL_SOURCE_FACTS: tuple[SourceFactDef, ...] = (
     LEO_LESSON7
@@ -1812,6 +1823,7 @@ ALL_SOURCE_FACTS: tuple[SourceFactDef, ...] = (
     + C8_ASPECT_PACKS
     + C9_ASPECT_PACKS
     + C11_ASPECT_PACKS
+    + C12_ASPECT_PACKS
 )
 
 # Repeated-signal definitions: SAME tag across distinct provenance keys only.

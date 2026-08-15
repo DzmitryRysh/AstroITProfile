@@ -31,10 +31,9 @@ EXPECTED_IMPOSSIBLE = frozenset(
     }
 )
 
-EXPECTED_MISSING_REACHABLE = frozenset(
+# Still-missing reachable keys after Venus completion; exact ownership is C12+.
+EXPECTED_STILL_MISSING_REACHABLE = frozenset(
     {
-        "conjunction_Venus",
-        "sextile_Venus",
         "conjunction_Neptune",
         "sextile_Neptune",
         "square_Neptune",
@@ -96,7 +95,7 @@ class NatalAspectReachabilityTests(unittest.TestCase):
         self.assertTrue(frozenset(SUPPORTED_ASPECT_KEYS) <= REACHABLE_NATAL_ASPECT_KEYS)
 
     def test_current_supported_and_missing_reachable_counts(self):
-        # Source-snapshot counts are owned by the latest aspect batch (C11+).
+        # Source-snapshot counts are owned by the latest aspect batch (C12+).
         # C10 verifies geometry + that supported keys remain reachable-only.
         self.assertTrue(frozenset(SUPPORTED_ASPECT_KEYS) <= REACHABLE_NATAL_ASPECT_KEYS)
         missing_reachable = REACHABLE_NATAL_ASPECT_KEYS - frozenset(SUPPORTED_ASPECT_KEYS)
@@ -108,7 +107,7 @@ class NatalAspectReachabilityTests(unittest.TestCase):
         self.assertTrue(IMPOSSIBLE_NATAL_ASPECT_KEYS.isdisjoint(SUPPORTED_ASPECT_KEYS))
 
     def test_raw_geometry_denominator_unchanged(self):
-        # Geometry constants remain fixed; raw source totals are owned by C11+.
+        # Geometry constants remain fixed; raw source totals are owned by C12+.
         self.assertEqual(len(RAW_NATAL_ASPECT_KEYS), 45)
         self.assertEqual(len(REACHABLE_NATAL_ASPECT_KEYS), 38)
         self.assertEqual(len(IMPOSSIBLE_NATAL_ASPECT_KEYS), 7)
@@ -124,11 +123,12 @@ class NatalAspectReachabilityTests(unittest.TestCase):
             summary["supported_reachable"] + summary["missing_reachable"],
             summary["reachable_total"],
         )
-        # After C11, Sun conjunction is supported; remaining missing set is source-owned by C11.
+        # Sun/Venus reachable factors are supported; exact missing set owned by C12+.
         self.assertNotIn("conjunction_Sun", summary["missing_reachable_keys"])
         self.assertIn("conjunction_Sun", summary["supported_reachable_keys"])
-        self.assertTrue(EXPECTED_MISSING_REACHABLE <= summary["missing_reachable_keys"])
-        self.assertEqual(len(summary["missing_reachable_keys"]), 9)
+        self.assertNotIn("conjunction_Venus", summary["missing_reachable_keys"])
+        self.assertNotIn("sextile_Venus", summary["missing_reachable_keys"])
+        self.assertTrue(EXPECTED_STILL_MISSING_REACHABLE <= summary["missing_reachable_keys"])
 
 
 if __name__ == "__main__":
