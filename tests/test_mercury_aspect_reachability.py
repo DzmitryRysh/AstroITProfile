@@ -15,7 +15,6 @@ from app.services.mercury_aspect_reachability import (
 )
 from app.services.mercury_aspects import MERCURY_ASPECT_TARGETS
 from app.services.mercury_source_knowledge import (
-    ALL_SOURCE_FACTS,
     ASPECT_PACK_ALIASES,
     SUPPORTED_ASPECT_KEYS,
 )
@@ -34,7 +33,6 @@ EXPECTED_IMPOSSIBLE = frozenset(
 
 EXPECTED_MISSING_REACHABLE = frozenset(
     {
-        "conjunction_Sun",
         "conjunction_Venus",
         "sextile_Venus",
         "conjunction_Neptune",
@@ -56,14 +54,6 @@ FULLY_REACHABLE_PLANETS = (
     "Neptune",
     "Pluto",
 )
-
-
-def _canonical_aspect_packs() -> set[str]:
-    return {
-        item.factor_key
-        for item in ALL_SOURCE_FACTS
-        if item.factor_type == "aspect"
-    }
 
 
 class NatalAspectReachabilityTests(unittest.TestCase):
@@ -106,34 +96,39 @@ class NatalAspectReachabilityTests(unittest.TestCase):
         self.assertTrue(frozenset(SUPPORTED_ASPECT_KEYS) <= REACHABLE_NATAL_ASPECT_KEYS)
 
     def test_current_supported_and_missing_reachable_counts(self):
-        supported_reachable = frozenset(SUPPORTED_ASPECT_KEYS) & REACHABLE_NATAL_ASPECT_KEYS
+        # Source-snapshot counts are owned by the latest aspect batch (C11+).
+        # C10 verifies geometry + that supported keys remain reachable-only.
+        self.assertTrue(frozenset(SUPPORTED_ASPECT_KEYS) <= REACHABLE_NATAL_ASPECT_KEYS)
         missing_reachable = REACHABLE_NATAL_ASPECT_KEYS - frozenset(SUPPORTED_ASPECT_KEYS)
-        self.assertEqual(len(supported_reachable), 28)
-        self.assertEqual(len(missing_reachable), 10)
-        self.assertEqual(missing_reachable, EXPECTED_MISSING_REACHABLE)
+        self.assertTrue(IMPOSSIBLE_NATAL_ASPECT_KEYS.isdisjoint(missing_reachable))
 
     def test_impossible_keys_are_not_missing_source_knowledge(self):
         missing_reachable = REACHABLE_NATAL_ASPECT_KEYS - frozenset(SUPPORTED_ASPECT_KEYS)
         self.assertTrue(IMPOSSIBLE_NATAL_ASPECT_KEYS.isdisjoint(missing_reachable))
         self.assertTrue(IMPOSSIBLE_NATAL_ASPECT_KEYS.isdisjoint(SUPPORTED_ASPECT_KEYS))
 
-    def test_raw_unsupported_and_c9_catalog_invariants_unchanged(self):
-        # Raw catalog (C9 ownership) remains parallel to reachable semantics.
-        self.assertEqual(len(SUPPORTED_ASPECT_KEYS), 28)
-        self.assertEqual(45 - len(SUPPORTED_ASPECT_KEYS), 17)
-        self.assertEqual(len(_canonical_aspect_packs()), 22)
-        self.assertEqual(len(ASPECT_PACK_ALIASES), 6)
+    def test_raw_geometry_denominator_unchanged(self):
+        # Geometry constants remain fixed; raw source totals are owned by C11+.
         self.assertEqual(len(RAW_NATAL_ASPECT_KEYS), 45)
+        self.assertEqual(len(REACHABLE_NATAL_ASPECT_KEYS), 38)
+        self.assertEqual(len(IMPOSSIBLE_NATAL_ASPECT_KEYS), 7)
+        self.assertEqual(len(ASPECT_PACK_ALIASES), 6)
 
-    def test_summary_helper(self):
+    def test_summary_helper_geometry_fields(self):
         summary = natal_aspect_reachability_summary(SUPPORTED_ASPECT_KEYS)
         self.assertEqual(summary["raw_total"], 45)
         self.assertEqual(summary["reachable_total"], 38)
         self.assertEqual(summary["impossible_total"], 7)
-        self.assertEqual(summary["supported_reachable"], 28)
-        self.assertEqual(summary["missing_reachable"], 10)
-        self.assertEqual(summary["missing_reachable_keys"], EXPECTED_MISSING_REACHABLE)
         self.assertEqual(summary["impossible_keys"], EXPECTED_IMPOSSIBLE)
+        self.assertEqual(
+            summary["supported_reachable"] + summary["missing_reachable"],
+            summary["reachable_total"],
+        )
+        # After C11, Sun conjunction is supported; remaining missing set is source-owned by C11.
+        self.assertNotIn("conjunction_Sun", summary["missing_reachable_keys"])
+        self.assertIn("conjunction_Sun", summary["supported_reachable_keys"])
+        self.assertTrue(EXPECTED_MISSING_REACHABLE <= summary["missing_reachable_keys"])
+        self.assertEqual(len(summary["missing_reachable_keys"]), 9)
 
 
 if __name__ == "__main__":

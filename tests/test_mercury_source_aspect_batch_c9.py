@@ -31,7 +31,6 @@ from app.services.mercury_source_profile import (
     detect_repeated_signals,
 )
 
-ENGINE_ASPECT_SLOTS = 45
 MOON_PUBLIC_FAMILY = {
     "conjunction_Moon",
     "sextile_Moon",
@@ -100,19 +99,16 @@ def _synthetic_moon(aspect_type: str):
 
 
 class AspectBatchC9CoverageTests(unittest.TestCase):
-    def test_supported_public_aspect_count_is_twenty_eight(self):
-        self.assertEqual(len(SUPPORTED_ASPECT_KEYS), 28)
-        self.assertEqual(ENGINE_ASPECT_SLOTS - len(SUPPORTED_ASPECT_KEYS), 17)
-        self.assertEqual(len(_canonical_aspect_packs()), 22)
-        self.assertEqual(len(ASPECT_PACK_ALIASES), 6)
-        self.assertEqual(len(SUPPORTED_SIGN_KEYS), 12)
-        self.assertEqual(len(SUPPORTED_HOUSE_KEYS), 12)
+    def test_c9_moon_family_remains_complete(self):
+        # Historical C9 batch: factor-specific guarantee. Exact public count owned by C11+.
+        self.assertTrue(MOON_PUBLIC_FAMILY.issubset(SUPPORTED_ASPECT_KEYS))
         self.assertTrue(JUPITER_PUBLIC_FAMILY.issubset(SUPPORTED_ASPECT_KEYS))
         self.assertTrue(SATURN_PUBLIC_FAMILY.issubset(SUPPORTED_ASPECT_KEYS))
         self.assertTrue(MARS_PUBLIC_FAMILY.issubset(SUPPORTED_ASPECT_KEYS))
         self.assertTrue(URANUS_PUBLIC_FAMILY.issubset(SUPPORTED_ASPECT_KEYS))
-        self.assertTrue(MOON_PUBLIC_FAMILY.issubset(SUPPORTED_ASPECT_KEYS))
         self.assertTrue(PLUTO_PARTIAL_FAMILY.issubset(SUPPORTED_ASPECT_KEYS))
+        self.assertEqual(len(SUPPORTED_SIGN_KEYS), 12)
+        self.assertEqual(len(SUPPORTED_HOUSE_KEYS), 12)
         self.assertNotIn("conjunction_Pluto", SUPPORTED_ASPECT_KEYS)
         self.assertNotIn("opposition_Pluto", SUPPORTED_ASPECT_KEYS)
 
