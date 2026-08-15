@@ -34,7 +34,6 @@ from app.services.mercury_source_profile import (
     detect_repeated_signals,
 )
 
-ENGINE_ASPECT_SLOTS = 45
 URANUS_PUBLIC_FAMILY = {
     "conjunction_Uranus",
     "sextile_Uranus",
@@ -91,17 +90,14 @@ def _synthetic_uranus(aspect_type: str):
 
 
 class AspectBatchC8CoverageTests(unittest.TestCase):
-    def test_supported_public_aspect_count_is_twenty_six(self):
-        self.assertEqual(len(SUPPORTED_ASPECT_KEYS), 26)
-        self.assertEqual(ENGINE_ASPECT_SLOTS - len(SUPPORTED_ASPECT_KEYS), 19)
-        self.assertEqual(len(_canonical_aspect_packs()), 20)
-        self.assertEqual(len(ASPECT_PACK_ALIASES), 6)
-        self.assertEqual(len(SUPPORTED_SIGN_KEYS), 12)
-        self.assertEqual(len(SUPPORTED_HOUSE_KEYS), 12)
+    def test_c8_uranus_family_remains_complete(self):
+        # Historical C8 batch: factor-specific guarantee. Exact public count owned by C9+.
+        self.assertTrue(URANUS_PUBLIC_FAMILY.issubset(SUPPORTED_ASPECT_KEYS))
         self.assertTrue(JUPITER_PUBLIC_FAMILY.issubset(SUPPORTED_ASPECT_KEYS))
         self.assertTrue(SATURN_PUBLIC_FAMILY.issubset(SUPPORTED_ASPECT_KEYS))
         self.assertTrue(MARS_PUBLIC_FAMILY.issubset(SUPPORTED_ASPECT_KEYS))
-        self.assertTrue(URANUS_PUBLIC_FAMILY.issubset(SUPPORTED_ASPECT_KEYS))
+        self.assertEqual(len(SUPPORTED_SIGN_KEYS), 12)
+        self.assertEqual(len(SUPPORTED_HOUSE_KEYS), 12)
 
     def test_uranus_family_is_exactly_five_of_five(self):
         self.assertIn("conjunction_Uranus", SUPPORTED_ASPECT_KEYS)

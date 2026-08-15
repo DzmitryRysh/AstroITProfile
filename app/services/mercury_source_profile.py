@@ -100,9 +100,11 @@ def _match_definitions(
             "strength_unresolved",
             "creative_core_strength_unresolved",
             "female_chart_context_unresolved",
+            "intellectual_work_context_unresolved",
         }:
             # Always include when this aspect factor is present; leave unresolved.
-            # No strength / winner / creative-core / gender resolver is applied.
+            # No strength / winner / creative-core / gender / intellectual-work
+            # resolver is applied.
             selected.append(
                 _to_fact(
                     definition,
