@@ -237,30 +237,99 @@ class SynthesisRoutingTests(unittest.TestCase):
 
 
 class SynthesisPreviewTests(unittest.TestCase):
-    def test_preview_max_four_and_provenance_diversity(self):
+    def test_preview_max_three_and_unique(self):
         synthesis = build_mercury_profile_synthesis(_avdey())
+        self.assertEqual(MAX_PREVIEW_FACTS, 3)
         for section in synthesis.sections:
             self.assertLessEqual(len(section.preview_fact_ids), MAX_PREVIEW_FACTS)
+            self.assertEqual(
+                len(section.preview_fact_ids),
+                len(set(section.preview_fact_ids)),
+            )
             self.assertTrue(
                 set(section.preview_fact_ids).issubset(set(section.resolved_fact_ids))
             )
             if section.resolved_fact_count >= 1:
                 self.assertGreaterEqual(len(section.preview_fact_ids), 1)
-            # First min(4, factor_count) previews should prefer distinct provenance.
+
+    def test_repeat_supported_selected_before_ordinary_representative(self):
+        profile = _avdey()
+        synthesis = build_mercury_profile_synthesis(profile)
+        repeat_ids = {
+            fact_id
+            for signal in profile.repeated_signals
+            for fact_id in signal.fact_ids
+        }
+        thinking = next(s for s in synthesis.sections if s.key == "thinking")
+        # Avdey has thinking facts that participate in repeats; first slots prefer them.
+        self.assertTrue(repeat_ids.intersection(thinking.preview_fact_ids))
+        # Only actual repeated-signal fact_ids qualify as "repeat-backed".
+        for fact_id in thinking.preview_fact_ids:
+            if fact_id in repeat_ids:
+                self.assertTrue(
+                    any(fact_id in signal.fact_ids for signal in profile.repeated_signals)
+                )
+
+    def test_one_signal_does_not_monopolize_when_multiple_have_evidence(self):
+        profile = _avdey()
+        synthesis = build_mercury_profile_synthesis(profile)
+        thinking = next(s for s in synthesis.sections if s.key == "thinking")
+        section_ids = set(thinking.resolved_fact_ids)
+        signals_with_evidence = [
+            signal
+            for signal in profile.repeated_signals
+            if section_ids.intersection(signal.fact_ids)
+        ]
+        if len(signals_with_evidence) < 2:
+            self.skipTest("need >=2 repeated signals with thinking evidence")
+        # Map preview facts to which signal(s) they support (first matching signal order).
+        owners = []
+        for fact_id in thinking.preview_fact_ids:
+            for signal in signals_with_evidence:
+                if fact_id in signal.fact_ids:
+                    owners.append(signal.signal)
+                    break
+        # When multiple signals have section evidence, distinct signals appear first.
+        if len(owners) >= 2:
+            self.assertNotEqual(owners[0], owners[1])
+
+    def test_section_local_repeat_evidence_only(self):
+        profile = _avdey()
+        synthesis = build_mercury_profile_synthesis(profile)
+        for section in synthesis.sections:
+            section_ids = set(section.resolved_fact_ids)
+            for fact_id in section.preview_fact_ids:
+                self.assertIn(fact_id, section_ids)
+
+    def test_no_repeat_fallback_factor_diversity(self):
+        synthesis = build_mercury_profile_synthesis(_milka())
+        self.assertEqual(synthesis.strongest_patterns, ())
+        for section in synthesis.sections:
+            if section.resolved_fact_count == 0:
+                continue
+            self.assertLessEqual(len(section.preview_fact_ids), MAX_PREVIEW_FACTS)
             preview_facts = [synthesis.facts_by_id[fid] for fid in section.preview_fact_ids]
-            first_wave = preview_facts[: min(MAX_PREVIEW_FACTS, section.factor_count)]
-            provenances = [
-                f"{fact.factor_type}:{fact.factor_key}" for fact in first_wave
-            ]
+            # Diversity first-pass: unique provenance among first min(limit, factor_count).
+            first_wave = preview_facts[: min(len(preview_facts), section.factor_count)]
+            provenances = [f"{f.factor_type}:{f.factor_key}" for f in first_wave]
             self.assertEqual(len(provenances), len(set(provenances)))
 
+    def test_preview_deterministic_and_input_unchanged(self):
+        profile = _vlad()
+        before_signals = [s.model_dump() for s in profile.repeated_signals]
+        first = build_mercury_profile_synthesis(profile)
+        second = build_mercury_profile_synthesis(profile)
+        thinking = next(s for s in first.sections if s.key == "thinking")
+        thinking2 = next(s for s in second.sections if s.key == "thinking")
+        self.assertEqual(thinking.preview_fact_ids, thinking2.preview_fact_ids)
+        self.assertEqual(
+            [s.model_dump() for s in profile.repeated_signals],
+            before_signals,
+        )
+
     def test_preview_does_not_prefer_polarity_or_orb(self):
-        # With fixed diversity algorithm, reordering by polarity must not change
-        # the selected preview set for a section with multiple factors.
         synthesis = build_mercury_profile_synthesis(_vlad())
         thinking = next(section for section in synthesis.sections if section.key == "thinking")
-        self.assertEqual(thinking.preview_fact_ids, thinking.preview_fact_ids)
-        # Deterministic: same profile twice yields identical previews.
         again = build_mercury_profile_synthesis(_vlad())
         thinking2 = next(section for section in again.sections if section.key == "thinking")
         self.assertEqual(thinking.preview_fact_ids, thinking2.preview_fact_ids)

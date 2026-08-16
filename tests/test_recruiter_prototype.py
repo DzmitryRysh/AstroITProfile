@@ -244,6 +244,23 @@ class RecruiterUxPolishTests(unittest.TestCase):
         self.assertIn("sectionDisplayTitle", self.js)
         self.assertIn("if (!section.resolved_fact_count) return \"\"", self.js)
         self.assertIn("View all", self.js)
+        self.assertIn("Show less", self.js)
+        self.assertIn("section-remaining-facts", self.js)
+        self.assertIn("!previewSet.has(id)", self.js)
+        self.assertNotIn("section-all-facts", self.js)
+        # Page-level title only — calculated card has no duplicate profile title.
+        self.assertIn("setBrandTitleForProfile", self.js)
+        self.assertIn("profileHeaderTitle", self.js)
+        self.assertNotIn("<h2>${escapeHtml(headerTitle)}</h2>", self.js)
+        self.assertIn("self-calc-line", self.js)
+        self.assertIn("self-aspect-list", self.js)
+        self.assertIn("formatAspectChip", self.js)
+        # View all does not re-fetch.
+        view_all_block = self.js.split("function renderSynthesisSections", 1)[1].split(
+            "function renderTensionRows", 1
+        )[0]
+        self.assertNotIn("apiPost", view_all_block)
+        self.assertNotIn("mercury-source-profile", view_all_block)
         self.assertIn("data-self-demo=\"avdey\"", self.html)
         self.assertIn("data-self-demo=\"vlad\"", self.html)
         self.assertIn("data-self-demo=\"dzmitry\"", self.html)

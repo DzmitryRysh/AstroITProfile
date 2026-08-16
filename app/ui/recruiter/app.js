@@ -596,20 +596,23 @@
     return (synthesis.sections || []).map((section) => {
       if (!section.resolved_fact_count) return "";
       const previewIds = section.preview_fact_ids || [];
+      const previewSet = new Set(previewIds);
       const previewItems = previewIds
         .map((id) => renderPreviewFactItem(facts.get(id)))
         .filter(Boolean)
         .join("");
       const evidence = `${section.resolved_fact_count} source-backed observations across ${section.factor_count} factor${section.factor_count === 1 ? "" : "s"}`;
-      const allItems = (section.resolved_fact_ids || [])
+      // Preserve resolved order; exclude preview IDs so View all does not duplicate.
+      const remainingIds = (section.resolved_fact_ids || []).filter((id) => !previewSet.has(id));
+      const remainingItems = remainingIds
         .map((id) => renderPreviewFactItem(facts.get(id)))
         .filter(Boolean)
         .join("");
-      const hasMore = (section.resolved_fact_ids || []).length > previewIds.length;
+      const hasMore = remainingIds.length > 0;
       const viewAll = hasMore
         ? `<details class="section-view-all">
-            <summary>View all</summary>
-            <ul class="fact-list section-all-facts">${allItems}</ul>
+            <summary><span class="view-all-label">View all</span><span class="show-less-label">Show less</span></summary>
+            <ul class="fact-list section-remaining-facts">${remainingItems}</ul>
           </details>`
         : "";
       const title = sectionDisplayTitle(section, audience);
@@ -841,7 +844,6 @@
 
     selfProfileContent.innerHTML = `
       <section class="panel self-header">
-        <h2>${escapeHtml(headerTitle)}</h2>
         <p class="self-calc-line">Mercury in ${escapeHtml(calc.mercury_sign || "—")} · House ${escapeHtml(String(calc.mercury_house ?? "—"))} · ${motionHtml}</p>
         ${aspectList ? `<ul class="self-aspect-list">${aspectList}</ul>` : `<p class="meta">No calculated aspects in orb.</p>`}
       </section>

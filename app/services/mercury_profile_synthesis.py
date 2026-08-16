@@ -50,7 +50,7 @@ CATEGORY_TO_SECTION: dict[str, str] = {
     for category in categories
 }
 
-MAX_PREVIEW_FACTS = 4
+MAX_PREVIEW_FACTS = 3
 FACTOR_TYPE_ORDER = ("sign", "house", "motion", "aspect")
 
 
@@ -147,27 +147,87 @@ def collect_canonical_facts(profile: MercurySourceProfileResponse) -> list[Sourc
     return ordered
 
 
-def _select_preview_fact_ids(facts: list[SourceFact]) -> tuple[str, ...]:
-    """Representative diversity: one fact per provenance, then fill in order."""
+def _fill_preview_by_factor_diversity(
+    facts: list[SourceFact],
+    *,
+    limit: int,
+    used_provenance: set[str] | None = None,
+    already_selected: set[str] | None = None,
+) -> list[str]:
+    """Representative diversity fill: one fact per provenance, then fill in order."""
+    if limit <= 0 or not facts:
+        return []
     preview: list[str] = []
-    used_provenance: set[str] = set()
+    used = set(used_provenance or ())
+    selected = set(already_selected or ())
     for fact in facts:
-        if len(preview) >= MAX_PREVIEW_FACTS:
+        if len(preview) >= limit:
             break
-        key = _provenance_key(fact)
-        if key in used_provenance:
+        if fact.id in selected:
             continue
-        used_provenance.add(key)
+        key = _provenance_key(fact)
+        if key in used:
+            continue
+        used.add(key)
         preview.append(fact.id)
-    if len(preview) < MAX_PREVIEW_FACTS:
-        selected = set(preview)
+        selected.add(fact.id)
+    if len(preview) < limit:
         for fact in facts:
-            if len(preview) >= MAX_PREVIEW_FACTS:
+            if len(preview) >= limit:
                 break
             if fact.id in selected:
                 continue
             preview.append(fact.id)
             selected.add(fact.id)
+    return preview
+
+
+def _select_preview_fact_ids(
+    facts: list[SourceFact],
+    repeated_signals: list | tuple = (),
+) -> tuple[str, ...]:
+    """Repeat-supported-first previews, then factor-diversity fallback.
+
+    Prefer facts that already appear in profile.repeated_signals (section-local
+    fact_ids only). One fact per distinct repeated signal, in existing signal
+    order. Remaining slots use the prior provenance-diversity algorithm.
+    """
+    if not facts:
+        return ()
+
+    preview: list[str] = []
+    selected: set[str] = set()
+    used_provenance: set[str] = set()
+
+    for signal in repeated_signals:
+        if len(preview) >= MAX_PREVIEW_FACTS:
+            break
+        signal_ids = set(signal.fact_ids)
+        eligible = [
+            fact
+            for fact in facts
+            if fact.id in signal_ids and fact.id not in selected
+        ]
+        if not eligible:
+            continue
+        preferred = [
+            fact for fact in eligible if _provenance_key(fact) not in used_provenance
+        ]
+        chosen = preferred[0] if preferred else eligible[0]
+        preview.append(chosen.id)
+        selected.add(chosen.id)
+        used_provenance.add(_provenance_key(chosen))
+
+    remaining = MAX_PREVIEW_FACTS - len(preview)
+    if remaining > 0:
+        preview.extend(
+            _fill_preview_by_factor_diversity(
+                facts,
+                limit=remaining,
+                used_provenance=used_provenance,
+                already_selected=selected,
+            )
+        )
     return tuple(preview)
 
 
@@ -225,7 +285,10 @@ def _build_tensions(
     return tuple(resolved), tuple(conditional)
 
 
-def _build_sections(canonical: list[SourceFact]) -> tuple[SynthesisSection, ...]:
+def _build_sections(
+    canonical: list[SourceFact],
+    repeated_signals: list | tuple = (),
+) -> tuple[SynthesisSection, ...]:
     sections: list[SynthesisSection] = []
     for key, title, categories in SECTION_SPECS:
         category_set = set(categories)
@@ -244,7 +307,7 @@ def _build_sections(canonical: list[SourceFact]) -> tuple[SynthesisSection, ...]
                 resolved_fact_count=len(section_facts),
                 factor_keys=factor_keys,
                 factor_count=len(factor_keys),
-                preview_fact_ids=_select_preview_fact_ids(section_facts),
+                preview_fact_ids=_select_preview_fact_ids(section_facts, repeated_signals),
             )
         )
     return tuple(sections)
@@ -314,7 +377,7 @@ def build_mercury_profile_synthesis(
 
     strongest_patterns = _build_strongest_patterns(profile, facts_by_id)
     resolved_tensions, conditional_tensions = _build_tensions(profile, facts_by_id)
-    sections = _build_sections(canonical)
+    sections = _build_sections(canonical, profile.repeated_signals)
     conditional_details = _build_conditional_details(canonical)
     source_details = _build_source_details(canonical)
 

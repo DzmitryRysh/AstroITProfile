@@ -1176,6 +1176,18 @@ details.more-details > summary::-webkit-details-marker {
   display: none;
 }
 
+.section-view-all .show-less-label {
+  display: none;
+}
+
+.section-view-all[open] .view-all-label {
+  display: none;
+}
+
+.section-view-all[open] .show-less-label {
+  display: inline;
+}
+
 .tension-intro {
   margin: 0 0 0.65rem;
 }
