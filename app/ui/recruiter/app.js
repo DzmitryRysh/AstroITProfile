@@ -205,9 +205,9 @@
     work_application: "Work / Application",
     environment: "Environment / Mobility",
     mobility: "Environment / Mobility",
-    compensation: "Compensation",
-    secondary_gain: "Secondary Gain",
-    source_specific: "Source-Specific",
+    compensation: "Compensation (source material / detail)",
+    secondary_gain: "Secondary Gain (source material / detail)",
+    source_specific: "Source-Specific Claims",
     focus: "Focus",
     memory: "Memory",
   };
@@ -407,7 +407,10 @@
 
   function renderFactGroups(facts) {
     const sourceSpecific = facts.filter((f) => f.category === "source_specific");
-    const regular = facts.filter((f) => f.category !== "source_specific");
+    const compensation = facts.filter((f) => f.category === "compensation");
+    const regular = facts.filter(
+      (f) => f.category !== "source_specific" && f.category !== "compensation"
+    );
     const byCategory = new Map();
     regular.forEach((fact) => {
       const key = fact.category || "other";
@@ -429,6 +432,17 @@
       </div>`;
     }).join("");
 
+    let compensationBlock = "";
+    if (compensation.length) {
+      compensationBlock = `<details class="source-specific-block compensation-detail-block">
+        <summary>Compensation (source material / detail) <span class="factor-summary-meta">${compensation.length}</span></summary>
+        <div class="source-specific-body">
+          <p class="source-specific-note">Source material from the framework — not treated as an automatically active personality trait.</p>
+          <ul class="fact-list">${compensation.map(renderFactItem).join("")}</ul>
+        </div>
+      </details>`;
+    }
+
     let sourceBlock = "";
     if (sourceSpecific.length) {
       sourceBlock = `<details class="source-specific-block">
@@ -440,17 +454,37 @@
       </details>`;
     }
 
-    return `${groups}${sourceBlock}`;
+    return `${groups}${compensationBlock}${sourceBlock}`;
   }
 
-  function renderRepeatedSignals(signals) {
-    if (!signals || !signals.length) {
-      return `<section class="panel"><div class="panel-head"><h2>What repeats in your profile</h2></div><p class="meta">No repeated signals for this profile.</p></section>`;
+  function synthesisFactMap(synthesis) {
+    const map = new Map();
+    const byId = (synthesis && synthesis.facts_by_id) || {};
+    Object.keys(byId).forEach((id) => map.set(id, byId[id]));
+    return map;
+  }
+
+  function renderPreviewFactItem(fact) {
+    if (!fact) return "";
+    const isRisk = fact.polarity === "risk";
+    const marker = isRisk
+      ? `<span class="risk-mark" title="Possible difficulty">Risk</span>`
+      : `<span class="fact-bullet" aria-hidden="true">•</span>`;
+    const provenance = compactProvenanceLabel(`${fact.factor_type}:${fact.factor_key}`);
+    return `<li class="fact-item${isRisk ? " fact-risk" : ""}">${marker}<span class="fact-text">${escapeHtml(fact.text)}<span class="fact-provenance">${escapeHtml(provenance)}</span></span></li>`;
+  }
+
+  function renderStrongestPatterns(synthesis) {
+    const patterns = (synthesis && synthesis.strongest_patterns) || [];
+    if (!patterns.length) {
+      return `<section class="panel synthesis-patterns">
+        <div class="panel-head"><h2>Patterns that repeat</h2></div>
+        <p class="meta patterns-empty">No repeated pattern stands out across multiple Mercury factors. Your profile is more distributed across individual themes.</p>
+      </section>`;
     }
-    const rows = signals.map((signal) => {
+    const rows = patterns.map((signal) => {
       const factors = (signal.sources || []).map(compactProvenanceLabel).join(" · ");
       const why = (signal.sources || []).map((src) => escapeHtml(src)).join("<br />");
-      const factIds = (signal.fact_ids || []).map((id) => escapeHtml(id)).join(", ");
       return `<article class="signal-row">
         <div class="signal-row-main">
           <strong class="signal-label">${escapeHtml(titleCaseSignal(signal.signal))}</strong>
@@ -461,14 +495,138 @@
           <summary>Why?</summary>
           <div class="signal-why-body">
             <p class="meta">${why}</p>
-            ${factIds ? `<p class="meta">Fact IDs: ${factIds}</p>` : ""}
           </div>
         </details>
       </article>`;
     }).join("");
-    return `<section class="panel">
-      <div class="panel-head"><h2>What repeats in your profile</h2></div>
+    return `<section class="panel synthesis-patterns">
+      <div class="panel-head"><h2>Patterns that repeat</h2></div>
       <div class="signal-list">${rows}</div>
+    </section>`;
+  }
+
+  function renderSynthesisSections(synthesis) {
+    if (!synthesis || !synthesis.sections) return "";
+    const facts = synthesisFactMap(synthesis);
+    return (synthesis.sections || []).map((section) => {
+      if (!section.resolved_fact_count) return "";
+      const previewIds = section.preview_fact_ids || [];
+      const previewItems = previewIds
+        .map((id) => renderPreviewFactItem(facts.get(id)))
+        .filter(Boolean)
+        .join("");
+      const evidence = `${section.resolved_fact_count} source-backed observations across ${section.factor_count} factor${section.factor_count === 1 ? "" : "s"}`;
+      const allItems = (section.resolved_fact_ids || [])
+        .map((id) => renderPreviewFactItem(facts.get(id)))
+        .filter(Boolean)
+        .join("");
+      const hasMore = (section.resolved_fact_ids || []).length > previewIds.length;
+      const viewAll = hasMore
+        ? `<details class="section-view-all">
+            <summary>View all</summary>
+            <ul class="fact-list section-all-facts">${allItems}</ul>
+          </details>`
+        : "";
+      return `<section class="panel synthesis-section" data-section-key="${escapeHtml(section.key)}">
+        <div class="panel-head"><h2>${escapeHtml(section.title)}</h2></div>
+        <p class="section-evidence-meta">${escapeHtml(evidence)}</p>
+        <ul class="fact-list section-preview">${previewItems}</ul>
+        ${viewAll}
+      </section>`;
+    }).join("");
+  }
+
+  function renderTensionRows(tensions, factsLookup) {
+    return (tensions || []).map((pair) => {
+      const keysA = [...new Set((pair.facts_a || []).map((id) => {
+        const fact = factsLookup.get(id);
+        return fact ? `${fact.factor_type}:${fact.factor_key}` : id;
+      }))];
+      const keysB = [...new Set((pair.facts_b || []).map((id) => {
+        const fact = factsLookup.get(id);
+        return fact ? `${fact.factor_type}:${fact.factor_key}` : id;
+      }))];
+      const provA = keysA.map(provenanceLabel).join(" · ");
+      const provB = keysB.map(provenanceLabel).join(" · ");
+      return `<div class="contrast-row">
+        <div class="contrast-pair">
+          <div class="contrast-side">
+            <h4>${escapeHtml(titleCaseSignal(pair.tag_a))}</h4>
+          </div>
+          <div class="contrast-arrow" aria-hidden="true">↕</div>
+          <div class="contrast-side">
+            <h4>${escapeHtml(titleCaseSignal(pair.tag_b))}</h4>
+          </div>
+        </div>
+        <details class="contrast-sources">
+          <summary>Sources</summary>
+          <p class="meta">${escapeHtml(provA)} · ${escapeHtml(provB)}</p>
+        </details>
+      </div>`;
+    }).join("");
+  }
+
+  function renderResolvedTensions(synthesis) {
+    const tensions = (synthesis && synthesis.resolved_tensions) || [];
+    if (!tensions.length) return "";
+    const facts = synthesisFactMap(synthesis);
+    return `<section class="panel synthesis-tensions">
+      <div class="panel-head"><h2>Tensions in your profile</h2></div>
+      <p class="meta tension-intro">Different Mercury factors can pull in different directions. AstroIT keeps both signals instead of choosing a winner.</p>
+      ${renderTensionRows(tensions, facts)}
+    </section>`;
+  }
+
+  function renderConditionalTensions(synthesis) {
+    const tensions = (synthesis && synthesis.conditional_tensions) || [];
+    if (!tensions.length) return "";
+    const facts = synthesisFactMap(synthesis);
+    return `<section class="panel synthesis-conditional-tensions">
+      <div class="panel-head"><h2>Conditional tensions</h2></div>
+      <p class="meta tension-intro">These possibilities depend on source conditions that cannot currently be resolved from the available chart data.</p>
+      ${renderTensionRows(tensions, facts)}
+    </section>`;
+  }
+
+  function renderConditionalSourceNotes(synthesis) {
+    const groups = (synthesis && synthesis.conditional_details) || [];
+    if (!groups.length) return "";
+    const facts = synthesisFactMap(synthesis);
+    const body = groups.map((group) => {
+      const label = factorCardTitle(group.factor_type, group.factor_key);
+      const condition = (group.activation_conditions || []).join(" · ") || "Unresolved condition";
+      const items = (group.fact_ids || [])
+        .map((id) => {
+          const fact = facts.get(id);
+          if (!fact) return "";
+          return `<li class="fact-item"><span class="fact-bullet" aria-hidden="true">•</span><span class="fact-text">${escapeHtml(fact.text)}</span></li>`;
+        })
+        .filter(Boolean)
+        .join("");
+      return `<div class="conditional-group">
+        <h4>${escapeHtml(label)}</h4>
+        <p class="condition-unresolved">Condition not resolved · ${escapeHtml(condition)}</p>
+        <ul class="fact-list">${items}</ul>
+      </div>`;
+    }).join("");
+    return `<section class="panel synthesis-conditional-notes">
+      <details class="conditional-notes-block">
+        <summary>Conditional source notes <span class="factor-summary-meta">${groups.length}</span></summary>
+        <div class="conditional-notes-body">
+          <p class="meta">These source notes depend on conditions that are not resolved from the available chart data. They are not treated as active.</p>
+          ${body}
+        </div>
+      </details>
+    </section>`;
+  }
+
+  function renderProfileNotes(profile) {
+    const notes = (profile.limitations || []).filter(Boolean);
+    if (!notes.length) return "";
+    const items = notes.map((note) => `<li>${escapeHtml(note)}</li>`).join("");
+    return `<section class="panel profile-notes">
+      <div class="panel-head"><h2>Profile notes</h2></div>
+      <ul class="profile-notes-list">${items}</ul>
     </section>`;
   }
 
@@ -484,16 +642,11 @@
       : `<p class="self-house-note">House not calculated — birth time required.</p>`;
 
     if (!layers.length) {
-      return `<section class="panel">
-        <div class="panel-head"><h2>Source layers</h2></div>
-        ${coverageHtml}
-        ${houseNote}
-        <p class="meta">No calculated Mercury factors to display.</p>
-      </section>`;
+      return `${coverageHtml}${houseNote}<p class="meta">No calculated Mercury factors to display.</p>`;
     }
 
-    const cards = layers.map((layer, index) => {
-      const openAttr = index === 0 ? " open" : "";
+    const cards = layers.map((layer) => {
+      const openAttr = "";
       const title = factorCardTitle(layer.factor_type, layer.factor_key);
       if (!layer.supported) {
         return `<details class="factor-card factor-unsupported"${openAttr}>
@@ -517,11 +670,18 @@
       </details>`;
     }).join("");
 
-    return `<section class="panel">
-      <div class="panel-head"><h2>Source layers</h2></div>
-      ${coverageHtml}
-      ${houseNote}
-      ${cards}
+    return `${coverageHtml}${houseNote}${cards}`;
+  }
+
+  function renderSourceEvidence(profile) {
+    return `<section class="panel source-evidence-panel">
+      <details class="source-evidence-block">
+        <summary>Explore source details</summary>
+        <div class="source-evidence-body">
+          <p class="meta">Full factor-by-factor source evidence and references.</p>
+          ${renderSourceLayers(profile)}
+        </div>
+      </details>
     </section>`;
   }
 
@@ -535,46 +695,6 @@
       ...(profile.conditional_unresolved || []),
     ].forEach((fact) => map.set(fact.id, fact));
     return map;
-  }
-
-  function renderContrasts(profile) {
-    const pairs = profile.contrasting_signals || [];
-    if (!pairs.length) return "";
-    const lookup = factLookup(profile);
-    const rows = pairs.map((pair) => {
-      const keysA = [...new Set((pair.facts_a || []).map((id) => {
-        const fact = lookup.get(id);
-        return fact ? `${fact.factor_type}:${fact.factor_key}` : id;
-      }))];
-      const keysB = [...new Set((pair.facts_b || []).map((id) => {
-        const fact = lookup.get(id);
-        return fact ? `${fact.factor_type}:${fact.factor_key}` : id;
-      }))];
-      const provA = keysA.map(provenanceLabel).join(" · ");
-      const provB = keysB.map(provenanceLabel).join(" · ");
-      const techA = keysA.map((src) => escapeHtml(src)).join(", ");
-      const techB = keysB.map((src) => escapeHtml(src)).join(", ");
-      return `<div class="contrast-row">
-        <div class="contrast-pair">
-          <div class="contrast-side">
-            <h4>${escapeHtml(titleCaseSignal(pair.tag_a))}</h4>
-          </div>
-          <div class="contrast-arrow" aria-hidden="true">↕</div>
-          <div class="contrast-side">
-            <h4>${escapeHtml(titleCaseSignal(pair.tag_b))}</h4>
-          </div>
-        </div>
-        <details class="contrast-sources">
-          <summary>Sources</summary>
-          <p class="meta">${escapeHtml(provA)} · ${escapeHtml(provB)}</p>
-          <p class="meta">${techA} ↔ ${techB}</p>
-        </details>
-      </div>`;
-    }).join("");
-    return `<section class="panel">
-      <div class="panel-head"><h2>Tensions in the profile</h2></div>
-      ${rows}
-    </section>`;
   }
 
   function renderTraceability(profile, displayName, factCount) {
@@ -620,6 +740,7 @@
 
   function renderSelfProfile(profile, displayName) {
     const calc = profile.calculated || {};
+    const synthesis = profile.synthesis || null;
     const motion = String(calc.mercury_motion || "");
     const motionHtml = motion.toLowerCase() === "retrograde"
       ? `<span class="motion-rx">Retrograde</span>`
@@ -639,9 +760,13 @@
         <p class="self-calc-line">Mercury in ${escapeHtml(calc.mercury_sign || "—")} · House ${escapeHtml(String(calc.mercury_house ?? "—"))} · ${motionHtml}</p>
         ${aspectList ? `<ul class="self-aspect-list">${aspectList}</ul>` : `<p class="meta">No calculated aspects in orb.</p>`}
       </section>
-      ${renderRepeatedSignals(profile.repeated_signals)}
-      ${renderSourceLayers(profile)}
-      ${renderContrasts(profile)}
+      ${renderStrongestPatterns(synthesis)}
+      ${renderSynthesisSections(synthesis)}
+      ${renderResolvedTensions(synthesis)}
+      ${renderConditionalTensions(synthesis)}
+      ${renderConditionalSourceNotes(synthesis)}
+      ${renderProfileNotes(profile)}
+      ${renderSourceEvidence(profile)}
       ${renderTraceability(profile, displayName, factCount)}
     `;
   }

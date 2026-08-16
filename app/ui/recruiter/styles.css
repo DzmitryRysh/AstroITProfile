@@ -1134,6 +1134,97 @@ details.more-details > summary::-webkit-details-marker {
   font-size: 0.78rem;
 }
 
+.section-evidence-meta {
+  margin: 0 0 0.55rem;
+  color: var(--text-faint);
+  font-size: 0.82rem;
+}
+
+.fact-provenance {
+  display: inline-block;
+  margin-left: 0.45rem;
+  color: var(--text-faint);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.section-view-all {
+  margin-top: 0.35rem;
+}
+
+.section-view-all > summary {
+  cursor: pointer;
+  color: var(--text-faint);
+  font-size: 0.8rem;
+  list-style: none;
+}
+
+.section-view-all > summary::-webkit-details-marker {
+  display: none;
+}
+
+.tension-intro {
+  margin: 0 0 0.65rem;
+}
+
+.synthesis-conditional-tensions {
+  opacity: 0.92;
+}
+
+.conditional-notes-block > summary,
+.source-evidence-block > summary {
+  cursor: pointer;
+  list-style: none;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.conditional-notes-block > summary::-webkit-details-marker,
+.source-evidence-block > summary::-webkit-details-marker {
+  display: none;
+}
+
+.conditional-notes-body,
+.source-evidence-body {
+  margin-top: 0.65rem;
+}
+
+.conditional-group {
+  margin: 0 0 0.75rem;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.conditional-group:last-child {
+  border-bottom: 0;
+}
+
+.conditional-group h4 {
+  margin: 0 0 0.25rem;
+  font-size: 0.92rem;
+}
+
+.condition-unresolved {
+  margin: 0 0 0.4rem;
+  color: var(--warn);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.profile-notes-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.patterns-empty {
+  margin: 0;
+}
+
 .trace-block {
   margin-top: 0.25rem;
 }

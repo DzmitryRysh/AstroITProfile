@@ -12,10 +12,15 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from app.schemas.mercury_source_profile import (
-    ContrastingSignalPair,
+    MercuryProfileSynthesisResponse,
     MercurySourceProfileResponse,
-    RepeatedSignal,
     SourceFact,
+    SynthesisConditionalGroup as SynthesisConditionalGroupSchema,
+    SynthesisDetailBucket as SynthesisDetailBucketSchema,
+    SynthesisSection as SynthesisSectionSchema,
+    SynthesisStrongestPattern as SynthesisStrongestPatternSchema,
+    SynthesisTension as SynthesisTensionSchema,
+    SynthesisTraceability as SynthesisTraceabilitySchema,
 )
 
 DETAIL_ONLY_CATEGORIES = frozenset(
@@ -367,3 +372,88 @@ def build_mercury_profile_synthesis(
         traceability=traceability,
         facts_by_id=facts_by_id,
     )
+
+
+def serialize_mercury_profile_synthesis(
+    synthesis: MercuryProfileSynthesis,
+) -> MercuryProfileSynthesisResponse:
+    """Convert internal synthesis dataclasses to the API response schema."""
+    return MercuryProfileSynthesisResponse(
+        strongest_patterns=[
+            SynthesisStrongestPatternSchema(
+                signal=item.signal,
+                source_count=item.source_count,
+                sources=list(item.sources),
+                fact_ids=list(item.fact_ids),
+                section_keys=list(item.section_keys),
+            )
+            for item in synthesis.strongest_patterns
+        ],
+        resolved_tensions=[
+            SynthesisTensionSchema(
+                tag_a=item.tag_a,
+                tag_b=item.tag_b,
+                facts_a=list(item.facts_a),
+                facts_b=list(item.facts_b),
+                state=item.state,  # type: ignore[arg-type]
+            )
+            for item in synthesis.resolved_tensions
+        ],
+        conditional_tensions=[
+            SynthesisTensionSchema(
+                tag_a=item.tag_a,
+                tag_b=item.tag_b,
+                facts_a=list(item.facts_a),
+                facts_b=list(item.facts_b),
+                state=item.state,  # type: ignore[arg-type]
+            )
+            for item in synthesis.conditional_tensions
+        ],
+        sections=[
+            SynthesisSectionSchema(
+                key=item.key,
+                title=item.title,
+                categories=list(item.categories),
+                resolved_fact_ids=list(item.resolved_fact_ids),
+                resolved_fact_count=item.resolved_fact_count,
+                factor_keys=list(item.factor_keys),
+                factor_count=item.factor_count,
+                preview_fact_ids=list(item.preview_fact_ids),
+            )
+            for item in synthesis.sections
+        ],
+        conditional_details=[
+            SynthesisConditionalGroupSchema(
+                factor_type=item.factor_type,
+                factor_key=item.factor_key,
+                fact_ids=list(item.fact_ids),
+                activation_conditions=list(item.activation_conditions),
+            )
+            for item in synthesis.conditional_details
+        ],
+        source_details=[
+            SynthesisDetailBucketSchema(
+                key=item.key,
+                fact_ids=list(item.fact_ids),
+            )
+            for item in synthesis.source_details
+        ],
+        traceability=SynthesisTraceabilitySchema(
+            total_fact_count=synthesis.traceability.total_fact_count,
+            resolved_section_fact_count=synthesis.traceability.resolved_section_fact_count,
+            conditional_fact_count=synthesis.traceability.conditional_fact_count,
+            detail_only_fact_count=synthesis.traceability.detail_only_fact_count,
+            unclassified_fact_count=synthesis.traceability.unclassified_fact_count,
+        ),
+        facts_by_id=dict(synthesis.facts_by_id),
+    )
+
+
+def attach_mercury_profile_synthesis(
+    profile: MercurySourceProfileResponse,
+) -> MercurySourceProfileResponse:
+    """Attach additive synthesis to an already-built source profile (no recalculation)."""
+    synthesis = serialize_mercury_profile_synthesis(
+        build_mercury_profile_synthesis(profile)
+    )
+    return profile.model_copy(update={"synthesis": synthesis})
