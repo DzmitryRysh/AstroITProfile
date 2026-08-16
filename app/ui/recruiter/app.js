@@ -29,6 +29,25 @@
   const DEFAULT_BRAND_TITLE = "Team Intelligence";
   const SELF_BRAND_TITLE = "Your Mercury Profile";
 
+  /** Presentation-only: named entry → person profile; empty name → self. */
+  const PERSON_SECTION_TITLES = {
+    thinking: "Thinking style",
+    communication: "Communication style",
+    learning: "Learning style",
+    memory_focus: "Memory & focus",
+    work_application: "Work-related patterns",
+    context_risks: "Context & watch-outs",
+  };
+
+  const SELF_SECTION_TITLES = {
+    thinking: "How you think",
+    communication: "How you communicate",
+    learning: "How you learn",
+    memory_focus: "Memory & focus",
+    work_application: "How it can show up in work",
+    context_risks: "Context & watch-outs",
+  };
+
   let memberSeq = 1;
   let candidateSeq = 1;
   let lastMembersPayload = [];
@@ -146,6 +165,64 @@
   function setBrandTitleMode(mode) {
     if (!brandTitle) return;
     brandTitle.textContent = mode === "self" ? SELF_BRAND_TITLE : DEFAULT_BRAND_TITLE;
+  }
+
+  function resolveProfileAudience(displayName) {
+    return String(displayName || "").trim() ? "person" : "self";
+  }
+
+  function possessiveLabel(name) {
+    const trimmed = String(name || "").trim();
+    if (!trimmed) return "";
+    return /s$/i.test(trimmed) ? `${trimmed}'` : `${trimmed}'s`;
+  }
+
+  function profileHeaderTitle(audience, displayName) {
+    if (audience === "person") {
+      const name = String(displayName || "").trim();
+      return name ? `${possessiveLabel(name)} Mercury Profile` : "Mercury Profile";
+    }
+    return SELF_BRAND_TITLE;
+  }
+
+  function setBrandTitleForProfile(audience, displayName) {
+    if (!brandTitle) return;
+    brandTitle.textContent = profileHeaderTitle(audience, displayName);
+  }
+
+  function sectionDisplayTitle(section, audience) {
+    const map = audience === "person" ? PERSON_SECTION_TITLES : SELF_SECTION_TITLES;
+    if (section && section.key && map[section.key]) return map[section.key];
+    return (section && section.title) || "";
+  }
+
+  function humanFactorLabelFromSource(sourceKey) {
+    const [type, ...rest] = String(sourceKey || "").split(":");
+    const key = rest.join(":");
+    if (type && key) return factorCardTitle(type, key);
+    return provenanceLabel(sourceKey);
+  }
+
+  function recurringPatternsExplanation(audience, displayName) {
+    if (audience === "person") {
+      const name = String(displayName || "").trim();
+      if (name) {
+        return `These themes appear independently in multiple parts of ${possessiveLabel(name)} profile.`;
+      }
+      return "These themes appear independently in multiple parts of this profile.";
+    }
+    return "These themes appear independently in multiple parts of your profile.";
+  }
+
+  function recurringPatternsEmptyCopy(audience) {
+    const subject = audience === "person"
+      ? "This profile is more distributed across individual themes."
+      : "Your profile is more distributed across individual themes.";
+    return `No repeated pattern stands out across multiple Mercury factors. ${subject}`;
+  }
+
+  function tensionsHeading(audience) {
+    return audience === "person" ? "Tensions in this profile" : "Tensions in your profile";
   }
 
   function showWorkspaceShell() {
@@ -474,38 +551,46 @@
     return `<li class="fact-item${isRisk ? " fact-risk" : ""}">${marker}<span class="fact-text">${escapeHtml(fact.text)}<span class="fact-provenance">${escapeHtml(provenance)}</span></span></li>`;
   }
 
-  function renderStrongestPatterns(synthesis) {
+  function renderStrongestPatterns(synthesis, audience, displayName) {
     const patterns = (synthesis && synthesis.strongest_patterns) || [];
+    const intro = `<p class="meta patterns-intro">${escapeHtml(recurringPatternsExplanation(audience, displayName))}</p>`;
     if (!patterns.length) {
       return `<section class="panel synthesis-patterns">
-        <div class="panel-head"><h2>Patterns that repeat</h2></div>
-        <p class="meta patterns-empty">No repeated pattern stands out across multiple Mercury factors. Your profile is more distributed across individual themes.</p>
+        <div class="panel-head"><h2>Key recurring patterns</h2></div>
+        ${intro}
+        <p class="meta patterns-empty">${escapeHtml(recurringPatternsEmptyCopy(audience))}</p>
       </section>`;
     }
     const rows = patterns.map((signal) => {
-      const factors = (signal.sources || []).map(compactProvenanceLabel).join(" · ");
-      const why = (signal.sources || []).map((src) => escapeHtml(src)).join("<br />");
+      const count = Number(signal.source_count) || (signal.sources || []).length || 0;
+      const supportLabel = count === 1
+        ? "Supported by 1 profile factor"
+        : `Supported by ${count} profile factors`;
+      const whyItems = (signal.sources || [])
+        .map((src) => `<li>${escapeHtml(humanFactorLabelFromSource(src))}</li>`)
+        .join("");
       return `<article class="signal-row">
         <div class="signal-row-main">
           <strong class="signal-label">${escapeHtml(titleCaseSignal(signal.signal))}</strong>
-          <span class="signal-meta">${escapeHtml(String(signal.source_count))} contributing factors</span>
-          <span class="signal-factors">${escapeHtml(factors)}</span>
+          <span class="signal-meta">${escapeHtml(supportLabel)}</span>
         </div>
         <details class="signal-why">
-          <summary>Why?</summary>
+          <summary>Why this appears</summary>
           <div class="signal-why-body">
-            <p class="meta">${why}</p>
+            <p class="signal-why-label">Supported by:</p>
+            <ul class="signal-why-list">${whyItems}</ul>
           </div>
         </details>
       </article>`;
     }).join("");
     return `<section class="panel synthesis-patterns">
-      <div class="panel-head"><h2>Patterns that repeat</h2></div>
+      <div class="panel-head"><h2>Key recurring patterns</h2></div>
+      ${intro}
       <div class="signal-list">${rows}</div>
     </section>`;
   }
 
-  function renderSynthesisSections(synthesis) {
+  function renderSynthesisSections(synthesis, audience) {
     if (!synthesis || !synthesis.sections) return "";
     const facts = synthesisFactMap(synthesis);
     return (synthesis.sections || []).map((section) => {
@@ -527,8 +612,9 @@
             <ul class="fact-list section-all-facts">${allItems}</ul>
           </details>`
         : "";
+      const title = sectionDisplayTitle(section, audience);
       return `<section class="panel synthesis-section" data-section-key="${escapeHtml(section.key)}">
-        <div class="panel-head"><h2>${escapeHtml(section.title)}</h2></div>
+        <div class="panel-head"><h2>${escapeHtml(title)}</h2></div>
         <p class="section-evidence-meta">${escapeHtml(evidence)}</p>
         <ul class="fact-list section-preview">${previewItems}</ul>
         ${viewAll}
@@ -566,12 +652,12 @@
     }).join("");
   }
 
-  function renderResolvedTensions(synthesis) {
+  function renderResolvedTensions(synthesis, audience) {
     const tensions = (synthesis && synthesis.resolved_tensions) || [];
     if (!tensions.length) return "";
     const facts = synthesisFactMap(synthesis);
     return `<section class="panel synthesis-tensions">
-      <div class="panel-head"><h2>Tensions in your profile</h2></div>
+      <div class="panel-head"><h2>${escapeHtml(tensionsHeading(audience))}</h2></div>
       <p class="meta tension-intro">Different Mercury factors can pull in different directions. AstroIT keeps both signals instead of choosing a winner.</p>
       ${renderTensionRows(tensions, facts)}
     </section>`;
@@ -741,6 +827,7 @@
   function renderSelfProfile(profile, displayName) {
     const calc = profile.calculated || {};
     const synthesis = profile.synthesis || null;
+    const audience = resolveProfileAudience(displayName);
     const motion = String(calc.mercury_motion || "");
     const motionHtml = motion.toLowerCase() === "retrograde"
       ? `<span class="motion-rx">Retrograde</span>`
@@ -749,20 +836,18 @@
       .map((aspect) => `<li>${escapeHtml(formatAspectChip(aspect))}</li>`)
       .join("");
     const factCount = countActiveSourceFacts(profile);
-
-    const headerTitle = displayName
-      ? escapeHtml(displayName)
-      : "Your Mercury Profile";
+    const headerTitle = profileHeaderTitle(audience, displayName);
+    setBrandTitleForProfile(audience, displayName);
 
     selfProfileContent.innerHTML = `
       <section class="panel self-header">
-        <h2>${headerTitle}</h2>
+        <h2>${escapeHtml(headerTitle)}</h2>
         <p class="self-calc-line">Mercury in ${escapeHtml(calc.mercury_sign || "—")} · House ${escapeHtml(String(calc.mercury_house ?? "—"))} · ${motionHtml}</p>
         ${aspectList ? `<ul class="self-aspect-list">${aspectList}</ul>` : `<p class="meta">No calculated aspects in orb.</p>`}
       </section>
-      ${renderStrongestPatterns(synthesis)}
-      ${renderSynthesisSections(synthesis)}
-      ${renderResolvedTensions(synthesis)}
+      ${renderStrongestPatterns(synthesis, audience, displayName)}
+      ${renderSynthesisSections(synthesis, audience)}
+      ${renderResolvedTensions(synthesis, audience)}
       ${renderConditionalTensions(synthesis)}
       ${renderConditionalSourceNotes(synthesis)}
       ${renderProfileNotes(profile)}

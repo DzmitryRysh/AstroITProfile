@@ -872,10 +872,14 @@ details.more-details > summary::-webkit-details-marker {
   gap: 0.35rem;
 }
 
+.patterns-intro {
+  margin: 0 0 0.75rem;
+}
+
 .signal-row {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.5rem 0.75rem;
+  grid-template-columns: 1fr;
+  gap: 0.25rem;
   align-items: start;
   border-bottom: 1px solid var(--border);
   padding: 0.55rem 0;
@@ -901,20 +905,14 @@ details.more-details > summary::-webkit-details-marker {
   font-size: 0.82rem;
 }
 
-.signal-factors {
-  color: var(--text);
-  font-size: 0.86rem;
-  font-weight: 600;
-}
-
 .signal-why {
-  justify-self: end;
+  justify-self: start;
 }
 
 .signal-why > summary {
   cursor: pointer;
   color: var(--text-faint);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   list-style: none;
 }
 
@@ -928,6 +926,21 @@ details.more-details > summary::-webkit-details-marker {
   border-radius: 8px;
   background: var(--bg);
   border: 1px solid var(--border);
+}
+
+.signal-why-label {
+  margin: 0 0 0.25rem;
+  color: var(--text-faint);
+  font-size: 0.78rem;
+}
+
+.signal-why-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  display: grid;
+  gap: 0.15rem;
 }
 
 .factor-card {
