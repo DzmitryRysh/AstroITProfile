@@ -109,8 +109,6 @@ class AspectBatchC9CoverageTests(unittest.TestCase):
         self.assertTrue(PLUTO_PARTIAL_FAMILY.issubset(SUPPORTED_ASPECT_KEYS))
         self.assertEqual(len(SUPPORTED_SIGN_KEYS), 12)
         self.assertEqual(len(SUPPORTED_HOUSE_KEYS), 12)
-        self.assertNotIn("conjunction_Pluto", SUPPORTED_ASPECT_KEYS)
-        self.assertNotIn("opposition_Pluto", SUPPORTED_ASPECT_KEYS)
 
     def test_moon_family_is_exactly_five_of_five(self):
         self.assertIn("conjunction_Moon", SUPPORTED_ASPECT_KEYS)
@@ -287,7 +285,7 @@ class AspectBatchC9ActivationTests(unittest.TestCase):
         self.assertFalse(any(item.id.startswith("moon_opp_") for item in sextile.aspect_facts))
         self.assertFalse(any(item.id.startswith("moon_cj_") for item in square.aspect_facts))
 
-    def test_unsupported_probe_remains_conjunction_Pluto(self):
+    def test_synthetic_unknown_aspect_still_marks_partial(self):
         profile = build_source_profile_from_factors(
             MercurySourceFactors(
                 birth_time_known=True,
@@ -295,14 +293,13 @@ class AspectBatchC9ActivationTests(unittest.TestCase):
                 mercury_element="fire",
                 mercury_motion="direct",
                 mercury_house=1,
-                aspects=[MercuryAspect(planet="Pluto", type="conjunction", orb_deg=2.0)],
+                aspects=[MercuryAspect(planet="SyntheticProbe", type="conjunction", orb_deg=2.0)],
             )
         )
         self.assertEqual(profile.coverage.status, "partial")
-        self.assertEqual(profile.coverage.missing_factors, ["aspect:conjunction_Pluto"])
+        self.assertEqual(profile.coverage.missing_factors, ["aspect:conjunction_SyntheticProbe"])
         self.assertIn("opposition_Moon", SUPPORTED_ASPECT_KEYS)
         self.assertIn("conjunction_Moon", SUPPORTED_ASPECT_KEYS)
-        self.assertNotIn("conjunction_Pluto", SUPPORTED_ASPECT_KEYS)
 
 
 class AspectBatchC9RegressionTests(unittest.TestCase):

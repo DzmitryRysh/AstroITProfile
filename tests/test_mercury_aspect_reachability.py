@@ -30,14 +30,6 @@ EXPECTED_IMPOSSIBLE = frozenset(
     }
 )
 
-# Still-missing reachable keys after Neptune completion; exact ownership is C13+.
-EXPECTED_STILL_MISSING_REACHABLE = frozenset(
-    {
-        "conjunction_Pluto",
-        "opposition_Pluto",
-    }
-)
-
 FULLY_REACHABLE_PLANETS = (
     "Moon",
     "Mars",
@@ -85,12 +77,14 @@ class NatalAspectReachabilityTests(unittest.TestCase):
                     self.assertNotIn(f"{aspect}_{planet}", IMPOSSIBLE_NATAL_ASPECT_KEYS)
 
     def test_supported_source_keys_are_all_reachable(self):
+        # Geometry ownership: any supported source key must be reachable-only.
+        # Exact source snapshot counts are owned by the latest aspect batch.
         self.assertTrue(SUPPORTED_ASPECT_KEYS.isdisjoint(IMPOSSIBLE_NATAL_ASPECT_KEYS))
         self.assertTrue(frozenset(SUPPORTED_ASPECT_KEYS) <= REACHABLE_NATAL_ASPECT_KEYS)
 
     def test_current_supported_and_missing_reachable_counts(self):
-        # Source-snapshot counts are owned by the latest aspect batch (C13+).
-        # C10 verifies geometry + that supported keys remain reachable-only.
+        # Source-snapshot counts are owned by the latest aspect batch.
+        # C10 verifies only that supported keys remain reachable-only.
         self.assertTrue(frozenset(SUPPORTED_ASPECT_KEYS) <= REACHABLE_NATAL_ASPECT_KEYS)
         missing_reachable = REACHABLE_NATAL_ASPECT_KEYS - frozenset(SUPPORTED_ASPECT_KEYS)
         self.assertTrue(IMPOSSIBLE_NATAL_ASPECT_KEYS.isdisjoint(missing_reachable))
@@ -101,7 +95,6 @@ class NatalAspectReachabilityTests(unittest.TestCase):
         self.assertTrue(IMPOSSIBLE_NATAL_ASPECT_KEYS.isdisjoint(SUPPORTED_ASPECT_KEYS))
 
     def test_raw_geometry_denominator_unchanged(self):
-        # Geometry constants remain fixed; raw source totals / alias count owned by C13+.
         self.assertEqual(len(RAW_NATAL_ASPECT_KEYS), 45)
         self.assertEqual(len(REACHABLE_NATAL_ASPECT_KEYS), 38)
         self.assertEqual(len(IMPOSSIBLE_NATAL_ASPECT_KEYS), 7)
@@ -116,20 +109,6 @@ class NatalAspectReachabilityTests(unittest.TestCase):
             summary["supported_reachable"] + summary["missing_reachable"],
             summary["reachable_total"],
         )
-        # Sun/Venus/Neptune reachable factors are supported; exact missing set owned by C13+.
-        self.assertNotIn("conjunction_Sun", summary["missing_reachable_keys"])
-        self.assertIn("conjunction_Sun", summary["supported_reachable_keys"])
-        self.assertNotIn("conjunction_Venus", summary["missing_reachable_keys"])
-        self.assertNotIn("sextile_Venus", summary["missing_reachable_keys"])
-        for key in (
-            "conjunction_Neptune",
-            "sextile_Neptune",
-            "square_Neptune",
-            "trine_Neptune",
-            "opposition_Neptune",
-        ):
-            self.assertNotIn(key, summary["missing_reachable_keys"])
-        self.assertTrue(EXPECTED_STILL_MISSING_REACHABLE <= summary["missing_reachable_keys"])
 
 
 if __name__ == "__main__":

@@ -243,7 +243,7 @@ class HouseBatchB3RegressionTests(unittest.TestCase):
             any("birth time unknown" in item.lower() for item in profile.limitations)
         )
 
-    def test_unsupported_factor_now_uses_aspect_not_house(self):
+    def test_house_remains_covered_when_synthetic_aspect_unsupported(self):
         profile = build_source_profile_from_factors(
             MercurySourceFactors(
                 birth_time_known=True,
@@ -251,13 +251,13 @@ class HouseBatchB3RegressionTests(unittest.TestCase):
                 mercury_element="fire",
                 mercury_motion="direct",
                 mercury_house=8,
-                aspects=[MercuryAspect(planet="Pluto", type="conjunction", orb_deg=2.0)],
+                aspects=[MercuryAspect(planet="SyntheticProbe", type="conjunction", orb_deg=2.0)],
             )
         )
         self.assertEqual(profile.coverage.status, "partial")
         self.assertIn("house:8", profile.coverage.covered_factors)
         self.assertNotIn("house:8", profile.coverage.missing_factors)
-        self.assertEqual(profile.coverage.missing_factors, ["aspect:conjunction_Pluto"])
+        self.assertEqual(profile.coverage.missing_factors, ["aspect:conjunction_SyntheticProbe"])
 
 
 if __name__ == "__main__":

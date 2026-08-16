@@ -98,7 +98,7 @@ def _synthetic_sun(orb_deg: float):
 
 class AspectBatchC11CoverageTests(unittest.TestCase):
     def test_c11_sun_family_and_catalog_guarantees(self):
-        # Exact raw/reachable totals are owned by the latest aspect batch (C13+).
+        # Exact raw/reachable totals are owned by the latest aspect batch (C14+).
         self.assertEqual(len(SUPPORTED_SIGN_KEYS), 12)
         self.assertEqual(len(SUPPORTED_HOUSE_KEYS), 12)
         self.assertTrue(MOON_PUBLIC_FAMILY.issubset(SUPPORTED_ASPECT_KEYS))
@@ -106,8 +106,6 @@ class AspectBatchC11CoverageTests(unittest.TestCase):
         self.assertTrue(SATURN_PUBLIC_FAMILY.issubset(SUPPORTED_ASPECT_KEYS))
         self.assertTrue(MARS_PUBLIC_FAMILY.issubset(SUPPORTED_ASPECT_KEYS))
         self.assertTrue(URANUS_PUBLIC_FAMILY.issubset(SUPPORTED_ASPECT_KEYS))
-        self.assertNotIn("conjunction_Pluto", SUPPORTED_ASPECT_KEYS)
-        self.assertNotIn("opposition_Pluto", SUPPORTED_ASPECT_KEYS)
 
     def test_sun_reachable_family_is_exactly_one_of_one(self):
         self.assertIn("conjunction_Sun", SUPPORTED_ASPECT_KEYS)
@@ -261,7 +259,7 @@ class AspectBatchC11ActivationTests(unittest.TestCase):
         self.assertEqual(len(affliction), 4)
         self.assertTrue(all(item.unresolved for item in affliction))
 
-    def test_unsupported_probe_remains_conjunction_pluto(self):
+    def test_synthetic_unknown_aspect_still_marks_partial(self):
         profile = build_source_profile_from_factors(
             MercurySourceFactors(
                 birth_time_known=True,
@@ -269,13 +267,12 @@ class AspectBatchC11ActivationTests(unittest.TestCase):
                 mercury_element="fire",
                 mercury_motion="direct",
                 mercury_house=1,
-                aspects=[MercuryAspect(planet="Pluto", type="conjunction", orb_deg=2.0)],
+                aspects=[MercuryAspect(planet="SyntheticProbe", type="conjunction", orb_deg=2.0)],
             )
         )
         self.assertEqual(profile.coverage.status, "partial")
-        self.assertEqual(profile.coverage.missing_factors, ["aspect:conjunction_Pluto"])
+        self.assertEqual(profile.coverage.missing_factors, ["aspect:conjunction_SyntheticProbe"])
         self.assertIn("conjunction_Sun", SUPPORTED_ASPECT_KEYS)
-        self.assertNotIn("conjunction_Pluto", SUPPORTED_ASPECT_KEYS)
 
 
 class AspectBatchC11RegressionTests(unittest.TestCase):

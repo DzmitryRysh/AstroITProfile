@@ -43,7 +43,6 @@ from app.services.mercury_source_profile import (
 )
 
 ENGINE_ASPECT_SLOTS = 45
-EXPECTED_MISSING_REACHABLE = frozenset({"conjunction_Pluto", "opposition_Pluto"})
 NEPTUNE_PUBLIC_FAMILY = {
     "conjunction_Neptune",
     "sextile_Neptune",
@@ -122,10 +121,8 @@ def _synthetic_neptune(aspect_type: str, orb_deg: float = 2.0):
 
 
 class AspectBatchC13CoverageTests(unittest.TestCase):
-    def test_supported_public_aspect_count_is_thirty_six(self):
-        self.assertEqual(len(SUPPORTED_ASPECT_KEYS), 36)
-        self.assertEqual(ENGINE_ASPECT_SLOTS - len(SUPPORTED_ASPECT_KEYS), 9)
-        self.assertEqual(len(_canonical_aspect_packs()), 29)
+    def test_c13_neptune_family_and_catalog_guarantees(self):
+        # Exact raw/reachable totals are owned by the latest aspect batch (C14+).
         self.assertEqual(len(ASPECT_PACK_ALIASES), 7)
         self.assertEqual(len(SUPPORTED_SIGN_KEYS), 12)
         self.assertEqual(len(SUPPORTED_HOUSE_KEYS), 12)
@@ -137,8 +134,6 @@ class AspectBatchC13CoverageTests(unittest.TestCase):
         self.assertTrue(URANUS_PUBLIC_FAMILY.issubset(SUPPORTED_ASPECT_KEYS))
         self.assertTrue(VENUS_REACHABLE_FAMILY.issubset(SUPPORTED_ASPECT_KEYS))
         self.assertIn("conjunction_Sun", SUPPORTED_ASPECT_KEYS)
-        self.assertNotIn("conjunction_Pluto", SUPPORTED_ASPECT_KEYS)
-        self.assertNotIn("opposition_Pluto", SUPPORTED_ASPECT_KEYS)
 
     def test_neptune_family_is_exactly_five_of_five(self):
         for key in NEPTUNE_PUBLIC_FAMILY:
@@ -152,15 +147,14 @@ class AspectBatchC13CoverageTests(unittest.TestCase):
             self.assertIn(key, _canonical_aspect_packs())
             self.assertNotIn(key, ASPECT_PACK_ALIASES)
 
-    def test_reachable_snapshot_after_c13(self):
+    def test_reachable_geometry_unchanged_after_c13(self):
         summary = natal_aspect_reachability_summary(SUPPORTED_ASPECT_KEYS)
         self.assertEqual(summary["raw_total"], 45)
         self.assertEqual(summary["reachable_total"], 38)
-        self.assertEqual(summary["supported_reachable"], 36)
-        self.assertEqual(summary["missing_reachable"], 2)
         self.assertEqual(summary["impossible_total"], 7)
-        self.assertEqual(summary["missing_reachable_keys"], EXPECTED_MISSING_REACHABLE)
-        self.assertTrue(IMPOSSIBLE_NATAL_ASPECT_KEYS.isdisjoint(EXPECTED_MISSING_REACHABLE))
+        for key in NEPTUNE_PUBLIC_FAMILY:
+            self.assertIn(key, summary["supported_reachable_keys"])
+            self.assertNotIn(key, summary["missing_reachable_keys"])
         self.assertTrue(frozenset(SUPPORTED_ASPECT_KEYS) <= REACHABLE_NATAL_ASPECT_KEYS)
 
     def test_refs_and_pack_sizes(self):
@@ -345,7 +339,8 @@ class AspectBatchC13ActivationTests(unittest.TestCase):
         # Single Neptune factor alone cannot create a cross-factor repeat.
         self.assertEqual(detect_repeated_signals(resolved_only), [])
 
-    def test_unsupported_probe_is_conjunction_pluto(self):
+    def test_synthetic_unknown_aspect_still_marks_partial(self):
+        # After C14 there is no reachable unsupported aspect; synthetic probe only.
         profile = build_source_profile_from_factors(
             MercurySourceFactors(
                 birth_time_known=True,
@@ -353,13 +348,12 @@ class AspectBatchC13ActivationTests(unittest.TestCase):
                 mercury_element="fire",
                 mercury_motion="direct",
                 mercury_house=1,
-                aspects=[MercuryAspect(planet="Pluto", type="conjunction", orb_deg=2.0)],
+                aspects=[MercuryAspect(planet="SyntheticProbe", type="conjunction", orb_deg=2.0)],
             )
         )
         self.assertEqual(profile.coverage.status, "partial")
-        self.assertEqual(profile.coverage.missing_factors, ["aspect:conjunction_Pluto"])
+        self.assertEqual(profile.coverage.missing_factors, ["aspect:conjunction_SyntheticProbe"])
         self.assertTrue(NEPTUNE_PUBLIC_FAMILY.issubset(SUPPORTED_ASPECT_KEYS))
-        self.assertNotIn("conjunction_Pluto", SUPPORTED_ASPECT_KEYS)
 
 
 class AspectBatchC13RegressionTests(unittest.TestCase):

@@ -325,26 +325,26 @@ class AvdeyGoldenCaseTests(unittest.TestCase):
         self.assertEqual(self.profile.coverage.status, "complete")
         self.assertEqual(self.profile.coverage.missing_factors, [])
 
-    def test_unsupported_factor_returns_partial_coverage(self):
-        """After C7 Mars coverage, exercise missing packs via unsupported aspect only."""
+    def test_synthetic_unknown_aspect_returns_partial_coverage(self):
+        """After reachable aspect coverage is complete, exercise missing packs via a synthetic unsupported aspect key."""
         factors = MercurySourceFactors(
             birth_time_known=True,
             mercury_sign="Leo",
             mercury_element="fire",
             mercury_motion="direct",
             mercury_house=1,
-            aspects=[MercuryAspect(planet="Pluto", type="conjunction", orb_deg=2.0)],
+            aspects=[MercuryAspect(planet="SyntheticProbe", type="conjunction", orb_deg=2.0)],
         )
         profile = build_source_profile_from_factors(factors)
         self.assertEqual(profile.coverage.status, "partial")
         self.assertNotIn("sign:Leo", profile.coverage.missing_factors)
         self.assertNotIn("house:1", profile.coverage.missing_factors)
         self.assertIn("house:1", profile.coverage.covered_factors)
-        self.assertEqual(profile.coverage.missing_factors, ["aspect:conjunction_Pluto"])
+        self.assertEqual(profile.coverage.missing_factors, ["aspect:conjunction_SyntheticProbe"])
         self.assertNotIn("motion:direct", profile.coverage.missing_factors)
         self.assertGreater(len(profile.sign_facts), 0)
         self.assertGreater(len(profile.house_facts), 0)
-        self.assertTrue(any("conjunction Pluto" in item for item in profile.limitations))
+        self.assertTrue(any("conjunction SyntheticProbe" in item for item in profile.limitations))
 
     def test_route_registered(self):
         app = create_app()

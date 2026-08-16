@@ -72,6 +72,10 @@ Aspect Batch C13 (verified Bioastrology Neptune reachable family):
 - square_Neptune
 - opposition_Neptune
 - conjunction_Neptune
+
+Aspect Batch C14 (verified Bioastrology Pluto reachable family completion):
+- opposition_Pluto
+- conjunction_Pluto
 """
 
 from __future__ import annotations
@@ -1674,6 +1678,8 @@ SUPPORTED_ASPECT_KEYS = {
     "square_Pluto",
     "trine_Pluto",
     "sextile_Pluto",
+    "opposition_Pluto",
+    "conjunction_Pluto",
     "trine_Saturn",
     "sextile_Saturn",
     "square_Saturn",
@@ -1804,6 +1810,11 @@ from app.services.mercury_source_knowledge_c13_aspects import (  # noqa: E402
     NEPTUNE_OPPOSITION,
     NEPTUNE_SQUARE,
 )
+from app.services.mercury_source_knowledge_c14_aspects import (  # noqa: E402
+    C14_ASPECT_PACKS,
+    PLUTO_CONJUNCTION,
+    PLUTO_OPPOSITION,
+)
 
 ALL_SOURCE_FACTS: tuple[SourceFactDef, ...] = (
     LEO_LESSON7
@@ -1844,6 +1855,7 @@ ALL_SOURCE_FACTS: tuple[SourceFactDef, ...] = (
     + C11_ASPECT_PACKS
     + C12_ASPECT_PACKS
     + C13_ASPECT_PACKS
+    + C14_ASPECT_PACKS
 )
 
 # Repeated-signal definitions: SAME tag across distinct provenance keys only.

@@ -45,10 +45,9 @@ def _canonical_aspect_packs() -> set[str]:
 
 class AspectBatchC3CoverageTests(unittest.TestCase):
     def test_c3_public_aspect_keys_remain_supported(self):
-        # Historical C3 batch: subset guarantee only. Exact public count owned by C4+.
+        # Historical C3 batch: harmonious Pluto subset guarantee only.
+        # Exact Pluto conj/opp ownership is C14+.
         self.assertTrue({"trine_Pluto", "sextile_Pluto"}.issubset(SUPPORTED_ASPECT_KEYS))
-        self.assertNotIn("conjunction_Pluto", SUPPORTED_ASPECT_KEYS)
-        self.assertNotIn("opposition_Pluto", SUPPORTED_ASPECT_KEYS)
 
     def test_c3_pluto_harmonious_alias_and_square_separation(self):
         self.assertEqual(ASPECT_PACK_ALIASES["sextile_Pluto"], "trine_Pluto")
