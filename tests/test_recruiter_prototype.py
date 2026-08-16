@@ -120,7 +120,8 @@ class RecruiterUxPolishTests(unittest.TestCase):
         self.assertIn("Key recurring patterns", self.js)
         self.assertIn("renderStrongestPatterns", self.js)
         self.assertIn("renderSynthesisSections", self.js)
-        self.assertIn("Explore source details", self.js)
+        self.assertIn("Explore full source evidence", self.js)
+        self.assertIn("Details &amp; methodology", self.js)
         self.assertIn("Tensions in your profile", self.js)
         self.assertIn("Tensions in this profile", self.js)
         self.assertIn("Conditional tensions", self.js)
@@ -151,7 +152,7 @@ class RecruiterUxPolishTests(unittest.TestCase):
         # Fact-count status is not the primary hierarchy; technical meta holds the count.
         self.assertNotIn("Source profile ready ·", self.js)
         self.assertIn("self-tech-meta", self.js)
-        self.assertIn("active source facts", self.js)
+        self.assertIn("active source facts were used in this profile", self.js)
         # Recurring Why disclosure collapsed by default.
         self.assertIn('class="signal-why"', self.js)
         self.assertIn("Why this appears", self.js)
@@ -159,8 +160,9 @@ class RecruiterUxPolishTests(unittest.TestCase):
         self.assertNotIn("<details class=\"signal-why\" open", self.js)
         # Factor cards live under collapsed source evidence; start closed.
         self.assertIn('class="factor-card"', self.js)
-        self.assertIn('class="source-evidence-block"', self.js)
+        self.assertIn("source-evidence-block", self.js)
         self.assertNotIn('class="source-evidence-block" open', self.js)
+        self.assertNotIn('source-evidence-block" open', self.js)
         self.assertIn("source statements", self.js)
         self.assertIn("Supported by", self.js)
         self.assertIn("profile factors", self.js)
@@ -172,7 +174,8 @@ class RecruiterUxPolishTests(unittest.TestCase):
         self.assertIn("risk-mark", self.js)
         self.assertIn('class="source-specific-block"', self.js)
         self.assertNotIn('class="source-specific-block" open', self.js)
-        self.assertIn('class="trace-details"', self.js)
+        self.assertIn("trace-details", self.js)
+        self.assertNotIn('trace-details" open', self.js)
         self.assertNotIn('class="trace-details" open', self.js)
         self.assertIn("contrast-sources", self.js)
         # Synthesis is primary; legacy top-level repeats/tensions are not a second path.
@@ -185,6 +188,68 @@ class RecruiterUxPolishTests(unittest.TestCase):
         self.assertNotIn("Patterns that repeat", self.js)
         # Team Intelligence product title remains the default HTML heading.
         self.assertIn('<h1 class="brand-title">Team Intelligence</h1>', self.html)
+
+    def test_visual_hierarchy_and_secondary_details(self):
+        # Helper text uses dedicated class (not trait styling).
+        self.assertIn('class="section-helper"', self.js)
+        self.assertIn(".section-helper", self.css)
+        patterns_fn = self.js.split("function renderStrongestPatterns", 1)[1].split(
+            "function renderSectionBody", 1
+        )[0]
+        tensions_fn = self.js.split("function renderResolvedTensions", 1)[1].split(
+            "function renderConditionalTensions", 1
+        )[0]
+        self.assertIn("section-helper", patterns_fn)
+        self.assertIn("section-helper", tensions_fn)
+        self.assertNotIn("patterns-intro", self.js)
+        self.assertNotIn("tension-intro", self.js)
+
+        # Tensions before watch-outs; details zone last.
+        self_profile_fn = self.js.split("function renderSelfProfile", 1)[1].split(
+            "async function buildMyProfile", 1
+        )[0]
+        tensions_pos = self_profile_fn.find("renderResolvedTensions")
+        watchouts_pos = self_profile_fn.find("renderContextWatchOuts")
+        details_pos = self_profile_fn.find("renderDetailsMethodology")
+        self.assertGreater(watchouts_pos, tensions_pos)
+        self.assertGreater(details_pos, watchouts_pos)
+
+        # Watch-outs collapsed by default; preview only inside expanded body.
+        self.assertIn("function renderContextWatchOuts", self.js)
+        self.assertIn('class="watchouts-block"', self.js)
+        self.assertNotIn('class="watchouts-block" open', self.js)
+        self.assertIn('data-section-key="context_risks"', self.js)
+        self.assertIn('if (section.key === "context_risks") return ""', self.js)
+        watchouts_fn = self.js.split("function renderContextWatchOuts", 1)[1].split(
+            "function renderTensionRows", 1
+        )[0]
+        self.assertIn("renderSectionBody(section, facts)", watchouts_fn)
+        self.assertIn("watchouts-body", watchouts_fn)
+
+        # Secondary details zone groups conditional / evidence / why.
+        self.assertIn("Details &amp; methodology", self.js)
+        self.assertIn("details-methodology", self.js)
+        self.assertIn("renderConditionalSourceNotesRow", self.js)
+        self.assertIn("renderSourceEvidenceRow", self.js)
+        self.assertIn("renderTraceabilityRow", self.js)
+        details_fn = self.js.split("function renderDetailsMethodology", 1)[1].split(
+            "function renderSelfProfile", 1
+        )[0]
+        self.assertIn("renderConditionalSourceNotesRow", details_fn)
+        self.assertIn("renderSourceEvidenceRow", details_fn)
+        self.assertIn("renderTraceabilityRow", details_fn)
+        self.assertNotIn('class="trace-block"', self.js)
+        self.assertNotIn("source-evidence-panel", self.js)
+        # Fact count is contextual metadata inside Why, not a peer card headline.
+        self.assertIn("active source facts were used in this profile", self.js)
+        self.assertNotIn("<p class=\"self-tech-meta\">${escapeHtml(String(factCount))} active source facts</p>", self.js)
+        # Conditional omitted when empty.
+        self.assertIn("if (!groups.length) return \"\"", self.js)
+        # No hiring/risk framing for watch-outs.
+        lowered = self.js.lower()
+        self.assertNotIn("red flags", lowered)
+        self.assertNotIn("hiring risk", lowered)
+        self.assertNotIn("candidate risk", lowered)
 
     def test_profile_audience_mode_copy(self):
         # Person mode: named subject, neutral section titles, no second-person framing.
@@ -255,10 +320,12 @@ class RecruiterUxPolishTests(unittest.TestCase):
         self.assertIn("self-calc-line", self.js)
         self.assertIn("self-aspect-list", self.js)
         self.assertIn("formatAspectChip", self.js)
-        # View all does not re-fetch.
-        view_all_block = self.js.split("function renderSynthesisSections", 1)[1].split(
-            "function renderTensionRows", 1
+        # View all does not re-fetch; remaining facts exclude preview IDs.
+        view_all_block = self.js.split("function renderSectionBody", 1)[1].split(
+            "function renderSynthesisSections", 1
         )[0]
+        self.assertIn("section-remaining-facts", view_all_block)
+        self.assertIn("!previewSet.has(id)", view_all_block)
         self.assertNotIn("apiPost", view_all_block)
         self.assertNotIn("mercury-source-profile", view_all_block)
         self.assertIn("data-self-demo=\"avdey\"", self.html)

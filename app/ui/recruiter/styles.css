@@ -872,8 +872,16 @@ details.more-details > summary::-webkit-details-marker {
   gap: 0.35rem;
 }
 
-.patterns-intro {
-  margin: 0 0 0.75rem;
+.section-helper {
+  margin: 0.12rem 0 0.9rem;
+  color: var(--text-faint);
+  font-size: 0.8rem;
+  line-height: 1.35;
+  font-weight: 400;
+}
+
+.section-helper.patterns-empty {
+  margin-top: 0;
 }
 
 .signal-row {
@@ -1188,31 +1196,85 @@ details.more-details > summary::-webkit-details-marker {
   display: inline;
 }
 
-.tension-intro {
-  margin: 0 0 0.65rem;
+.synthesis-tensions.level-2,
+.synthesis-conditional-tensions.level-2,
+.synthesis-watchouts.level-2 {
+  opacity: 0.98;
 }
 
 .synthesis-conditional-tensions {
   opacity: 0.92;
 }
 
-.conditional-notes-block > summary,
-.source-evidence-block > summary {
+.watchouts-block > summary {
+  cursor: pointer;
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.35rem 0.75rem;
+  align-items: baseline;
+}
+
+.watchouts-block > summary::-webkit-details-marker {
+  display: none;
+}
+
+.watchouts-summary-main {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.watchouts-body {
+  margin-top: 0.7rem;
+}
+
+.details-methodology.level-3 {
+  padding: 0.85rem 1rem;
+  background: var(--bg);
+}
+
+.details-methodology.level-3 .panel-head h2 {
+  font-size: 0.95rem;
+  font-weight: 650;
+  color: var(--text-muted);
+  letter-spacing: 0.01em;
+}
+
+.details-methodology-rows {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.methodology-row {
+  border-top: 1px solid var(--border);
+  padding: 0.45rem 0;
+}
+
+.methodology-row:first-child {
+  border-top: 0;
+  padding-top: 0.15rem;
+}
+
+.methodology-row > summary {
   cursor: pointer;
   list-style: none;
   color: var(--text-muted);
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   font-weight: 600;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.55rem;
+  align-items: baseline;
 }
 
-.conditional-notes-block > summary::-webkit-details-marker,
-.source-evidence-block > summary::-webkit-details-marker {
+.methodology-row > summary::-webkit-details-marker {
   display: none;
 }
 
 .conditional-notes-body,
-.source-evidence-body {
-  margin-top: 0.65rem;
+.source-evidence-body,
+.trace-body {
+  margin-top: 0.55rem;
 }
 
 .conditional-group {
@@ -1238,7 +1300,7 @@ details.more-details > summary::-webkit-details-marker {
 }
 
 .profile-notes-list {
-  margin: 0;
+  margin: 0.45rem 0 0;
   padding-left: 1.1rem;
   color: var(--text-muted);
   font-size: 0.88rem;
@@ -1250,22 +1312,11 @@ details.more-details > summary::-webkit-details-marker {
   margin: 0;
 }
 
-.trace-block {
-  margin-top: 0.25rem;
-}
-
-.trace-details > summary {
-  cursor: pointer;
-  color: var(--text-muted);
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
 .trace-pre {
   margin: 0.5rem 0 0;
   padding: 0.85rem 1rem;
   border-radius: 10px;
-  background: var(--bg);
+  background: var(--bg-elevated);
   border: 1px solid var(--border);
   overflow: auto;
   font-size: 0.8rem;

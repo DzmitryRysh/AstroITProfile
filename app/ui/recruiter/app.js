@@ -553,12 +553,12 @@
 
   function renderStrongestPatterns(synthesis, audience, displayName) {
     const patterns = (synthesis && synthesis.strongest_patterns) || [];
-    const intro = `<p class="meta patterns-intro">${escapeHtml(recurringPatternsExplanation(audience, displayName))}</p>`;
+    const intro = `<p class="section-helper">${escapeHtml(recurringPatternsExplanation(audience, displayName))}</p>`;
     if (!patterns.length) {
-      return `<section class="panel synthesis-patterns">
+      return `<section class="panel synthesis-patterns level-1">
         <div class="panel-head"><h2>Key recurring patterns</h2></div>
         ${intro}
-        <p class="meta patterns-empty">${escapeHtml(recurringPatternsEmptyCopy(audience))}</p>
+        <p class="section-helper patterns-empty">${escapeHtml(recurringPatternsEmptyCopy(audience))}</p>
       </section>`;
     }
     const rows = patterns.map((signal) => {
@@ -583,11 +583,36 @@
         </details>
       </article>`;
     }).join("");
-    return `<section class="panel synthesis-patterns">
+    return `<section class="panel synthesis-patterns level-1">
       <div class="panel-head"><h2>Key recurring patterns</h2></div>
       ${intro}
       <div class="signal-list">${rows}</div>
     </section>`;
+  }
+
+  function renderSectionBody(section, facts) {
+    const previewIds = section.preview_fact_ids || [];
+    const previewSet = new Set(previewIds);
+    const previewItems = previewIds
+      .map((id) => renderPreviewFactItem(facts.get(id)))
+      .filter(Boolean)
+      .join("");
+    const evidence = `${section.resolved_fact_count} source-backed observations across ${section.factor_count} factor${section.factor_count === 1 ? "" : "s"}`;
+    const remainingIds = (section.resolved_fact_ids || []).filter((id) => !previewSet.has(id));
+    const remainingItems = remainingIds
+      .map((id) => renderPreviewFactItem(facts.get(id)))
+      .filter(Boolean)
+      .join("");
+    const hasMore = remainingIds.length > 0;
+    const viewAll = hasMore
+      ? `<details class="section-view-all">
+          <summary><span class="view-all-label">View all</span><span class="show-less-label">Show less</span></summary>
+          <ul class="fact-list section-remaining-facts">${remainingItems}</ul>
+        </details>`
+      : "";
+    return `<p class="section-evidence-meta">${escapeHtml(evidence)}</p>
+      <ul class="fact-list section-preview">${previewItems}</ul>
+      ${viewAll}`;
   }
 
   function renderSynthesisSections(synthesis, audience) {
@@ -595,34 +620,36 @@
     const facts = synthesisFactMap(synthesis);
     return (synthesis.sections || []).map((section) => {
       if (!section.resolved_fact_count) return "";
-      const previewIds = section.preview_fact_ids || [];
-      const previewSet = new Set(previewIds);
-      const previewItems = previewIds
-        .map((id) => renderPreviewFactItem(facts.get(id)))
-        .filter(Boolean)
-        .join("");
-      const evidence = `${section.resolved_fact_count} source-backed observations across ${section.factor_count} factor${section.factor_count === 1 ? "" : "s"}`;
-      // Preserve resolved order; exclude preview IDs so View all does not duplicate.
-      const remainingIds = (section.resolved_fact_ids || []).filter((id) => !previewSet.has(id));
-      const remainingItems = remainingIds
-        .map((id) => renderPreviewFactItem(facts.get(id)))
-        .filter(Boolean)
-        .join("");
-      const hasMore = remainingIds.length > 0;
-      const viewAll = hasMore
-        ? `<details class="section-view-all">
-            <summary><span class="view-all-label">View all</span><span class="show-less-label">Show less</span></summary>
-            <ul class="fact-list section-remaining-facts">${remainingItems}</ul>
-          </details>`
-        : "";
+      // Watch-outs render separately as a secondary collapsed block.
+      if (section.key === "context_risks") return "";
       const title = sectionDisplayTitle(section, audience);
-      return `<section class="panel synthesis-section" data-section-key="${escapeHtml(section.key)}">
+      return `<section class="panel synthesis-section level-1" data-section-key="${escapeHtml(section.key)}">
         <div class="panel-head"><h2>${escapeHtml(title)}</h2></div>
-        <p class="section-evidence-meta">${escapeHtml(evidence)}</p>
-        <ul class="fact-list section-preview">${previewItems}</ul>
-        ${viewAll}
+        ${renderSectionBody(section, facts)}
       </section>`;
     }).join("");
+  }
+
+  function renderContextWatchOuts(synthesis, audience) {
+    if (!synthesis || !synthesis.sections) return "";
+    const section = (synthesis.sections || []).find((item) => item.key === "context_risks");
+    if (!section || !section.resolved_fact_count) return "";
+    const facts = synthesisFactMap(synthesis);
+    const title = sectionDisplayTitle(section, audience);
+    const countLabel = section.resolved_fact_count === 1
+      ? "1 source-backed observation"
+      : `${section.resolved_fact_count} source-backed observations`;
+    return `<section class="panel synthesis-watchouts level-2" data-section-key="context_risks">
+      <details class="watchouts-block">
+        <summary>
+          <span class="watchouts-summary-main">${escapeHtml(title)}</span>
+          <span class="factor-summary-meta">${escapeHtml(countLabel)}</span>
+        </summary>
+        <div class="watchouts-body">
+          ${renderSectionBody(section, facts)}
+        </div>
+      </details>
+    </section>`;
   }
 
   function renderTensionRows(tensions, factsLookup) {
@@ -659,9 +686,9 @@
     const tensions = (synthesis && synthesis.resolved_tensions) || [];
     if (!tensions.length) return "";
     const facts = synthesisFactMap(synthesis);
-    return `<section class="panel synthesis-tensions">
+    return `<section class="panel synthesis-tensions level-2">
       <div class="panel-head"><h2>${escapeHtml(tensionsHeading(audience))}</h2></div>
-      <p class="meta tension-intro">Different Mercury factors can pull in different directions. AstroIT keeps both signals instead of choosing a winner.</p>
+      <p class="section-helper">Different Mercury factors can pull in different directions. AstroIT keeps both signals instead of choosing a winner.</p>
       ${renderTensionRows(tensions, facts)}
     </section>`;
   }
@@ -670,14 +697,14 @@
     const tensions = (synthesis && synthesis.conditional_tensions) || [];
     if (!tensions.length) return "";
     const facts = synthesisFactMap(synthesis);
-    return `<section class="panel synthesis-conditional-tensions">
+    return `<section class="panel synthesis-conditional-tensions level-2">
       <div class="panel-head"><h2>Conditional tensions</h2></div>
-      <p class="meta tension-intro">These possibilities depend on source conditions that cannot currently be resolved from the available chart data.</p>
+      <p class="section-helper">These possibilities depend on source conditions that cannot currently be resolved from the available chart data.</p>
       ${renderTensionRows(tensions, facts)}
     </section>`;
   }
 
-  function renderConditionalSourceNotes(synthesis) {
+  function renderConditionalSourceNotesRow(synthesis) {
     const groups = (synthesis && synthesis.conditional_details) || [];
     if (!groups.length) return "";
     const facts = synthesisFactMap(synthesis);
@@ -698,25 +725,23 @@
         <ul class="fact-list">${items}</ul>
       </div>`;
     }).join("");
-    return `<section class="panel synthesis-conditional-notes">
-      <details class="conditional-notes-block">
-        <summary>Conditional source notes <span class="factor-summary-meta">${groups.length}</span></summary>
-        <div class="conditional-notes-body">
-          <p class="meta">These source notes depend on conditions that are not resolved from the available chart data. They are not treated as active.</p>
-          ${body}
-        </div>
-      </details>
-    </section>`;
+    return `<details class="methodology-row conditional-notes-block">
+      <summary>Conditional source notes <span class="factor-summary-meta">${groups.length}</span></summary>
+      <div class="conditional-notes-body">
+        <p class="section-helper">These source notes depend on conditions that are not resolved from the available chart data. They are not treated as active.</p>
+        ${body}
+      </div>
+    </details>`;
   }
 
-  function renderProfileNotes(profile) {
+  function renderProfileNotesRow(profile) {
     const notes = (profile.limitations || []).filter(Boolean);
     if (!notes.length) return "";
     const items = notes.map((note) => `<li>${escapeHtml(note)}</li>`).join("");
-    return `<section class="panel profile-notes">
-      <div class="panel-head"><h2>Profile notes</h2></div>
+    return `<details class="methodology-row profile-notes-block">
+      <summary>Profile notes <span class="factor-summary-meta">${notes.length}</span></summary>
       <ul class="profile-notes-list">${items}</ul>
-    </section>`;
+    </details>`;
   }
 
   function renderSourceLayers(profile) {
@@ -762,16 +787,14 @@
     return `${coverageHtml}${houseNote}${cards}`;
   }
 
-  function renderSourceEvidence(profile) {
-    return `<section class="panel source-evidence-panel">
-      <details class="source-evidence-block">
-        <summary>Explore source details</summary>
-        <div class="source-evidence-body">
-          <p class="meta">Full factor-by-factor source evidence and references.</p>
-          ${renderSourceLayers(profile)}
-        </div>
-      </details>
-    </section>`;
+  function renderSourceEvidenceRow(profile) {
+    return `<details class="methodology-row source-evidence-block">
+      <summary>Explore full source evidence</summary>
+      <div class="source-evidence-body">
+        <p class="section-helper">Full factor-by-factor source evidence and references.</p>
+        ${renderSourceLayers(profile)}
+      </div>
+    </details>`;
   }
 
   function factLookup(profile) {
@@ -786,7 +809,7 @@
     return map;
   }
 
-  function renderTraceability(profile, displayName, factCount) {
+  function renderTraceabilityRow(profile, displayName, factCount) {
     const calc = profile.calculated || {};
     const layers = collectFactsByFactor(profile);
     const lines = [];
@@ -818,12 +841,32 @@
         lines.push(`    facts: ${(signal.fact_ids || []).join(", ")}`);
       });
     }
-    return `<section class="panel trace-block">
-      <p class="self-tech-meta">${escapeHtml(String(factCount))} active source facts</p>
-      <details class="trace-details">
-        <summary>Why AstroIT shows this</summary>
+    const countPhrase = factCount === 1
+      ? "1 active source fact was used in this profile."
+      : `${factCount} active source facts were used in this profile.`;
+    return `<details class="methodology-row trace-details">
+      <summary>Why AstroIT shows this</summary>
+      <div class="trace-body">
+        <p class="section-helper self-tech-meta">${escapeHtml(countPhrase)}</p>
         <pre class="trace-pre">${escapeHtml(lines.join("\n"))}</pre>
-      </details>
+      </div>
+    </details>`;
+  }
+
+  function renderDetailsMethodology(profile, synthesis, displayName, factCount) {
+    const conditional = renderConditionalSourceNotesRow(synthesis);
+    const notes = renderProfileNotesRow(profile);
+    const evidence = renderSourceEvidenceRow(profile);
+    const why = renderTraceabilityRow(profile, displayName, factCount);
+    if (!conditional && !notes && !evidence && !why) return "";
+    return `<section class="panel details-methodology level-3">
+      <div class="panel-head"><h2>Details &amp; methodology</h2></div>
+      <div class="details-methodology-rows">
+        ${conditional}
+        ${notes}
+        ${evidence}
+        ${why}
+      </div>
     </section>`;
   }
 
@@ -839,7 +882,6 @@
       .map((aspect) => `<li>${escapeHtml(formatAspectChip(aspect))}</li>`)
       .join("");
     const factCount = countActiveSourceFacts(profile);
-    const headerTitle = profileHeaderTitle(audience, displayName);
     setBrandTitleForProfile(audience, displayName);
 
     selfProfileContent.innerHTML = `
@@ -851,10 +893,8 @@
       ${renderSynthesisSections(synthesis, audience)}
       ${renderResolvedTensions(synthesis, audience)}
       ${renderConditionalTensions(synthesis)}
-      ${renderConditionalSourceNotes(synthesis)}
-      ${renderProfileNotes(profile)}
-      ${renderSourceEvidence(profile)}
-      ${renderTraceability(profile, displayName, factCount)}
+      ${renderContextWatchOuts(synthesis, audience)}
+      ${renderDetailsMethodology(profile, synthesis, displayName, factCount)}
     `;
   }
 
