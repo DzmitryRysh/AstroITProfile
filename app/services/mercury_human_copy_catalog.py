@@ -34,7 +34,8 @@ ALL_REVIEW_STATUSES: tuple[str, ...] = (
 )
 
 # Explicit presentation decisions only (not overrides — those live in
-# HUMAN_COPY_OVERRIDES). S4.3 seed + S4.4B–S4.5B + S4.7B–S4.11B + S4.14B.
+# HUMAN_COPY_OVERRIDES). S4.3 seed + S4.4B–S4.5B + S4.7B–S4.11B + S4.14B
+# + S4.16B.
 APPROVED_RAW_FACT_IDS: frozenset[str] = frozenset(
     {
         # S4.3 seed
@@ -397,6 +398,8 @@ APPROVED_RAW_FACT_IDS: frozenset[str] = frozenset(
         "rx_tendency_to_rewrite",
         "rx_unexpected_conclusions",
         "rx_written_easier_than_spontaneous",
+        # S4.16B house:2 approved_raw
+        "h2_profit_through_public_speaking",
     }
 )
 

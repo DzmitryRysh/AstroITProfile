@@ -1261,6 +1261,64 @@ HUMAN_COPY_OVERRIDES: dict[str, str] = {
         "May support qualities associated with sales."
     ),
     "h1_youthful_quality": "May come across as youthful.",
+    # --- S4.16B house:2 family review (19) ---
+    "h2_accumulates_collects_books": "May accumulate or collect books.",
+    "h2_advertising_income_association": (
+        "The source associates income or activity with advertising."
+    ),
+    "h2_financial_mechanism_design": (
+        "The source associates greater income potential with creating "
+        "carefully designed financial mechanisms."
+    ),
+    "h2_financial_scheme_creation": (
+        "The source associates greater income potential with creating "
+        "carefully designed financial schemes."
+    ),
+    "h2_import_export_trade_association": (
+        "The source especially associates this placement with import-export "
+        "trade."
+    ),
+    "h2_likes_expensive_pens": "May like expensive pens.",
+    "h2_likes_notebooks": "May like notebooks.",
+    "h2_likes_stationery": "May like stationery.",
+    "h2_likes_writing_paper_letters": "May enjoy writing paper letters.",
+    "h2_literary_text_work_examples": (
+        "The source associates this placement with literary or text-related "
+        "work such as speechwriting, editing, and copywriting; these are "
+        "not certified skills."
+    ),
+    "h2_money_loss_carelessness": (
+        "In this house context, money-loss risk may be associated with "
+        "carelessness or lack of caution."
+    ),
+    "h2_money_loss_overconfidence": (
+        "In this house context, money-loss risk may be associated with "
+        "excessive self-confidence."
+    ),
+    "h2_money_loss_superficiality": (
+        "In this house context, money-loss risk may be associated with "
+        "superficiality."
+    ),
+    "h2_objects_attract_through_applicability": (
+        "May be drawn to objects or things for their practical "
+        "applicability."
+    ),
+    "h2_objects_attract_through_interestingness": (
+        "May be drawn to objects or things that seem interesting."
+    ),
+    "h2_objects_attract_through_usefulness": (
+        "May be drawn to objects or things for their usefulness."
+    ),
+    "h2_profit_through_literary_text_activity": (
+        "Profit may come through literary or text-related activity."
+    ),
+    "h2_talking_genre_profession_association": (
+        'The source associates this placement with speaking or "talking '
+        'genre" professions; this is not a career assignment.'
+    ),
+    "h2_trade_income_association": (
+        "The source associates income or activity with trade."
+    ),
 }
 
 
