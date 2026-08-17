@@ -14,7 +14,7 @@ from collections.abc import Iterable
 from app.schemas.mercury_source_profile import SourceFact
 
 # Curated human-facing overrides. Keys are stable SourceFact.id values.
-# S4.0–S4.8B + S4.9B Pisces/Aries family review. Presentation only.
+# S4.0–S4.9B + S4.10B Scorpio/Libra family review. Presentation only.
 HUMAN_COPY_OVERRIDES: dict[str, str] = {
     # --- S4.0 pilot ---
     "pluto_sq_conflictual_communication": (
@@ -753,6 +753,201 @@ HUMAN_COPY_OVERRIDES: dict[str, str] = {
     ),
     "aries_l7_risk_not_hearing_other_viewpoint": (
         "May have difficulty hearing another point of view while learning."
+    ),
+    # --- S4.10B Scorpio family review (39) ---
+    "scorpio_bio_afflicted_causticity": (
+        "Communication may become caustic."
+    ),
+    "scorpio_bio_afflicted_maximalism_in_evaluations": (
+        "Evaluations can become maximalist."
+    ),
+    "scorpio_bio_afflicted_mockery_malicious_wit": (
+        "Communication may involve mockery, malicious wit, or snide remarks."
+    ),
+    "scorpio_bio_afflicted_quarrelsome_verbal_conflict": (
+        "Communication may become quarrelsome or verbally abusive."
+    ),
+    "scorpio_bio_analytical_aptitude": "May show analytical aptitude.",
+    "scorpio_bio_authoritative_voice_effect": (
+        "Voice may have an authoritative or commanding effect."
+    ),
+    "scorpio_bio_critic_aptitude": "May show critic aptitude.",
+    "scorpio_bio_influence_people": "May tend to influence people.",
+    "scorpio_bio_intuitive_deep_thinking": (
+        "Deep thinking with an intuitive quality."
+    ),
+    "scorpio_bio_learning_criticizing_others_ideas": (
+        "Learning through criticizing or dismantling other people's ideas."
+    ),
+    "scorpio_bio_motivation_challenge_prove": (
+        "Learning may be motivated by a challenge to prove oneself."
+    ),
+    "scorpio_bio_motivation_curiosity": (
+        "Learning may be motivated by curiosity."
+    ),
+    "scorpio_bio_motivation_influence_linked_info": (
+        "Learning may be motivated by information linked to the possibility "
+        "of influence."
+    ),
+    "scorpio_bio_motivation_money": (
+        "Learning may be motivated by money."
+    ),
+    "scorpio_bio_occupation_associations": (
+        "Occupational themes associated with this placement include "
+        "management, entrepreneurship, and psychology; these are not career "
+        "assignments."
+    ),
+    "scorpio_bio_pluto_colored_framing": (
+        "Thinking, communication, and learning may be colored by intensity, "
+        "depth, and transformation themes."
+    ),
+    "scorpio_bio_psychological_penetration": (
+        "May probe psychological material deeply."
+    ),
+    "scorpio_bio_researcher_aptitude": "May show researcher aptitude.",
+    "scorpio_bio_speak_through_secrets": (
+        "May speak through secrets, leaving others to figure things out."
+    ),
+    "scorpio_bio_sticky_attention": (
+        "Attention can be sticky or persistent."
+    ),
+    "scorpio_bio_technical_aptitude": "May show technical aptitude.",
+    "scorpio_l7_argument_dispute_learning": (
+        "Argument or dispute can support learning."
+    ),
+    "scorpio_l7_asking_questions_to_expose_essence": (
+        "Asking questions to expose the essence supports learning."
+    ),
+    "scorpio_l7_deep_concepts": "Deep concepts support learning.",
+    "scorpio_l7_depth": "Depth of thinking.",
+    "scorpio_l7_destroy_to_understand": (
+        "May deconstruct or take apart ideas in order to understand."
+    ),
+    "scorpio_l7_dev_awareness_of_causticity": (
+        "Growth area: become more aware of caustic communication."
+    ),
+    "scorpio_l7_dev_awareness_of_criticality": (
+        "Growth area: become more aware of a tendency toward criticism."
+    ),
+    "scorpio_l7_dev_finish_explain_thought": (
+        "Growth area: finish and explain a thought instead of cutting it off "
+        "with hints."
+    ),
+    "scorpio_l7_env_manipulation_source_claim": (
+        "Close-environment communication may involve a tendency toward "
+        "manipulation."
+    ),
+    "scorpio_l7_env_transformative_role": (
+        "May play a transformative role in the close environment."
+    ),
+    "scorpio_l7_hints": "May communicate through hints.",
+    "scorpio_l7_learn_dig_to_essence": (
+        "Digging to the essence supports learning."
+    ),
+    "scorpio_l7_practice_learning": "Practice supports learning.",
+    "scorpio_l7_quiet_environment": (
+        "A quiet environment supports learning."
+    ),
+    "scorpio_l7_risk_maximalism_in_evaluations": (
+        "May show maximalism in evaluations."
+    ),
+    "scorpio_l7_risk_sharp_judgments": "Judgments can become sharp.",
+    "scorpio_l7_sensitivity_to_intuitive_impressions": (
+        "May be sensitive to intuitive impressions."
+    ),
+    "scorpio_l7_vulnerability_error_detection": (
+        "Detecting vulnerabilities or errors supports learning."
+    ),
+    # --- S4.10B Libra family review (35) ---
+    "libra_bio_afflicted_absence_of_conclusions": (
+        "Thinking may reach no clear conclusions."
+    ),
+    "libra_bio_afflicted_absence_of_position": (
+        "May lack a clear position."
+    ),
+    "libra_bio_afflicted_excessively_sugary_communication": (
+        "Communication may become overly sweet or artificially positive."
+    ),
+    "libra_bio_afflicted_intellectual_indecision": (
+        "Thinking can become intellectually indecisive."
+    ),
+    "libra_bio_afflicted_lying_distortion": (
+        "Communication may involve lying or distortion."
+    ),
+    "libra_bio_communicator_aptitude": (
+        "May show aptitude for communication."
+    ),
+    "libra_bio_compliment_skill": "May show skill with compliments.",
+    "libra_bio_compromise_skill": "May show skill with compromise.",
+    "libra_bio_dialogue_skill": "May show skill in dialogue.",
+    "libra_bio_humanities_aptitude": (
+        "May show aptitude for the humanities."
+    ),
+    "libra_bio_interviewer_aptitude": (
+        "May show aptitude for interviewing."
+    ),
+    "libra_bio_learning_two_sides": (
+        "Learning through two sides or two aspects of a situation."
+    ),
+    "libra_bio_motivation_aesthetic_environment": (
+        "Learning may be motivated by an aesthetically pleasing environment."
+    ),
+    "libra_bio_motivation_attractive_people": (
+        "Learning may be motivated by attractive or aesthetic people."
+    ),
+    "libra_bio_motivation_attractive_subject": (
+        "Learning may be motivated by an attractive subject or material."
+    ),
+    "libra_bio_motivation_establish_fairness": (
+        "Learning may be motivated by the possibility of establishing "
+        "fairness."
+    ),
+    "libra_bio_motivation_possibility_to_discuss": (
+        "Learning may be motivated by opportunities for discussion."
+    ),
+    "libra_bio_occupation_associations": (
+        "Occupational themes associated with this placement include "
+        "presenting, consulting, law, and politics; these are not career "
+        "assignments."
+    ),
+    "libra_bio_salesperson_aptitude": "May show sales aptitude.",
+    "libra_bio_venusian_diplomacy_aesthetic_coloring": (
+        "Thinking, communication, and learning may be colored by diplomacy "
+        "and aesthetic quality."
+    ),
+    "libra_l7_conversational_adaptation": (
+        "Conversational adaptation or chameleon-like adjustment."
+    ),
+    "libra_l7_endless_pros_cons_weighing": (
+        "May weigh pros and cons endlessly."
+    ),
+    "libra_l7_env_consultant_smoothing_role": (
+        "May take on a consulting or conflict-smoothing role in the close "
+        "environment."
+    ),
+    "libra_l7_env_easy_quick_contact": (
+        "Contact may form easily and quickly."
+    ),
+    "libra_l7_reluctance_to_take_one_side": (
+        "May be reluctant or afraid to take one side."
+    ),
+    "libra_l7_risk_avoiding_dispute": "May avoid dispute.",
+    "libra_l7_risk_serving_two_masters": (
+        "May try to serve two opposing sides."
+    ),
+    "libra_l7_support_aesthetic_environment": (
+        "An aesthetic learning environment supports learning."
+    ),
+    "libra_l7_support_books": "Books support learning.",
+    "libra_l7_support_dialogue": "Dialogue supports learning.",
+    "libra_l7_support_exchange_of_opinions": (
+        "Exchange of opinions supports learning."
+    ),
+    "libra_l7_support_lectures": "Lectures support learning.",
+    "libra_l7_support_live_peer": "A live peer supports learning.",
+    "libra_l7_support_live_teacher": "A live teacher supports learning.",
+    "libra_l7_support_peer_collaboration": (
+        "Peer collaboration on difficult problems supports learning."
     ),
 }
 

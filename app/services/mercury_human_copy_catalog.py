@@ -34,7 +34,7 @@ ALL_REVIEW_STATUSES: tuple[str, ...] = (
 )
 
 # Explicit presentation decisions only (not overrides — those live in
-# HUMAN_COPY_OVERRIDES). S4.3 seed + S4.4B–S4.5B + S4.7B–S4.9B.
+# HUMAN_COPY_OVERRIDES). S4.3 seed + S4.4B–S4.5B + S4.7B–S4.10B.
 APPROVED_RAW_FACT_IDS: frozenset[str] = frozenset(
     {
         # S4.3 seed
@@ -285,6 +285,57 @@ APPROVED_RAW_FACT_IDS: frozenset[str] = frozenset(
         "aries_l7_repeats_own_position",
         "aries_l7_retains_existing_formulation",
         "aries_l7_risk_haste_errors",
+        # S4.10B Scorpio approved_raw
+        "scorpio_bio_learning_group_discussion",
+        "scorpio_bio_learning_independent_research",
+        "scorpio_bio_quiet_calm_voice",
+        "scorpio_bio_strong_memory",
+        "scorpio_l7_ability_to_see_the_essence",
+        "scorpio_l7_categorical_thinking",
+        "scorpio_l7_caustic_speech",
+        "scorpio_l7_detective_like_thinking",
+        "scorpio_l7_env_hidden_sibling_tension",
+        "scorpio_l7_env_sibling_competition",
+        "scorpio_l7_env_sibling_verbal_jabs",
+        "scorpio_l7_expects_listener_to_infer",
+        "scorpio_l7_extraction_of_nonverbal_information",
+        "scorpio_l7_fast_replies",
+        "scorpio_l7_high_analytical_ability",
+        "scorpio_l7_independent_learning",
+        "scorpio_l7_many_probing_questions",
+        "scorpio_l7_maximalist_thinking",
+        "scorpio_l7_research_oriented_mind",
+        "scorpio_l7_says_very_little_explicitly",
+        "scorpio_l7_sharp_replies",
+        "scorpio_l7_sticky_memory",
+        "scorpio_l7_tendency_to_dig_to_core",
+        "scorpio_l7_tense_communication",
+        "scorpio_l7_verbal_jabs",
+        "scorpio_l7_very_deep_memory",
+        # S4.10B Libra approved_raw
+        "libra_bio_beautiful_handwriting",
+        "libra_bio_beauty_of_words",
+        "libra_bio_learning_books",
+        "libra_bio_learning_contrasts",
+        "libra_bio_learning_dialogue",
+        "libra_l7_appeal_to_fairness",
+        "libra_l7_assimilation_through_discussion",
+        "libra_l7_delicate_communication",
+        "libra_l7_difficulty_making_decisions",
+        "libra_l7_env_search_for_common_language",
+        "libra_l7_env_sibling_diplomacy",
+        "libra_l7_env_sibling_dispute_avoidance",
+        "libra_l7_env_tendency_to_form_relationships",
+        "libra_l7_evaluates_via_aesthetic_beauty",
+        "libra_l7_evaluates_via_completeness",
+        "libra_l7_high_receptivity",
+        "libra_l7_high_speed_of_comprehension",
+        "libra_l7_information_synthesis",
+        "libra_l7_learning_through_contradiction_comparison",
+        "libra_l7_peaceful_communication",
+        "libra_l7_says_what_interlocutor_wants",
+        "libra_l7_skill_with_compliments",
+        "libra_l7_view_issue_from_multiple_sides",
     }
 )
 
@@ -313,6 +364,8 @@ NEEDS_REVIEW_FACT_IDS: frozenset[str] = frozenset(
         "pisces_l7_mystical_thinking",
         # Aries sexual/intimate motivation (S4.9B)
         "aries_bio_source_sexual_motivation_wording",
+        # Scorpio sexual/intimate motivation (S4.10B)
+        "scorpio_bio_source_sexual_motivation",
     }
 )
 
