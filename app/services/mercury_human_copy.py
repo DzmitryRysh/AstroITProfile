@@ -1135,6 +1135,85 @@ HUMAN_COPY_OVERRIDES: dict[str, str] = {
         "Simple or direct communication style."
     ),
     "virgo_l7_statistics_tracking": "May track statistics.",
+    # --- S4.12B cross-family presentation policy (18) ---
+    # presentation_ready != primary-section eligible; routing unchanged.
+    "sag_bio_major_exile": (
+        "Within the source framework, this placement is described as a "
+        "major exile."
+    ),
+    "sag_bio_impartiality_disrupted": (
+        "Within the source framework, Mercury's impartiality is described "
+        "as disrupted."
+    ),
+    "sag_bio_learnability_disrupted": (
+        "Within the source framework, Mercury's learnability is described "
+        "as disrupted."
+    ),
+    "gemini_bio_major_domicile_sync": (
+        "Within the source framework, Mercury and Gemini are described as "
+        "strongly synchronized (major domicile)."
+    ),
+    "pisces_bio_minor_exile": (
+        "Within the source framework, this placement is described as a "
+        "minor exile."
+    ),
+    "virgo_bio_minor_domicile_near_sync": (
+        "Within the source framework, Mercury and Virgo are described as "
+        "near-synchronized (minor domicile)."
+    ),
+    "aquarius_bio_afflicted_source_adhd_effect_wording": (
+        'Under affliction, the source explicitly uses an "ADHD effect" '
+        "comparison; this is source terminology, not a medical diagnosis."
+    ),
+    "aquarius_bio_source_genius_intellect_archetype": (
+        'The source archetypically describes this placement using '
+        'exceptionally "genius"-like intellect language; this is not an '
+        "IQ score, rank, or hiring conclusion."
+    ),
+    "aquarius_l7_source_genius_intellect_wording": (
+        'The source uses strongest-intellect or "genius" wording for this '
+        "placement; this is not an IQ score, rank, or hiring conclusion."
+    ),
+    "pisces_bio_universal_cosmic_intellect_synthesis": (
+        "The source describes a universal or cosmic intellect that "
+        "synthesizes knowledge across fields; this is a source claim, not "
+        "a validated ability or rank."
+    ),
+    "cancer_bio_emotional_intelligence_source_claim": (
+        "The source describes emotional-intelligence potential; this is "
+        "not a measured or certified professional ability."
+    ),
+    "aquarius_l7_claircognizance": (
+        'The source uses the term "claircognizance" or sudden knowing; '
+        "this is not a scientifically validated ability."
+    ),
+    "pisces_bio_unusually_strong_intuition": (
+        "The source claims unusually strong intuition; this is not a "
+        "scientifically established ability."
+    ),
+    "pisces_l7_high_intuition": (
+        "The source describes high intuition; this is not a scientifically "
+        "established ability."
+    ),
+    "pisces_l7_correct_decisions_nonrational_routes": (
+        "The source says correct decisions may sometimes emerge through "
+        "unclear or non-rational routes; this is a source claim, not a "
+        "validated decision-making ability."
+    ),
+    "pisces_l7_mystical_thinking": (
+        "The source describes mystical thinking and a search for hidden "
+        "meaning."
+    ),
+    "aries_bio_source_sexual_motivation_wording": (
+        "One learning-drive theme in the source framework is sexual or "
+        "intimate motivation; this is not a professional or hiring "
+        "recommendation."
+    ),
+    "scorpio_bio_source_sexual_motivation": (
+        "One learning-drive theme in the source framework is sexual or "
+        "intimate motivation; this is not a professional or hiring "
+        "recommendation."
+    ),
 }
 
 

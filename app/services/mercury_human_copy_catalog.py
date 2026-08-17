@@ -391,39 +391,13 @@ APPROVED_RAW_FACT_IDS: frozenset[str] = frozenset(
     }
 )
 
-# Explicit needs_review decisions. Cross-family presentation policy backlog:
-# placement/framework status, medical-adjacent, genius/rank-adjacent,
-# metaphysical source claims, sexual/intimate motivation wording,
-# conditional chart-context dependency (S4.12 taxonomy).
+# Explicit needs_review decisions. S4.12B resolved 18 of 19 sign policy
+# facts via HUMAN_COPY_OVERRIDES. Remaining conditional dependency:
+# cancer_bio_depends_on_moon_sign — Moon-sign context not resolved in
+# this prototype; reconsider only when a Moon-sign resolver exists.
 NEEDS_REVIEW_FACT_IDS: frozenset[str] = frozenset(
     {
-        # Sagittarius framework/status
-        "sag_bio_impartiality_disrupted",
-        "sag_bio_learnability_disrupted",
-        "sag_bio_major_exile",
-        # Aquarius sensitive source-policy (S4.8B)
-        "aquarius_bio_afflicted_source_adhd_effect_wording",
-        "aquarius_bio_source_genius_intellect_archetype",
-        "aquarius_l7_source_genius_intellect_wording",
-        "aquarius_l7_claircognizance",
-        # Gemini framework/status (S4.8B)
-        "gemini_bio_major_domicile_sync",
-        # Pisces framework / genius / metaphysical (S4.9B)
-        "pisces_bio_minor_exile",
-        "pisces_bio_universal_cosmic_intellect_synthesis",
-        "pisces_bio_unusually_strong_intuition",
-        "pisces_l7_high_intuition",
-        "pisces_l7_correct_decisions_nonrational_routes",
-        "pisces_l7_mystical_thinking",
-        # Aries sexual/intimate motivation (S4.9B)
-        "aries_bio_source_sexual_motivation_wording",
-        # Scorpio sexual/intimate motivation (S4.10B)
-        "scorpio_bio_source_sexual_motivation",
-        # Cancer conditional chart-context / claimed-ability (S4.11B)
         "cancer_bio_depends_on_moon_sign",
-        "cancer_bio_emotional_intelligence_source_claim",
-        # Virgo framework/status (S4.11B)
-        "virgo_bio_minor_domicile_near_sync",
     }
 )
 

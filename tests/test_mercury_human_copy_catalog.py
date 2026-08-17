@@ -376,13 +376,13 @@ class SagittariusFamilyS44BTests(unittest.TestCase):
         family = next(f for f in report.families if f.family_key == "sign:Sagittarius")
         self.assertEqual(family.total_facts, 58)
         self.assertEqual(family.unreviewed, 0)
-        self.assertEqual(family.approved_override, 42)
+        self.assertEqual(family.approved_override, 45)
         self.assertEqual(family.approved_raw, 13)
-        self.assertEqual(family.needs_review, 3)
+        self.assertEqual(family.needs_review, 0)
         self.assertEqual(family.reviewed_count, 58)
-        self.assertEqual(family.presentation_ready_count, 55)
+        self.assertEqual(family.presentation_ready_count, 58)
         self.assertEqual(family.review_coverage, 1.0)
-        self.assertAlmostEqual(family.presentation_ready_coverage, 55 / 58, places=6)
+        self.assertEqual(family.presentation_ready_coverage, 1.0)
 
     def test_sagittarius_approved_raw_ids(self):
         by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
@@ -428,24 +428,24 @@ class SagittariusFamilyS44BTests(unittest.TestCase):
         self.assertNotIn("recommended career", occupation.human_text.lower())
         self.assertNotIn("hiring", occupation.human_text.lower())
 
-    def test_sagittarius_needs_review_ids(self):
+    def test_sagittarius_policy_ids_resolved_as_overrides(self):
+        # S4.12B moved former Sagittarius needs_review IDs to overrides.
         by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
-        self.assertTrue(set(S44B_SAGITTARIUS_NEEDS_REVIEW).issubset(NEEDS_REVIEW_FACT_IDS))
         for fact_id in S44B_SAGITTARIUS_NEEDS_REVIEW:
             with self.subTest(fact_id=fact_id):
-                self.assertNotIn(fact_id, HUMAN_COPY_OVERRIDES)
+                self.assertIn(fact_id, HUMAN_COPY_OVERRIDES)
+                self.assertNotIn(fact_id, NEEDS_REVIEW_FACT_IDS)
                 self.assertNotIn(fact_id, APPROVED_RAW_FACT_IDS)
                 entry = build_catalog_entry(by_id[fact_id])
-                self.assertEqual(entry.review_status, STATUS_NEEDS_REVIEW)
-                self.assertFalse(entry.uses_override)
-                self.assertEqual(entry.human_text, entry.canonical_text)
+                self.assertEqual(entry.review_status, STATUS_APPROVED_OVERRIDE)
+                self.assertEqual(entry.canonical_text, by_id[fact_id].text)
 
-    def test_global_totals_after_s411b(self):
+    def test_global_totals_after_s412b(self):
         report = build_human_copy_catalog()
         self.assertEqual(report.total_facts, 1590)
-        self.assertEqual(report.approved_override_count, 397)
+        self.assertEqual(report.approved_override_count, 415)
         self.assertEqual(report.approved_raw_count, 338)
-        self.assertEqual(report.needs_review_count, 19)
+        self.assertEqual(report.needs_review_count, 1)
         self.assertEqual(report.unreviewed_count, 836)
         self.assertEqual(
             report.approved_override_count
@@ -455,7 +455,7 @@ class SagittariusFamilyS44BTests(unittest.TestCase):
             1590,
         )
         self.assertEqual(report.reviewed_count, 754)
-        self.assertEqual(report.presentation_ready_count, 735)
+        self.assertEqual(report.presentation_ready_count, 753)
 
 
 class TaurusFamilyS45BTests(unittest.TestCase):
@@ -594,9 +594,9 @@ class SignReviewQueueS46Tests(unittest.TestCase):
         self.assertTrue(taurus.is_review_complete)
         self.assertTrue(taurus.is_presentation_ready_complete)
         self.assertTrue(sag.is_review_complete)
-        self.assertFalse(sag.is_presentation_ready_complete)
-        self.assertEqual(sag.needs_review, 3)
-        self.assertEqual(sag.presentation_ready_count, 55)
+        self.assertTrue(sag.is_presentation_ready_complete)
+        self.assertEqual(sag.needs_review, 0)
+        self.assertEqual(sag.presentation_ready_count, 58)
         completed_keys = {entry.family_key for entry in queue.completed_families}
         self.assertIn("sign:Taurus", completed_keys)
         self.assertIn("sign:Sagittarius", completed_keys)
@@ -727,36 +727,13 @@ class SignReviewQueueS46Tests(unittest.TestCase):
             [("A", "D"), ("B", "C")],
         )
 
-    def test_needs_review_backlog_contains_policy_nineteen(self):
+    def test_needs_review_backlog_contains_moon_dependency_only(self):
         from app.services.mercury_human_copy_catalog import build_sign_review_queue
 
         queue = build_sign_review_queue()
         backlog_ids = {item.fact_id for item in queue.needs_review_backlog}
-        self.assertEqual(
-            backlog_ids,
-            {
-                "sag_bio_impartiality_disrupted",
-                "sag_bio_learnability_disrupted",
-                "sag_bio_major_exile",
-                "aquarius_bio_afflicted_source_adhd_effect_wording",
-                "aquarius_bio_source_genius_intellect_archetype",
-                "aquarius_l7_source_genius_intellect_wording",
-                "aquarius_l7_claircognizance",
-                "gemini_bio_major_domicile_sync",
-                "pisces_bio_minor_exile",
-                "pisces_bio_universal_cosmic_intellect_synthesis",
-                "pisces_bio_unusually_strong_intuition",
-                "pisces_l7_high_intuition",
-                "pisces_l7_correct_decisions_nonrational_routes",
-                "pisces_l7_mystical_thinking",
-                "aries_bio_source_sexual_motivation_wording",
-                "scorpio_bio_source_sexual_motivation",
-                "cancer_bio_depends_on_moon_sign",
-                "cancer_bio_emotional_intelligence_source_claim",
-                "virgo_bio_minor_domicile_near_sync",
-            },
-        )
-        self.assertEqual(len(queue.needs_review_backlog), 19)
+        self.assertEqual(backlog_ids, {"cancer_bio_depends_on_moon_sign"})
+        self.assertEqual(len(queue.needs_review_backlog), 1)
 
     def test_queue_does_not_mutate_registries_or_totals(self):
         from app.services.mercury_human_copy_catalog import (
@@ -776,14 +753,14 @@ class SignReviewQueueS46Tests(unittest.TestCase):
         self.assertEqual(set(APPROVED_RAW_FACT_IDS), before_raw)
         self.assertEqual(set(NEEDS_REVIEW_FACT_IDS), before_needs)
         self.assertEqual(queue.review_complete_family_count, 12)
-        self.assertEqual(queue.presentation_ready_complete_family_count, 4)
+        self.assertEqual(queue.presentation_ready_complete_family_count, 11)
         self.assertEqual(len(queue.incomplete_queue), 0)
         self.assertEqual(list(queue.suggested_batches), [])
         self.assertEqual(queue.sign_total_facts, 730)
         self.assertEqual(queue.sign_reviewed_facts, 730)
         self.assertEqual(queue.sign_unreviewed_facts, 0)
-        self.assertEqual(queue.sign_presentation_ready_facts, 711)
-        self.assertEqual(queue.sign_needs_review_facts, 19)
+        self.assertEqual(queue.sign_presentation_ready_facts, 729)
+        self.assertEqual(queue.sign_needs_review_facts, 1)
 
 
 class CapricornLeoFamilyS47BTests(unittest.TestCase):
@@ -1077,7 +1054,7 @@ class CapricornLeoFamilyS47BTests(unittest.TestCase):
         self.assertIn("deafness", by_id["leo_l7_difficulty_opinion_receptivity"].text)
         self.assertIn("fundamentality", by_id["capricorn_l7_develop_fundamentality"].text)
 
-    def test_s47b_no_registry_conflicts_and_needs_review_unchanged(self):
+    def test_s47b_no_registry_conflicts_and_moon_needs_review_only(self):
         self.assertTrue(
             set(HUMAN_COPY_OVERRIDES).isdisjoint(APPROVED_RAW_FACT_IDS)
         )
@@ -1087,14 +1064,16 @@ class CapricornLeoFamilyS47BTests(unittest.TestCase):
         self.assertTrue(
             set(APPROVED_RAW_FACT_IDS).isdisjoint(NEEDS_REVIEW_FACT_IDS)
         )
-        self.assertTrue(
-            {
-                "sag_bio_impartiality_disrupted",
-                "sag_bio_learnability_disrupted",
-                "sag_bio_major_exile",
-            }.issubset(NEEDS_REVIEW_FACT_IDS)
-        )
-        self.assertEqual(len(NEEDS_REVIEW_FACT_IDS), 19)
+        # S4.12B: former Sagittarius policy IDs are overrides; only Moon remains.
+        for fact_id in (
+            "sag_bio_impartiality_disrupted",
+            "sag_bio_learnability_disrupted",
+            "sag_bio_major_exile",
+        ):
+            self.assertIn(fact_id, HUMAN_COPY_OVERRIDES)
+            self.assertNotIn(fact_id, NEEDS_REVIEW_FACT_IDS)
+        self.assertEqual(NEEDS_REVIEW_FACT_IDS, frozenset({"cancer_bio_depends_on_moon_sign"}))
+        self.assertEqual(len(NEEDS_REVIEW_FACT_IDS), 1)
         # Capricorn common-sense approval is ID-local; Taurus twin stays raw.
         self.assertIn("capricorn_l7_common_sense_reliance", APPROVED_RAW_FACT_IDS)
         self.assertIn("taurus_relies_on_common_sense", APPROVED_RAW_FACT_IDS)
@@ -1321,27 +1300,27 @@ class AquariusGeminiFamilyS48BTests(unittest.TestCase):
         report = build_human_copy_catalog()
         family = next(f for f in report.families if f.family_key == "sign:Aquarius")
         self.assertEqual(family.total_facts, 72)
-        self.assertEqual(family.approved_override, 33)
+        self.assertEqual(family.approved_override, 37)
         self.assertEqual(family.approved_raw, 35)
-        self.assertEqual(family.needs_review, 4)
+        self.assertEqual(family.needs_review, 0)
         self.assertEqual(family.unreviewed, 0)
         self.assertEqual(family.reviewed_count, 72)
-        self.assertEqual(family.presentation_ready_count, 68)
+        self.assertEqual(family.presentation_ready_count, 72)
         self.assertEqual(family.review_coverage, 1.0)
-        self.assertEqual(family.presentation_ready_coverage, round(68 / 72, 6))
+        self.assertEqual(family.presentation_ready_coverage, 1.0)
 
     def test_gemini_family_fully_reviewed(self):
         report = build_human_copy_catalog()
         family = next(f for f in report.families if f.family_key == "sign:Gemini")
         self.assertEqual(family.total_facts, 50)
-        self.assertEqual(family.approved_override, 20)
+        self.assertEqual(family.approved_override, 21)
         self.assertEqual(family.approved_raw, 29)
-        self.assertEqual(family.needs_review, 1)
+        self.assertEqual(family.needs_review, 0)
         self.assertEqual(family.unreviewed, 0)
         self.assertEqual(family.reviewed_count, 50)
-        self.assertEqual(family.presentation_ready_count, 49)
+        self.assertEqual(family.presentation_ready_count, 50)
         self.assertEqual(family.review_coverage, 1.0)
-        self.assertEqual(family.presentation_ready_coverage, 0.98)
+        self.assertEqual(family.presentation_ready_coverage, 1.0)
 
     def test_s48b_registries_and_wording_corrections(self):
         by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
@@ -1377,13 +1356,14 @@ class AquariusGeminiFamilyS48BTests(unittest.TestCase):
             *self.S48B_AQUARIUS_NEEDS_REVIEW,
             "gemini_bio_major_domicile_sync",
         ):
-            with self.subTest(needs=fact_id):
-                self.assertIn(fact_id, NEEDS_REVIEW_FACT_IDS)
-                self.assertNotIn(fact_id, HUMAN_COPY_OVERRIDES)
+            with self.subTest(policy_resolved=fact_id):
+                # S4.12B: former needs_review IDs resolved via overrides.
+                self.assertIn(fact_id, HUMAN_COPY_OVERRIDES)
+                self.assertNotIn(fact_id, NEEDS_REVIEW_FACT_IDS)
                 self.assertNotIn(fact_id, APPROVED_RAW_FACT_IDS)
                 entry = build_catalog_entry(by_id[fact_id])
-                self.assertEqual(entry.review_status, STATUS_NEEDS_REVIEW)
-                self.assertEqual(entry.human_text, entry.canonical_text)
+                self.assertEqual(entry.review_status, STATUS_APPROVED_OVERRIDE)
+                self.assertEqual(entry.canonical_text, by_id[fact_id].text)
         # Spot-check approved wording corrections vs unchanged canonical.
         self.assertEqual(
             HUMAN_COPY_OVERRIDES["aquarius_bio_afflicted_anomalous_rhythms"],
@@ -1425,7 +1405,7 @@ class AquariusGeminiFamilyS48BTests(unittest.TestCase):
         self.assertTrue(
             set(APPROVED_RAW_FACT_IDS).isdisjoint(NEEDS_REVIEW_FACT_IDS)
         )
-        self.assertEqual(len(NEEDS_REVIEW_FACT_IDS), 19)
+        self.assertEqual(len(NEEDS_REVIEW_FACT_IDS), 1)
 
 
 class PiscesAriesFamilyS49BTests(unittest.TestCase):
@@ -1672,27 +1652,27 @@ class PiscesAriesFamilyS49BTests(unittest.TestCase):
         report = build_human_copy_catalog()
         family = next(f for f in report.families if f.family_key == "sign:Pisces")
         self.assertEqual(family.total_facts, 71)
-        self.assertEqual(family.approved_override, 36)
+        self.assertEqual(family.approved_override, 42)
         self.assertEqual(family.approved_raw, 29)
-        self.assertEqual(family.needs_review, 6)
+        self.assertEqual(family.needs_review, 0)
         self.assertEqual(family.unreviewed, 0)
         self.assertEqual(family.reviewed_count, 71)
-        self.assertEqual(family.presentation_ready_count, 65)
+        self.assertEqual(family.presentation_ready_count, 71)
         self.assertEqual(family.review_coverage, 1.0)
-        self.assertEqual(family.presentation_ready_coverage, round(65 / 71, 6))
+        self.assertEqual(family.presentation_ready_coverage, 1.0)
 
     def test_aries_family_fully_reviewed(self):
         report = build_human_copy_catalog()
         family = next(f for f in report.families if f.family_key == "sign:Aries")
         self.assertEqual(family.total_facts, 51)
-        self.assertEqual(family.approved_override, 24)
+        self.assertEqual(family.approved_override, 25)
         self.assertEqual(family.approved_raw, 26)
-        self.assertEqual(family.needs_review, 1)
+        self.assertEqual(family.needs_review, 0)
         self.assertEqual(family.unreviewed, 0)
         self.assertEqual(family.reviewed_count, 51)
-        self.assertEqual(family.presentation_ready_count, 50)
+        self.assertEqual(family.presentation_ready_count, 51)
         self.assertEqual(family.review_coverage, 1.0)
-        self.assertEqual(family.presentation_ready_coverage, round(50 / 51, 6))
+        self.assertEqual(family.presentation_ready_coverage, 1.0)
 
     def test_s49b_registries_and_wording_corrections(self):
         by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
@@ -1728,13 +1708,13 @@ class PiscesAriesFamilyS49BTests(unittest.TestCase):
             *self.S49B_PISCES_NEEDS_REVIEW,
             "aries_bio_source_sexual_motivation_wording",
         ):
-            with self.subTest(needs=fact_id):
-                self.assertIn(fact_id, NEEDS_REVIEW_FACT_IDS)
-                self.assertNotIn(fact_id, HUMAN_COPY_OVERRIDES)
+            with self.subTest(policy_resolved=fact_id):
+                self.assertIn(fact_id, HUMAN_COPY_OVERRIDES)
+                self.assertNotIn(fact_id, NEEDS_REVIEW_FACT_IDS)
                 self.assertNotIn(fact_id, APPROVED_RAW_FACT_IDS)
                 entry = build_catalog_entry(by_id[fact_id])
-                self.assertEqual(entry.review_status, STATUS_NEEDS_REVIEW)
-                self.assertEqual(entry.human_text, entry.canonical_text)
+                self.assertEqual(entry.review_status, STATUS_APPROVED_OVERRIDE)
+                self.assertEqual(entry.canonical_text, by_id[fact_id].text)
         # Limited wording corrections exact; canonical unchanged.
         self.assertEqual(
             HUMAN_COPY_OVERRIDES["pisces_bio_afflicted_crumpled_speech"],
@@ -1788,11 +1768,11 @@ class PiscesAriesFamilyS49BTests(unittest.TestCase):
             HUMAN_COPY_OVERRIDES["aries_l7_risk_not_hearing_other_viewpoint"],
             "May have difficulty hearing another point of view while learning.",
         )
-        self.assertNotIn(
+        self.assertIn(
             "aries_bio_source_sexual_motivation_wording",
             HUMAN_COPY_OVERRIDES,
         )
-        self.assertEqual(len(NEEDS_REVIEW_FACT_IDS), 19)
+        self.assertEqual(len(NEEDS_REVIEW_FACT_IDS), 1)
         self.assertTrue(
             set(HUMAN_COPY_OVERRIDES).isdisjoint(APPROVED_RAW_FACT_IDS)
         )
@@ -2059,18 +2039,18 @@ class ScorpioLibraFamilyS410BTests(unittest.TestCase):
         report = build_human_copy_catalog()
         family = next(f for f in report.families if f.family_key == "sign:Scorpio")
         self.assertEqual(family.total_facts, 66)
-        self.assertEqual(family.approved_override, 39)
+        self.assertEqual(family.approved_override, 40)
         self.assertEqual(family.approved_raw, 26)
-        self.assertEqual(family.needs_review, 1)
+        self.assertEqual(family.needs_review, 0)
         self.assertEqual(family.unreviewed, 0)
         self.assertEqual(
             family.approved_raw + family.approved_override + family.needs_review,
             66,
         )
         self.assertEqual(family.reviewed_count, 66)
-        self.assertEqual(family.presentation_ready_count, 65)
+        self.assertEqual(family.presentation_ready_count, 66)
         self.assertEqual(family.review_coverage, 1.0)
-        self.assertEqual(family.presentation_ready_coverage, round(65 / 66, 6))
+        self.assertEqual(family.presentation_ready_coverage, 1.0)
         entry = build_catalog_entry(
             next(f for f in ALL_SOURCE_FACTS if f.id == "scorpio_l7_categorical_thinking")
         )
@@ -2120,8 +2100,8 @@ class ScorpioLibraFamilyS410BTests(unittest.TestCase):
                 self.assertEqual(entry.review_status, STATUS_APPROVED_OVERRIDE)
                 self.assertEqual(entry.canonical_text, by_id[fact_id].text)
                 self.assertNotEqual(entry.canonical_text, human)
-        self.assertIn("scorpio_bio_source_sexual_motivation", NEEDS_REVIEW_FACT_IDS)
-        self.assertNotIn("scorpio_bio_source_sexual_motivation", HUMAN_COPY_OVERRIDES)
+        self.assertIn("scorpio_bio_source_sexual_motivation", HUMAN_COPY_OVERRIDES)
+        self.assertNotIn("scorpio_bio_source_sexual_motivation", NEEDS_REVIEW_FACT_IDS)
         self.assertEqual(
             HUMAN_COPY_OVERRIDES["scorpio_bio_psychological_penetration"],
             "May probe psychological material deeply.",
@@ -2161,7 +2141,7 @@ class ScorpioLibraFamilyS410BTests(unittest.TestCase):
             "psychological penetration",
             by_id["scorpio_bio_psychological_penetration"].text.lower(),
         )
-        self.assertEqual(len(NEEDS_REVIEW_FACT_IDS), 19)
+        self.assertEqual(len(NEEDS_REVIEW_FACT_IDS), 1)
         self.assertTrue(
             set(HUMAN_COPY_OVERRIDES).isdisjoint(APPROVED_RAW_FACT_IDS)
         )
@@ -2441,47 +2421,48 @@ class CancerVirgoFamilyS411BTests(unittest.TestCase):
         report = build_human_copy_catalog()
         family = next(f for f in report.families if f.family_key == "sign:Cancer")
         self.assertEqual(family.total_facts, 74)
-        self.assertEqual(family.approved_override, 40)
+        self.assertEqual(family.approved_override, 41)
         self.assertEqual(family.approved_raw, 32)
-        self.assertEqual(family.needs_review, 2)
+        self.assertEqual(family.needs_review, 1)
         self.assertEqual(family.unreviewed, 0)
         self.assertEqual(family.reviewed_count, 74)
-        self.assertEqual(family.presentation_ready_count, 72)
+        self.assertEqual(family.presentation_ready_count, 73)
         self.assertEqual(family.review_coverage, 1.0)
-        self.assertEqual(family.presentation_ready_coverage, round(72 / 74, 6))
+        self.assertEqual(family.presentation_ready_coverage, round(73 / 74, 6))
 
     def test_virgo_family_fully_reviewed(self):
         report = build_human_copy_catalog()
         family = next(f for f in report.families if f.family_key == "sign:Virgo")
         self.assertEqual(family.total_facts, 60)
-        self.assertEqual(family.approved_override, 41)
+        self.assertEqual(family.approved_override, 42)
         self.assertEqual(family.approved_raw, 18)
-        self.assertEqual(family.needs_review, 1)
+        self.assertEqual(family.needs_review, 0)
         self.assertEqual(family.unreviewed, 0)
         self.assertEqual(family.reviewed_count, 60)
-        self.assertEqual(family.presentation_ready_count, 59)
+        self.assertEqual(family.presentation_ready_count, 60)
         self.assertEqual(family.review_coverage, 1.0)
-        self.assertEqual(family.presentation_ready_coverage, round(59 / 60, 6))
+        self.assertEqual(family.presentation_ready_coverage, 1.0)
 
     def test_sign_layer_complete_after_s411b(self):
         from app.services.mercury_human_copy_catalog import build_sign_review_queue
 
         queue = build_sign_review_queue()
         self.assertEqual(queue.review_complete_family_count, 12)
-        self.assertEqual(queue.presentation_ready_complete_family_count, 4)
+        self.assertEqual(queue.presentation_ready_complete_family_count, 11)
         self.assertEqual(list(queue.incomplete_queue), [])
         self.assertEqual(list(queue.suggested_batches), [])
         self.assertEqual(queue.sign_total_facts, 730)
         self.assertEqual(queue.sign_reviewed_facts, 730)
         self.assertEqual(queue.sign_unreviewed_facts, 0)
-        self.assertEqual(queue.sign_presentation_ready_facts, 711)
-        self.assertEqual(queue.sign_needs_review_facts, 19)
+        self.assertEqual(queue.sign_presentation_ready_facts, 729)
+        self.assertEqual(queue.sign_needs_review_facts, 1)
         ready_complete = {
             e.sign_name
             for e in queue.all_sign_families
             if e.is_presentation_ready_complete
         }
-        self.assertEqual(ready_complete, {"Taurus", "Capricorn", "Leo", "Libra"})
+        self.assertEqual(len(ready_complete), 11)
+        self.assertNotIn("Cancer", ready_complete)
 
     def test_s411b_registries_and_wording_corrections(self):
         by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
@@ -2518,17 +2499,22 @@ class CancerVirgoFamilyS411BTests(unittest.TestCase):
                 self.assertIn(fact_id, HUMAN_COPY_OVERRIDES)
                 self.assertNotIn(fact_id, APPROVED_RAW_FACT_IDS)
                 self.assertNotIn(fact_id, NEEDS_REVIEW_FACT_IDS)
-        for fact_id in (
-            *self.S411B_CANCER_NEEDS_REVIEW,
-            "virgo_bio_minor_domicile_near_sync",
-        ):
-            with self.subTest(needs=fact_id):
-                self.assertIn(fact_id, NEEDS_REVIEW_FACT_IDS)
-                self.assertNotIn(fact_id, HUMAN_COPY_OVERRIDES)
-                self.assertNotIn(fact_id, APPROVED_RAW_FACT_IDS)
-                entry = build_catalog_entry(by_id[fact_id])
-                self.assertEqual(entry.review_status, STATUS_NEEDS_REVIEW)
-                self.assertEqual(entry.human_text, entry.canonical_text)
+        # S4.12B: EI + Virgo domicile resolved; only Moon dependency remains.
+        self.assertIn(
+            "cancer_bio_emotional_intelligence_source_claim",
+            HUMAN_COPY_OVERRIDES,
+        )
+        self.assertNotIn(
+            "cancer_bio_emotional_intelligence_source_claim",
+            NEEDS_REVIEW_FACT_IDS,
+        )
+        self.assertIn("virgo_bio_minor_domicile_near_sync", HUMAN_COPY_OVERRIDES)
+        self.assertNotIn("virgo_bio_minor_domicile_near_sync", NEEDS_REVIEW_FACT_IDS)
+        self.assertIn("cancer_bio_depends_on_moon_sign", NEEDS_REVIEW_FACT_IDS)
+        self.assertNotIn("cancer_bio_depends_on_moon_sign", HUMAN_COPY_OVERRIDES)
+        moon = build_catalog_entry(by_id["cancer_bio_depends_on_moon_sign"])
+        self.assertEqual(moon.review_status, STATUS_NEEDS_REVIEW)
+        self.assertEqual(moon.human_text, moon.canonical_text)
         self.assertEqual(
             HUMAN_COPY_OVERRIDES["cancer_bio_depth_substantive_nature"],
             "May show depth and substance.",
@@ -2584,8 +2570,8 @@ class CancerVirgoFamilyS411BTests(unittest.TestCase):
             self.assertIn(sticky_id, APPROVED_RAW_FACT_IDS)
             self.assertNotIn(sticky_id, HUMAN_COPY_OVERRIDES)
         self.assertIn("Gemini", by_id["virgo_bio_less_accumulation_for_its_own_sake"].text)
-        self.assertEqual(len(NEEDS_REVIEW_FACT_IDS), 19)
-        self.assertEqual(len(HUMAN_COPY_OVERRIDES), 397)
+        self.assertEqual(len(NEEDS_REVIEW_FACT_IDS), 1)
+        self.assertEqual(len(HUMAN_COPY_OVERRIDES), 415)
         self.assertEqual(len(APPROVED_RAW_FACT_IDS), 338)
         self.assertTrue(
             set(HUMAN_COPY_OVERRIDES).isdisjoint(APPROVED_RAW_FACT_IDS)
@@ -2596,6 +2582,229 @@ class CancerVirgoFamilyS411BTests(unittest.TestCase):
         self.assertTrue(
             set(APPROVED_RAW_FACT_IDS).isdisjoint(NEEDS_REVIEW_FACT_IDS)
         )
+
+
+class CrossFamilyPolicyS412BTests(unittest.TestCase):
+    """S4.12B: resolve 18 policy facts via overrides; keep Moon needs_review.
+
+    presentation_ready means human copy passed review — not that a fact is
+    eligible for every primary recruiter section. Section routing is separate.
+    """
+
+    PLACEMENT: dict[str, str] = {
+        "sag_bio_major_exile": (
+            "Within the source framework, this placement is described as a "
+            "major exile."
+        ),
+        "sag_bio_impartiality_disrupted": (
+            "Within the source framework, Mercury's impartiality is described "
+            "as disrupted."
+        ),
+        "sag_bio_learnability_disrupted": (
+            "Within the source framework, Mercury's learnability is described "
+            "as disrupted."
+        ),
+        "gemini_bio_major_domicile_sync": (
+            "Within the source framework, Mercury and Gemini are described as "
+            "strongly synchronized (major domicile)."
+        ),
+        "pisces_bio_minor_exile": (
+            "Within the source framework, this placement is described as a "
+            "minor exile."
+        ),
+        "virgo_bio_minor_domicile_near_sync": (
+            "Within the source framework, Mercury and Virgo are described as "
+            "near-synchronized (minor domicile)."
+        ),
+    }
+    MEDICAL: dict[str, str] = {
+        "aquarius_bio_afflicted_source_adhd_effect_wording": (
+            'Under affliction, the source explicitly uses an "ADHD effect" '
+            "comparison; this is source terminology, not a medical diagnosis."
+        ),
+    }
+    GENIUS_RANK: dict[str, str] = {
+        "aquarius_bio_source_genius_intellect_archetype": (
+            'The source archetypically describes this placement using '
+            'exceptionally "genius"-like intellect language; this is not an '
+            "IQ score, rank, or hiring conclusion."
+        ),
+        "aquarius_l7_source_genius_intellect_wording": (
+            'The source uses strongest-intellect or "genius" wording for this '
+            "placement; this is not an IQ score, rank, or hiring conclusion."
+        ),
+        "pisces_bio_universal_cosmic_intellect_synthesis": (
+            "The source describes a universal or cosmic intellect that "
+            "synthesizes knowledge across fields; this is a source claim, not "
+            "a validated ability or rank."
+        ),
+    }
+    PSYCHOMETRIC: dict[str, str] = {
+        "cancer_bio_emotional_intelligence_source_claim": (
+            "The source describes emotional-intelligence potential; this is "
+            "not a measured or certified professional ability."
+        ),
+    }
+    METAPHYSICAL: dict[str, str] = {
+        "aquarius_l7_claircognizance": (
+            'The source uses the term "claircognizance" or sudden knowing; '
+            "this is not a scientifically validated ability."
+        ),
+        "pisces_bio_unusually_strong_intuition": (
+            "The source claims unusually strong intuition; this is not a "
+            "scientifically established ability."
+        ),
+        "pisces_l7_high_intuition": (
+            "The source describes high intuition; this is not a scientifically "
+            "established ability."
+        ),
+        "pisces_l7_correct_decisions_nonrational_routes": (
+            "The source says correct decisions may sometimes emerge through "
+            "unclear or non-rational routes; this is a source claim, not a "
+            "validated decision-making ability."
+        ),
+        "pisces_l7_mystical_thinking": (
+            "The source describes mystical thinking and a search for hidden "
+            "meaning."
+        ),
+    }
+    SEXUAL: dict[str, str] = {
+        "aries_bio_source_sexual_motivation_wording": (
+            "One learning-drive theme in the source framework is sexual or "
+            "intimate motivation; this is not a professional or hiring "
+            "recommendation."
+        ),
+        "scorpio_bio_source_sexual_motivation": (
+            "One learning-drive theme in the source framework is sexual or "
+            "intimate motivation; this is not a professional or hiring "
+            "recommendation."
+        ),
+    }
+    CONDITIONAL = "cancer_bio_depends_on_moon_sign"
+
+    def test_eighteen_policy_overrides_and_moon_kept(self):
+        by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
+        all_resolved = {
+            **self.PLACEMENT,
+            **self.MEDICAL,
+            **self.GENIUS_RANK,
+            **self.PSYCHOMETRIC,
+            **self.METAPHYSICAL,
+            **self.SEXUAL,
+        }
+        self.assertEqual(len(all_resolved), 18)
+        self.assertEqual(len(self.PLACEMENT), 6)
+        self.assertEqual(len(self.MEDICAL), 1)
+        self.assertEqual(len(self.GENIUS_RANK), 3)
+        self.assertEqual(len(self.PSYCHOMETRIC), 1)
+        self.assertEqual(len(self.METAPHYSICAL), 5)
+        self.assertEqual(len(self.SEXUAL), 2)
+        for fact_id, human in all_resolved.items():
+            with self.subTest(override=fact_id):
+                self.assertEqual(HUMAN_COPY_OVERRIDES[fact_id], human)
+                self.assertNotIn(fact_id, NEEDS_REVIEW_FACT_IDS)
+                self.assertNotIn(fact_id, APPROVED_RAW_FACT_IDS)
+                entry = build_catalog_entry(by_id[fact_id])
+                self.assertEqual(entry.review_status, STATUS_APPROVED_OVERRIDE)
+                self.assertEqual(entry.canonical_text, by_id[fact_id].text)
+                self.assertNotEqual(entry.canonical_text, human)
+        self.assertEqual(
+            NEEDS_REVIEW_FACT_IDS, frozenset({self.CONDITIONAL})
+        )
+        self.assertNotIn(self.CONDITIONAL, HUMAN_COPY_OVERRIDES)
+        moon = build_catalog_entry(by_id[self.CONDITIONAL])
+        self.assertEqual(moon.review_status, STATUS_NEEDS_REVIEW)
+        self.assertFalse(moon.uses_override)
+        self.assertEqual(moon.human_text, moon.canonical_text)
+
+    def test_policy_class_wording_guards(self):
+        medical = HUMAN_COPY_OVERRIDES[
+            "aquarius_bio_afflicted_source_adhd_effect_wording"
+        ]
+        self.assertIn("ADHD effect", medical)
+        self.assertIn("not a medical diagnosis", medical.lower())
+        for fact_id, human in self.GENIUS_RANK.items():
+            with self.subTest(genius=fact_id):
+                self.assertIn("source", human.lower())
+                self.assertNotRegex(human.lower(), r"^genius\b")
+                self.assertTrue(
+                    ("iq" in human.lower())
+                    or ("rank" in human.lower())
+                    or ("validated ability" in human.lower())
+                )
+        ei = HUMAN_COPY_OVERRIDES["cancer_bio_emotional_intelligence_source_claim"]
+        self.assertIn("emotional-intelligence", ei)
+        self.assertIn("not a measured", ei.lower())
+        self.assertNotIn("empathy", ei.lower())
+        self.assertNotIn("attunement", ei.lower())
+        clair = HUMAN_COPY_OVERRIDES["aquarius_l7_claircognizance"]
+        self.assertIn("claircognizance", clair.lower())
+        self.assertNotIn("insight only", clair.lower())
+        self.assertIn("not a scientifically validated", clair.lower())
+        strong = HUMAN_COPY_OVERRIDES["pisces_bio_unusually_strong_intuition"]
+        high = HUMAN_COPY_OVERRIDES["pisces_l7_high_intuition"]
+        self.assertIn("unusually strong", strong.lower())
+        self.assertIn("high intuition", high.lower())
+        self.assertNotEqual(strong, high)
+        mystical = HUMAN_COPY_OVERRIDES["pisces_l7_mystical_thinking"]
+        nonrat = HUMAN_COPY_OVERRIDES[
+            "pisces_l7_correct_decisions_nonrational_routes"
+        ]
+        self.assertIn("mystical", mystical.lower())
+        self.assertIn("non-rational", nonrat.lower())
+        self.assertNotEqual(mystical, nonrat)
+        aries = HUMAN_COPY_OVERRIDES["aries_bio_source_sexual_motivation_wording"]
+        scorpio = HUMAN_COPY_OVERRIDES["scorpio_bio_source_sexual_motivation"]
+        self.assertEqual(aries, scorpio)
+        self.assertIn("not a professional or hiring", aries.lower())
+
+    def test_sign_and_global_totals_after_s412b(self):
+        from app.services.mercury_human_copy_catalog import build_sign_review_queue
+
+        report = build_human_copy_catalog()
+        self.assertEqual(report.approved_override_count, 415)
+        self.assertEqual(report.approved_raw_count, 338)
+        self.assertEqual(report.needs_review_count, 1)
+        self.assertEqual(report.unreviewed_count, 836)
+        self.assertEqual(report.reviewed_count, 754)
+        self.assertEqual(report.presentation_ready_count, 753)
+        queue = build_sign_review_queue(report)
+        self.assertEqual(queue.sign_reviewed_facts, 730)
+        self.assertEqual(queue.sign_presentation_ready_facts, 729)
+        self.assertEqual(queue.sign_needs_review_facts, 1)
+        self.assertEqual(queue.sign_unreviewed_facts, 0)
+        self.assertEqual(queue.review_complete_family_count, 12)
+        self.assertEqual(queue.presentation_ready_complete_family_count, 11)
+        cancer = next(f for f in report.families if f.family_key == "sign:Cancer")
+        self.assertEqual(cancer.presentation_ready_count, 73)
+        self.assertEqual(cancer.needs_review, 1)
+        self.assertTrue(
+            set(HUMAN_COPY_OVERRIDES).isdisjoint(APPROVED_RAW_FACT_IDS)
+        )
+        self.assertTrue(
+            set(HUMAN_COPY_OVERRIDES).isdisjoint(NEEDS_REVIEW_FACT_IDS)
+        )
+        self.assertTrue(
+            set(APPROVED_RAW_FACT_IDS).isdisjoint(NEEDS_REVIEW_FACT_IDS)
+        )
+
+    def test_policy_facts_remain_detail_only_categories(self):
+        # Read-only routing invariant: all 18 resolved policy facts are
+        # source_specific → synthesis DETAIL_ONLY (not primary sections).
+        from app.services.mercury_profile_synthesis import DETAIL_ONLY_CATEGORIES
+
+        by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
+        for fact_id in (
+            *self.PLACEMENT,
+            *self.MEDICAL,
+            *self.GENIUS_RANK,
+            *self.PSYCHOMETRIC,
+            *self.METAPHYSICAL,
+            *self.SEXUAL,
+        ):
+            with self.subTest(fact_id=fact_id):
+                self.assertEqual(by_id[fact_id].category, "source_specific")
+                self.assertIn(by_id[fact_id].category, DETAIL_ONLY_CATEGORIES)
 
 
 class RuntimeRegressionTests(unittest.TestCase):

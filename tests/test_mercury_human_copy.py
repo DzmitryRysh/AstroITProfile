@@ -100,8 +100,8 @@ class HumanCopyModuleTests(unittest.TestCase):
         self.assertNotIn("unmapped_x", result)
 
     def test_pilot_override_count(self):
-        # S4.0–S4.10B (325) + S4.11B Cancer (31) + Virgo (41).
-        self.assertEqual(len(HUMAN_COPY_OVERRIDES), 397)
+        # S4.0–S4.11B (397) + S4.12B policy overrides (18).
+        self.assertEqual(len(HUMAN_COPY_OVERRIDES), 415)
 
     def test_s42_override_ids_exist_and_raw_text_unchanged(self):
         by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
@@ -553,7 +553,13 @@ class HumanCopyModuleTests(unittest.TestCase):
             "Tendency to attach labels.",
         )
         self.assertNotIn("sag_tendency_to_attach_labels", HUMAN_COPY_OVERRIDES)
-        self.assertNotIn("sag_bio_major_exile", HUMAN_COPY_OVERRIDES)
+        # S4.12B: framework status resolved via explicit override.
+        self.assertEqual(
+            HUMAN_COPY_OVERRIDES["sag_bio_major_exile"],
+            "Within the source framework, this placement is described as a "
+            "major exile.",
+        )
+        self.assertIn("major exile", by_id["sag_bio_major_exile"].text.lower())
 
     def test_s45b_taurus_overrides_and_raw_invariant(self):
         by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
