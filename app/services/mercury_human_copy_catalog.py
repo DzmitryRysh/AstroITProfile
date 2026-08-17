@@ -34,7 +34,7 @@ ALL_REVIEW_STATUSES: tuple[str, ...] = (
 )
 
 # Explicit presentation decisions only (not overrides — those live in
-# HUMAN_COPY_OVERRIDES). S4.3 seed + S4.4B–S4.5B + S4.7B–S4.11B.
+# HUMAN_COPY_OVERRIDES). S4.3 seed + S4.4B–S4.5B + S4.7B–S4.11B + S4.14B.
 APPROVED_RAW_FACT_IDS: frozenset[str] = frozenset(
     {
         # S4.3 seed
@@ -388,6 +388,15 @@ APPROVED_RAW_FACT_IDS: frozenset[str] = frozenset(
         "virgo_l7_strongest_logic_after_preparation",
         "virgo_l7_tendency_to_clarify_details",
         "virgo_l7_weaker_strategic_overview",
+        # S4.14B motion:retrograde approved_raw
+        "rx_nonstandard_solutions",
+        "rx_processing_takes_longer",
+        "rx_repeated_internal_processing",
+        "rx_revisit_previously_learned",
+        "rx_tendency_to_relearn",
+        "rx_tendency_to_rewrite",
+        "rx_unexpected_conclusions",
+        "rx_written_easier_than_spontaneous",
     }
 )
 

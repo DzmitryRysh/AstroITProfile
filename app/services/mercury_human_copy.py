@@ -1214,6 +1214,13 @@ HUMAN_COPY_OVERRIDES: dict[str, str] = {
         "intimate motivation; this is not a professional or hiring "
         "recommendation."
     ),
+    # --- S4.14B motion:retrograde family review (2) ---
+    "rx_communication_learning_unusual": (
+        "Communication and learning may operate in unusual ways."
+    ),
+    "rx_works_more_inwardly": (
+        "Thinking, communication, and learning may operate more inwardly."
+    ),
 }
 
 

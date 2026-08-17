@@ -345,7 +345,7 @@ class SeedApprovedRawTests(unittest.TestCase):
         by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
         self.assertTrue(set(SEED_APPROVED_RAW_EXPECTED).issubset(APPROVED_RAW_FACT_IDS))
         self.assertEqual(len(SEED_APPROVED_RAW_EXPECTED), 15)
-        self.assertEqual(len(APPROVED_RAW_FACT_IDS), 338)
+        self.assertEqual(len(APPROVED_RAW_FACT_IDS), 346)
         for fact_id, expected_text in SEED_APPROVED_RAW_EXPECTED.items():
             with self.subTest(fact_id=fact_id):
                 self.assertEqual(by_id[fact_id].text, expected_text)
@@ -440,13 +440,13 @@ class SagittariusFamilyS44BTests(unittest.TestCase):
                 self.assertEqual(entry.review_status, STATUS_APPROVED_OVERRIDE)
                 self.assertEqual(entry.canonical_text, by_id[fact_id].text)
 
-    def test_global_totals_after_s412b(self):
+    def test_global_totals_after_s414b(self):
         report = build_human_copy_catalog()
         self.assertEqual(report.total_facts, 1590)
-        self.assertEqual(report.approved_override_count, 415)
-        self.assertEqual(report.approved_raw_count, 338)
+        self.assertEqual(report.approved_override_count, 417)
+        self.assertEqual(report.approved_raw_count, 346)
         self.assertEqual(report.needs_review_count, 1)
-        self.assertEqual(report.unreviewed_count, 836)
+        self.assertEqual(report.unreviewed_count, 826)
         self.assertEqual(
             report.approved_override_count
             + report.approved_raw_count
@@ -454,8 +454,8 @@ class SagittariusFamilyS44BTests(unittest.TestCase):
             + report.unreviewed_count,
             1590,
         )
-        self.assertEqual(report.reviewed_count, 754)
-        self.assertEqual(report.presentation_ready_count, 753)
+        self.assertEqual(report.reviewed_count, 764)
+        self.assertEqual(report.presentation_ready_count, 763)
 
 
 class TaurusFamilyS45BTests(unittest.TestCase):
@@ -2571,8 +2571,8 @@ class CancerVirgoFamilyS411BTests(unittest.TestCase):
             self.assertNotIn(sticky_id, HUMAN_COPY_OVERRIDES)
         self.assertIn("Gemini", by_id["virgo_bio_less_accumulation_for_its_own_sake"].text)
         self.assertEqual(len(NEEDS_REVIEW_FACT_IDS), 1)
-        self.assertEqual(len(HUMAN_COPY_OVERRIDES), 415)
-        self.assertEqual(len(APPROVED_RAW_FACT_IDS), 338)
+        self.assertEqual(len(HUMAN_COPY_OVERRIDES), 417)
+        self.assertEqual(len(APPROVED_RAW_FACT_IDS), 346)
         self.assertTrue(
             set(HUMAN_COPY_OVERRIDES).isdisjoint(APPROVED_RAW_FACT_IDS)
         )
@@ -2762,12 +2762,13 @@ class CrossFamilyPolicyS412BTests(unittest.TestCase):
         from app.services.mercury_human_copy_catalog import build_sign_review_queue
 
         report = build_human_copy_catalog()
-        self.assertEqual(report.approved_override_count, 415)
-        self.assertEqual(report.approved_raw_count, 338)
+        # Global totals include later S4.14B motion layer.
+        self.assertEqual(report.approved_override_count, 417)
+        self.assertEqual(report.approved_raw_count, 346)
         self.assertEqual(report.needs_review_count, 1)
-        self.assertEqual(report.unreviewed_count, 836)
-        self.assertEqual(report.reviewed_count, 754)
-        self.assertEqual(report.presentation_ready_count, 753)
+        self.assertEqual(report.unreviewed_count, 826)
+        self.assertEqual(report.reviewed_count, 764)
+        self.assertEqual(report.presentation_ready_count, 763)
         queue = build_sign_review_queue(report)
         self.assertEqual(queue.sign_reviewed_facts, 730)
         self.assertEqual(queue.sign_presentation_ready_facts, 729)
@@ -2805,6 +2806,120 @@ class CrossFamilyPolicyS412BTests(unittest.TestCase):
             with self.subTest(fact_id=fact_id):
                 self.assertEqual(by_id[fact_id].category, "source_specific")
                 self.assertIn(by_id[fact_id].category, DETAIL_ONLY_CATEGORIES)
+
+
+class MotionRetrogradeS414BTests(unittest.TestCase):
+    """S4.14B: complete motion:retrograde human-copy layer (10 facts)."""
+
+    S414B_APPROVED_RAW: tuple[str, ...] = (
+        "rx_nonstandard_solutions",
+        "rx_processing_takes_longer",
+        "rx_repeated_internal_processing",
+        "rx_revisit_previously_learned",
+        "rx_tendency_to_relearn",
+        "rx_tendency_to_rewrite",
+        "rx_unexpected_conclusions",
+        "rx_written_easier_than_spontaneous",
+    )
+    S414B_OVERRIDES: dict[str, str] = {
+        "rx_communication_learning_unusual": (
+            "Communication and learning may operate in unusual ways."
+        ),
+        "rx_works_more_inwardly": (
+            "Thinking, communication, and learning may operate more inwardly."
+        ),
+    }
+
+    def test_motion_retrograde_fully_reviewed(self):
+        report = build_human_copy_catalog()
+        family = next(
+            f for f in report.families if f.family_key == "motion:retrograde"
+        )
+        self.assertEqual(family.total_facts, 10)
+        self.assertEqual(family.approved_override, 2)
+        self.assertEqual(family.approved_raw, 8)
+        self.assertEqual(family.needs_review, 0)
+        self.assertEqual(family.unreviewed, 0)
+        self.assertEqual(family.reviewed_count, 10)
+        self.assertEqual(family.presentation_ready_count, 10)
+        self.assertEqual(family.review_coverage, 1.0)
+        self.assertEqual(family.presentation_ready_coverage, 1.0)
+        motion_fams = [f for f in report.families if f.factor_type == "motion"]
+        self.assertEqual(len(motion_fams), 1)
+        self.assertFalse(
+            any(f.family_key == "motion:direct" for f in report.families)
+        )
+
+    def test_s414b_registries_and_wording(self):
+        by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
+        self.assertEqual(len(self.S414B_APPROVED_RAW), 8)
+        self.assertEqual(len(self.S414B_OVERRIDES), 2)
+        classified = set(self.S414B_APPROVED_RAW) | set(self.S414B_OVERRIDES)
+        motion_ids = {
+            f.id for f in ALL_SOURCE_FACTS if f.factor_type == "motion"
+        }
+        self.assertEqual(classified, motion_ids)
+        self.assertEqual(len(classified), 10)
+        for fact_id in self.S414B_APPROVED_RAW:
+            with self.subTest(raw=fact_id):
+                self.assertIn(fact_id, APPROVED_RAW_FACT_IDS)
+                self.assertNotIn(fact_id, HUMAN_COPY_OVERRIDES)
+                self.assertNotIn(fact_id, NEEDS_REVIEW_FACT_IDS)
+                entry = build_catalog_entry(by_id[fact_id])
+                self.assertEqual(entry.review_status, STATUS_APPROVED_RAW)
+                self.assertEqual(entry.human_text, entry.canonical_text)
+                self.assertEqual(entry.canonical_text, by_id[fact_id].text)
+        for fact_id, human in self.S414B_OVERRIDES.items():
+            with self.subTest(override=fact_id):
+                self.assertEqual(HUMAN_COPY_OVERRIDES[fact_id], human)
+                self.assertNotIn(fact_id, APPROVED_RAW_FACT_IDS)
+                self.assertNotIn(fact_id, NEEDS_REVIEW_FACT_IDS)
+                entry = build_catalog_entry(by_id[fact_id])
+                self.assertEqual(entry.review_status, STATUS_APPROVED_OVERRIDE)
+                self.assertEqual(entry.canonical_text, by_id[fact_id].text)
+                self.assertNotEqual(entry.canonical_text, human)
+        self.assertIn("/", by_id["rx_communication_learning_unusual"].text)
+        self.assertIn("Mercury function", by_id["rx_works_more_inwardly"].text)
+        self.assertNotIn(
+            "Mercury function",
+            HUMAN_COPY_OVERRIDES["rx_works_more_inwardly"],
+        )
+        # Semantic distinction: relearn / rewrite / revisit remain distinct IDs.
+        self.assertNotEqual(
+            by_id["rx_tendency_to_relearn"].text,
+            by_id["rx_tendency_to_rewrite"].text,
+        )
+        self.assertNotEqual(
+            by_id["rx_tendency_to_relearn"].text,
+            by_id["rx_revisit_previously_learned"].text,
+        )
+        self.assertEqual(NEEDS_REVIEW_FACT_IDS, frozenset({"cancer_bio_depends_on_moon_sign"}))
+        self.assertEqual(len(HUMAN_COPY_OVERRIDES), 417)
+        self.assertEqual(len(APPROVED_RAW_FACT_IDS), 346)
+        report = build_human_copy_catalog()
+        self.assertEqual(report.approved_override_count, 417)
+        self.assertEqual(report.approved_raw_count, 346)
+        self.assertEqual(report.needs_review_count, 1)
+        self.assertEqual(report.unreviewed_count, 826)
+        self.assertEqual(report.reviewed_count, 764)
+        self.assertEqual(report.presentation_ready_count, 763)
+        by_type = {}
+        for fam in report.families:
+            by_type.setdefault(fam.factor_type, 0)
+            by_type[fam.factor_type] += fam.unreviewed
+        self.assertEqual(by_type["motion"], 0)
+        self.assertEqual(by_type["house"], 201)
+        self.assertEqual(by_type["aspect"], 625)
+        self.assertEqual(by_type["sign"], 0)
+        self.assertTrue(
+            set(HUMAN_COPY_OVERRIDES).isdisjoint(APPROVED_RAW_FACT_IDS)
+        )
+        self.assertTrue(
+            set(HUMAN_COPY_OVERRIDES).isdisjoint(NEEDS_REVIEW_FACT_IDS)
+        )
+        self.assertTrue(
+            set(APPROVED_RAW_FACT_IDS).isdisjoint(NEEDS_REVIEW_FACT_IDS)
+        )
 
 
 class RuntimeRegressionTests(unittest.TestCase):

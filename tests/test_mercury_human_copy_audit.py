@@ -247,7 +247,7 @@ class FullAuditSmokeTests(unittest.TestCase):
         report = run_human_copy_audit()
         self.assertEqual(report.total_source_facts, len(ALL_SOURCE_FACTS))
         self.assertEqual(report.human_override_count, len(HUMAN_COPY_OVERRIDES))
-        self.assertEqual(report.human_override_count, 415)
+        self.assertEqual(report.human_override_count, 417)
         self.assertEqual(
             len(report.candidates),
             len(report.candidates_already_overridden)
