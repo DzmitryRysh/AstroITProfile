@@ -949,6 +949,192 @@ HUMAN_COPY_OVERRIDES: dict[str, str] = {
     "libra_l7_support_peer_collaboration": (
         "Peer collaboration on difficult problems supports learning."
     ),
+    # --- S4.11B Cancer family review (31 new; 9 afflicted frozen above) ---
+    "cancer_bio_can_be_hurt_in_communication": (
+        "May be hurt or offended in communication."
+    ),
+    "cancer_bio_can_be_knocked_off_balance_in_speech": (
+        "May be knocked off balance or confused in speech."
+    ),
+    "cancer_bio_communication_colored_by_emotionality": (
+        "Communication may be colored by emotionality."
+    ),
+    "cancer_bio_depth_substantive_nature": "May show depth and substance.",
+    "cancer_bio_humanities_aptitude": (
+        "May show aptitude for the humanities."
+    ),
+    "cancer_bio_learning_colored_by_emotionality": (
+        "Learning may be colored by emotionality."
+    ),
+    "cancer_bio_learns_around_familiar_people": (
+        "Learns well around familiar or close people."
+    ),
+    "cancer_bio_motivation_comfortable_environment": (
+        "Learning may be motivated by a comfortable environment."
+    ),
+    "cancer_bio_motivation_familiar_group": (
+        "Learning may be motivated by a familiar group."
+    ),
+    "cancer_bio_motivation_favorite_teacher": (
+        "Learning may be motivated when facts are connected to a favorite "
+        "or respected teacher."
+    ),
+    "cancer_bio_motivation_strong_emotion": (
+        "Learning may be motivated by strong emotion."
+    ),
+    "cancer_bio_motivation_tradition": (
+        "Learning may be motivated by tradition."
+    ),
+    "cancer_bio_notice_rhyme": "May notice rhyme.",
+    "cancer_bio_notice_subtext": "May notice subtext.",
+    "cancer_bio_psychologically_dissect_texts": (
+        "May analyze texts from a psychological perspective."
+    ),
+    "cancer_bio_see_hidden_meaning": "May see hidden meaning.",
+    "cancer_bio_storyteller_talent": (
+        "May show storyteller talent or potential."
+    ),
+    "cancer_bio_thinking_colored_by_emotionality": (
+        "Thinking may be colored by emotionality."
+    ),
+    "cancer_bio_writer_association": (
+        "May show writing aptitude or potential."
+    ),
+    "cancer_l7_arguments_arise_intuitively": (
+        "Arguments may arise intuitively."
+    ),
+    "cancer_l7_dev_avoid_stuck_in_details": (
+        "Growth area: avoid getting stuck in details."
+    ),
+    "cancer_l7_dev_retain_central_idea": (
+        "Growth area: retain the central idea."
+    ),
+    "cancer_l7_dev_separate_emotion_from_argument": (
+        "Growth area: separate emotion from rational argument."
+    ),
+    "cancer_l7_dev_structured_speech_training": (
+        "Growth area: practice structuring speech."
+    ),
+    "cancer_l7_dev_subjectivity_risk": "Subjectivity can become a risk.",
+    "cancer_l7_env_narrow_pleasant_circle": (
+        "May keep a narrow circle of people found pleasant."
+    ),
+    "cancer_l7_env_possible_social_withdrawal": (
+        "May withdraw socially in connection with sensitivity or "
+        "vulnerability."
+    ),
+    "cancer_l7_learn_comfortable_environment": (
+        "A comfortable, gentle environment supports learning."
+    ),
+    "cancer_l7_learn_small_segments": (
+        "Dividing information into small pieces or segments supports "
+        "learning."
+    ),
+    "cancer_l7_searches_for_roots": (
+        "May search for the roots or origin of an idea."
+    ),
+    "cancer_l7_viewpoint_depends_on_tastes": (
+        "Viewpoint may depend on tastes, views, or habits."
+    ),
+    # --- S4.11B Virgo family review (41) ---
+    "virgo_bio_afflicted_cannot_see_forest_for_trees": (
+        "May lose sight of the forest for the trees."
+    ),
+    "virgo_bio_afflicted_collecting_facts_without_central_idea": (
+        "May collect facts without a central idea."
+    ),
+    "virgo_bio_afflicted_collecting_facts_without_conclusion": (
+        "May collect facts without reaching a conclusion."
+    ),
+    "virgo_bio_afflicted_pettiness": (
+        "Thinking or communication may become petty."
+    ),
+    "virgo_bio_afflicted_tediousness": (
+        "Thinking or communication may become tedious."
+    ),
+    "virgo_bio_high_mastery_of_words": (
+        "May show potential for very high mastery of words."
+    ),
+    "virgo_bio_legal_aptitude": "May show legal aptitude.",
+    "virgo_bio_less_accumulation_for_its_own_sake": (
+        "Learning merely for the sake of accumulating knowledge is "
+        "described as less characteristic."
+    ),
+    "virgo_bio_literary_aptitude": "May show literary aptitude.",
+    "virgo_bio_motivation_curiosity": (
+        "Learning may be motivated by curiosity."
+    ),
+    "virgo_bio_motivation_practical_usefulness": (
+        "Learning may be motivated by practical usefulness."
+    ),
+    "virgo_bio_occupation_associations": (
+        "Occupational themes associated with this placement include "
+        "writers, scientists, officials, and backstage negotiators; "
+        "these are not career assignments."
+    ),
+    "virgo_bio_skill_operating_facts": (
+        "May be skilled at working with facts."
+    ),
+    "virgo_bio_somewhat_dry_thinking_learning": (
+        "Thinking and learning may be somewhat dry."
+    ),
+    "virgo_bio_speech_lacks_expressive_zest": (
+        "Speech may lack expressive flair."
+    ),
+    "virgo_bio_sticky_strong_memory": "Sticky or strong memory.",
+    "virgo_bio_strongly_articulated_wording": (
+        "Strongly articulated or stamped wording."
+    ),
+    "virgo_bio_technical_aptitude": "May show technical aptitude.",
+    "virgo_bio_writing_aptitude": "May show writing aptitude.",
+    "virgo_l7_dev_avoid_micromanagement": (
+        "Growth area: avoid micromanagement."
+    ),
+    "virgo_l7_dev_build_schemes": "Growth area: build schemes.",
+    "virgo_l7_dev_construct_methodology": (
+        "Growth area: develop a methodology."
+    ),
+    "virgo_l7_dev_put_each_detail_in_place": (
+        "Growth area: put each detail into its place."
+    ),
+    "virgo_l7_dev_remove_unnecessary": (
+        "Growth area: remove unnecessary elements."
+    ),
+    "virgo_l7_diary_recording_tendency": (
+        "May have a tendency to keep a diary or records."
+    ),
+    "virgo_l7_emotionally_cool": (
+        "May be emotionally cool or not easily moved by emotion."
+    ),
+    "virgo_l7_env_connections_from_duty": (
+        "May maintain connections from duty or propriety."
+    ),
+    "virgo_l7_env_practical_sibling_communication": (
+        "Practical or useful communication with siblings."
+    ),
+    "virgo_l7_fixation_on_everyday_details": (
+        "May fixate on everyday or routine details."
+    ),
+    "virgo_l7_learning_algorithms": "Algorithms support learning.",
+    "virgo_l7_learning_compile_others_opinions": (
+        "Compiling other people's opinions supports learning."
+    ),
+    "virgo_l7_learning_notes": "Notes support learning.",
+    "virgo_l7_learning_schemes": "Schemes support learning.",
+    "virgo_l7_learning_tables": "Tables support learning.",
+    "virgo_l7_observation_keeping": "May keep observations.",
+    "virgo_l7_proper_intonation": "Proper or correct intonation.",
+    "virgo_l7_risk_losing_whole_picture": (
+        "May lose the whole picture because of details."
+    ),
+    "virgo_l7_risk_routine_fixation": "May become fixated on routine.",
+    "virgo_l7_selects_significant_arguments": (
+        "May identify or select significant arguments."
+    ),
+    "virgo_l7_simple_direct_communication": (
+        "Simple or direct communication style."
+    ),
+    "virgo_l7_statistics_tracking": "May track statistics.",
 }
 
 

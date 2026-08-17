@@ -100,8 +100,8 @@ class HumanCopyModuleTests(unittest.TestCase):
         self.assertNotIn("unmapped_x", result)
 
     def test_pilot_override_count(self):
-        # S4.0–S4.4B (88) + S4.5B Taurus family (8).
-        self.assertEqual(len(HUMAN_COPY_OVERRIDES), 325)
+        # S4.0–S4.10B (325) + S4.11B Cancer (31) + Virgo (41).
+        self.assertEqual(len(HUMAN_COPY_OVERRIDES), 397)
 
     def test_s42_override_ids_exist_and_raw_text_unchanged(self):
         by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}

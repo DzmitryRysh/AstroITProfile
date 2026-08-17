@@ -34,7 +34,7 @@ ALL_REVIEW_STATUSES: tuple[str, ...] = (
 )
 
 # Explicit presentation decisions only (not overrides — those live in
-# HUMAN_COPY_OVERRIDES). S4.3 seed + S4.4B–S4.5B + S4.7B–S4.10B.
+# HUMAN_COPY_OVERRIDES). S4.3 seed + S4.4B–S4.5B + S4.7B–S4.11B.
 APPROVED_RAW_FACT_IDS: frozenset[str] = frozenset(
     {
         # S4.3 seed
@@ -336,12 +336,65 @@ APPROVED_RAW_FACT_IDS: frozenset[str] = frozenset(
         "libra_l7_says_what_interlocutor_wants",
         "libra_l7_skill_with_compliments",
         "libra_l7_view_issue_from_multiple_sides",
+        # S4.11B Cancer approved_raw
+        "cancer_bio_also_accepts_books",
+        "cancer_bio_attachment_to_classics_opinions",
+        "cancer_bio_attachment_to_parents_opinions",
+        "cancer_bio_image_based_emotional_memory",
+        "cancer_bio_learns_through_audio",
+        "cancer_bio_learns_through_impressions",
+        "cancer_bio_learns_through_lectures",
+        "cancer_bio_learns_through_video",
+        "cancer_bio_living_image_in_web_of_facts",
+        "cancer_bio_may_lose_debates_lacking_force",
+        "cancer_bio_speech_may_be_unstable",
+        "cancer_l7_deep_associative_connections",
+        "cancer_l7_env_authorities_important",
+        "cancer_l7_env_emotional_attachment_siblings",
+        "cancer_l7_env_traditions_important",
+        "cancer_l7_excellent_imagination",
+        "cancer_l7_good_improvisation",
+        "cancer_l7_intuitive_args_hard_to_explain",
+        "cancer_l7_learning_through_authorities",
+        "cancer_l7_learning_through_traditions",
+        "cancer_l7_mind_attached_to_past",
+        "cancer_l7_need_emotional_feedback",
+        "cancer_l7_risk_difficulty_concentrating",
+        "cancer_l7_risk_emotionality_interferes_learning",
+        "cancer_l7_risk_mental_drifting",
+        "cancer_l7_sensitivity_to_dialogue_atmosphere",
+        "cancer_l7_speech_can_become_tangled",
+        "cancer_l7_speech_expresses_emotion",
+        "cancer_l7_sticky_memory_emotions",
+        "cancer_l7_sticky_memory_images",
+        "cancer_l7_sticky_memory_smells",
+        "cancer_l7_thought_hard_to_express",
+        # S4.11B Virgo approved_raw
+        "virgo_bio_deliberately_correct_speech",
+        "virgo_bio_grounded_thinking",
+        "virgo_bio_independent_analysis_learning",
+        "virgo_bio_learning_on_the_fly",
+        "virgo_bio_strong_attention",
+        "virgo_bio_strong_erudition",
+        "virgo_l7_analytical_thinking",
+        "virgo_l7_dispersion_into_small_details",
+        "virgo_l7_env_limited_social_circle",
+        "virgo_l7_env_low_emotionality_siblings",
+        "virgo_l7_limited_contact_circle",
+        "virgo_l7_practical_learning",
+        "virgo_l7_precision_of_formulations",
+        "virgo_l7_selective_thinking",
+        "virgo_l7_strong_tactical_thinking",
+        "virgo_l7_strongest_logic_after_preparation",
+        "virgo_l7_tendency_to_clarify_details",
+        "virgo_l7_weaker_strategic_overview",
     }
 )
 
 # Explicit needs_review decisions. Cross-family presentation policy backlog:
 # placement/framework status, medical-adjacent, genius/rank-adjacent,
-# metaphysical source claims, sexual/intimate motivation wording.
+# metaphysical source claims, sexual/intimate motivation wording,
+# conditional chart-context dependency (S4.12 taxonomy).
 NEEDS_REVIEW_FACT_IDS: frozenset[str] = frozenset(
     {
         # Sagittarius framework/status
@@ -366,6 +419,11 @@ NEEDS_REVIEW_FACT_IDS: frozenset[str] = frozenset(
         "aries_bio_source_sexual_motivation_wording",
         # Scorpio sexual/intimate motivation (S4.10B)
         "scorpio_bio_source_sexual_motivation",
+        # Cancer conditional chart-context / claimed-ability (S4.11B)
+        "cancer_bio_depends_on_moon_sign",
+        "cancer_bio_emotional_intelligence_source_claim",
+        # Virgo framework/status (S4.11B)
+        "virgo_bio_minor_domicile_near_sync",
     }
 )
 

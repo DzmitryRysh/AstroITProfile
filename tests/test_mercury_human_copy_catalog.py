@@ -345,7 +345,7 @@ class SeedApprovedRawTests(unittest.TestCase):
         by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
         self.assertTrue(set(SEED_APPROVED_RAW_EXPECTED).issubset(APPROVED_RAW_FACT_IDS))
         self.assertEqual(len(SEED_APPROVED_RAW_EXPECTED), 15)
-        self.assertEqual(len(APPROVED_RAW_FACT_IDS), 288)
+        self.assertEqual(len(APPROVED_RAW_FACT_IDS), 338)
         for fact_id, expected_text in SEED_APPROVED_RAW_EXPECTED.items():
             with self.subTest(fact_id=fact_id):
                 self.assertEqual(by_id[fact_id].text, expected_text)
@@ -440,13 +440,13 @@ class SagittariusFamilyS44BTests(unittest.TestCase):
                 self.assertFalse(entry.uses_override)
                 self.assertEqual(entry.human_text, entry.canonical_text)
 
-    def test_global_totals_after_s410b(self):
+    def test_global_totals_after_s411b(self):
         report = build_human_copy_catalog()
         self.assertEqual(report.total_facts, 1590)
-        self.assertEqual(report.approved_override_count, 325)
-        self.assertEqual(report.approved_raw_count, 288)
-        self.assertEqual(report.needs_review_count, 16)
-        self.assertEqual(report.unreviewed_count, 961)
+        self.assertEqual(report.approved_override_count, 397)
+        self.assertEqual(report.approved_raw_count, 338)
+        self.assertEqual(report.needs_review_count, 19)
+        self.assertEqual(report.unreviewed_count, 836)
         self.assertEqual(
             report.approved_override_count
             + report.approved_raw_count
@@ -454,8 +454,8 @@ class SagittariusFamilyS44BTests(unittest.TestCase):
             + report.unreviewed_count,
             1590,
         )
-        self.assertEqual(report.reviewed_count, 629)
-        self.assertEqual(report.presentation_ready_count, 613)
+        self.assertEqual(report.reviewed_count, 754)
+        self.assertEqual(report.presentation_ready_count, 735)
 
 
 class TaurusFamilyS45BTests(unittest.TestCase):
@@ -625,25 +625,15 @@ class SignReviewQueueS46Tests(unittest.TestCase):
             ordered,
             sorted(ordered, key=_sign_review_priority_key),
         )
-        # No polarity/orb/astrology weighting fields exist on the priority key.
-        sample_key = _sign_review_priority_key(ordered[0])
-        self.assertEqual(len(sample_key), 4)
-        self.assertIsInstance(sample_key[0], int)
-        self.assertIsInstance(sample_key[1], int)
-        self.assertIsInstance(sample_key[2], float)
-        self.assertIsInstance(sample_key[3], str)
+        # Sign review is complete: empty incomplete queue and batches.
+        self.assertEqual(ordered, [])
+        self.assertEqual(list(first.suggested_batches), [])
 
     def test_queue_priority_order_incomplete_signs(self):
         from app.services.mercury_human_copy_catalog import build_sign_review_queue
 
         queue = build_sign_review_queue()
-        self.assertEqual(
-            [entry.sign_name for entry in queue.incomplete_queue],
-            [
-                "Cancer",
-                "Virgo",
-            ],
-        )
+        self.assertEqual(list(queue.incomplete_queue), [])
         completed = {entry.sign_name for entry in queue.completed_families}
         self.assertEqual(
             completed,
@@ -658,6 +648,8 @@ class SignReviewQueueS46Tests(unittest.TestCase):
                 "Aries",
                 "Scorpio",
                 "Libra",
+                "Cancer",
+                "Virgo",
             },
         )
 
@@ -667,65 +659,23 @@ class SignReviewQueueS46Tests(unittest.TestCase):
         queue = build_sign_review_queue()
         incomplete_keys = [entry.family_key for entry in queue.incomplete_queue]
         completed_keys = {entry.family_key for entry in queue.completed_families}
-        self.assertNotIn("sign:Capricorn", incomplete_keys)
-        self.assertNotIn("sign:Leo", incomplete_keys)
-        self.assertNotIn("sign:Aquarius", incomplete_keys)
-        self.assertNotIn("sign:Gemini", incomplete_keys)
-        self.assertNotIn("sign:Pisces", incomplete_keys)
-        self.assertNotIn("sign:Aries", incomplete_keys)
-        self.assertNotIn("sign:Scorpio", incomplete_keys)
-        self.assertNotIn("sign:Libra", incomplete_keys)
-        self.assertIn("sign:Capricorn", completed_keys)
-        self.assertIn("sign:Leo", completed_keys)
-        self.assertIn("sign:Aquarius", completed_keys)
-        self.assertIn("sign:Gemini", completed_keys)
-        self.assertIn("sign:Pisces", completed_keys)
-        self.assertIn("sign:Aries", completed_keys)
-        self.assertIn("sign:Scorpio", completed_keys)
-        self.assertIn("sign:Libra", completed_keys)
-        batch_keys: list[str] = []
-        for batch in queue.suggested_batches:
-            self.assertGreaterEqual(len(batch.family_keys), 1)
-            self.assertLessEqual(len(batch.family_keys), 2)
-            for key in batch.family_keys:
-                self.assertIn(key, incomplete_keys)
-                self.assertNotIn(key, completed_keys)
-                self.assertNotIn(key, batch_keys)
-                batch_keys.append(key)
-        self.assertEqual(sorted(batch_keys), sorted(incomplete_keys))
-        self.assertEqual(len(batch_keys), len(set(batch_keys)))
-        # Deterministic heaviest+lightest against CURRENT incomplete queue.
-        remaining = list(queue.incomplete_queue)
-        expected_names: list[tuple[str, ...]] = []
-        expected_workloads: list[int] = []
-        while remaining:
-            if len(remaining) == 1:
-                only = remaining.pop(0)
-                expected_names.append((only.sign_name,))
-                expected_workloads.append(only.unreviewed)
-                break
-            heavy = remaining.pop(0)
-            light = remaining.pop(-1)
-            expected_names.append((heavy.sign_name, light.sign_name))
-            expected_workloads.append(heavy.unreviewed + light.unreviewed)
-        self.assertEqual(
-            [batch.sign_names for batch in queue.suggested_batches],
-            expected_names,
-        )
-        self.assertEqual(
-            [batch.unreviewed_workload for batch in queue.suggested_batches],
-            expected_workloads,
-        )
-        by_name = {entry.sign_name: entry for entry in queue.incomplete_queue}
-        expected_recommended = []
-        for names in expected_names:
-            expected_recommended.append(
-                sum(by_name[name].review_recommended_unreviewed for name in names)
-            )
-        self.assertEqual(
-            [batch.review_recommended_workload for batch in queue.suggested_batches],
-            expected_recommended,
-        )
+        self.assertEqual(incomplete_keys, [])
+        self.assertEqual(list(queue.suggested_batches), [])
+        for sign in (
+            "Capricorn",
+            "Leo",
+            "Aquarius",
+            "Gemini",
+            "Pisces",
+            "Aries",
+            "Scorpio",
+            "Libra",
+            "Cancer",
+            "Virgo",
+            "Taurus",
+            "Sagittarius",
+        ):
+            self.assertIn(f"sign:{sign}", completed_keys)
 
     def test_pack_heaviest_lightest_and_odd_singleton(self):
         from app.services.mercury_human_copy_catalog import (
@@ -777,7 +727,7 @@ class SignReviewQueueS46Tests(unittest.TestCase):
             [("A", "D"), ("B", "C")],
         )
 
-    def test_needs_review_backlog_contains_policy_sixteen(self):
+    def test_needs_review_backlog_contains_policy_nineteen(self):
         from app.services.mercury_human_copy_catalog import build_sign_review_queue
 
         queue = build_sign_review_queue()
@@ -801,9 +751,12 @@ class SignReviewQueueS46Tests(unittest.TestCase):
                 "pisces_l7_mystical_thinking",
                 "aries_bio_source_sexual_motivation_wording",
                 "scorpio_bio_source_sexual_motivation",
+                "cancer_bio_depends_on_moon_sign",
+                "cancer_bio_emotional_intelligence_source_claim",
+                "virgo_bio_minor_domicile_near_sync",
             },
         )
-        self.assertEqual(len(queue.needs_review_backlog), 16)
+        self.assertEqual(len(queue.needs_review_backlog), 19)
 
     def test_queue_does_not_mutate_registries_or_totals(self):
         from app.services.mercury_human_copy_catalog import (
@@ -822,17 +775,15 @@ class SignReviewQueueS46Tests(unittest.TestCase):
         self.assertEqual(dict(HUMAN_COPY_OVERRIDES), before_overrides)
         self.assertEqual(set(APPROVED_RAW_FACT_IDS), before_raw)
         self.assertEqual(set(NEEDS_REVIEW_FACT_IDS), before_needs)
-        self.assertEqual(queue.review_complete_family_count, 10)
+        self.assertEqual(queue.review_complete_family_count, 12)
         self.assertEqual(queue.presentation_ready_complete_family_count, 4)
-        self.assertEqual(len(queue.incomplete_queue), 2)
-        self.assertEqual(
-            [entry.sign_name for entry in queue.incomplete_queue],
-            ["Cancer", "Virgo"],
-        )
-        self.assertEqual(
-            sum(entry.unreviewed for entry in queue.incomplete_queue),
-            125,
-        )
+        self.assertEqual(len(queue.incomplete_queue), 0)
+        self.assertEqual(list(queue.suggested_batches), [])
+        self.assertEqual(queue.sign_total_facts, 730)
+        self.assertEqual(queue.sign_reviewed_facts, 730)
+        self.assertEqual(queue.sign_unreviewed_facts, 0)
+        self.assertEqual(queue.sign_presentation_ready_facts, 711)
+        self.assertEqual(queue.sign_needs_review_facts, 19)
 
 
 class CapricornLeoFamilyS47BTests(unittest.TestCase):
@@ -1143,7 +1094,7 @@ class CapricornLeoFamilyS47BTests(unittest.TestCase):
                 "sag_bio_major_exile",
             }.issubset(NEEDS_REVIEW_FACT_IDS)
         )
-        self.assertEqual(len(NEEDS_REVIEW_FACT_IDS), 16)
+        self.assertEqual(len(NEEDS_REVIEW_FACT_IDS), 19)
         # Capricorn common-sense approval is ID-local; Taurus twin stays raw.
         self.assertIn("capricorn_l7_common_sense_reliance", APPROVED_RAW_FACT_IDS)
         self.assertIn("taurus_relies_on_common_sense", APPROVED_RAW_FACT_IDS)
@@ -1474,7 +1425,7 @@ class AquariusGeminiFamilyS48BTests(unittest.TestCase):
         self.assertTrue(
             set(APPROVED_RAW_FACT_IDS).isdisjoint(NEEDS_REVIEW_FACT_IDS)
         )
-        self.assertEqual(len(NEEDS_REVIEW_FACT_IDS), 16)
+        self.assertEqual(len(NEEDS_REVIEW_FACT_IDS), 19)
 
 
 class PiscesAriesFamilyS49BTests(unittest.TestCase):
@@ -1841,7 +1792,7 @@ class PiscesAriesFamilyS49BTests(unittest.TestCase):
             "aries_bio_source_sexual_motivation_wording",
             HUMAN_COPY_OVERRIDES,
         )
-        self.assertEqual(len(NEEDS_REVIEW_FACT_IDS), 16)
+        self.assertEqual(len(NEEDS_REVIEW_FACT_IDS), 19)
         self.assertTrue(
             set(HUMAN_COPY_OVERRIDES).isdisjoint(APPROVED_RAW_FACT_IDS)
         )
@@ -2210,7 +2161,432 @@ class ScorpioLibraFamilyS410BTests(unittest.TestCase):
             "psychological penetration",
             by_id["scorpio_bio_psychological_penetration"].text.lower(),
         )
-        self.assertEqual(len(NEEDS_REVIEW_FACT_IDS), 16)
+        self.assertEqual(len(NEEDS_REVIEW_FACT_IDS), 19)
+        self.assertTrue(
+            set(HUMAN_COPY_OVERRIDES).isdisjoint(APPROVED_RAW_FACT_IDS)
+        )
+        self.assertTrue(
+            set(HUMAN_COPY_OVERRIDES).isdisjoint(NEEDS_REVIEW_FACT_IDS)
+        )
+        self.assertTrue(
+            set(APPROVED_RAW_FACT_IDS).isdisjoint(NEEDS_REVIEW_FACT_IDS)
+        )
+
+
+class CancerVirgoFamilyS411BTests(unittest.TestCase):
+    S411B_CANCER_APPROVED_RAW: tuple[str, ...] = (
+        "cancer_bio_also_accepts_books",
+        "cancer_bio_attachment_to_classics_opinions",
+        "cancer_bio_attachment_to_parents_opinions",
+        "cancer_bio_image_based_emotional_memory",
+        "cancer_bio_learns_through_audio",
+        "cancer_bio_learns_through_impressions",
+        "cancer_bio_learns_through_lectures",
+        "cancer_bio_learns_through_video",
+        "cancer_bio_living_image_in_web_of_facts",
+        "cancer_bio_may_lose_debates_lacking_force",
+        "cancer_bio_speech_may_be_unstable",
+        "cancer_l7_deep_associative_connections",
+        "cancer_l7_env_authorities_important",
+        "cancer_l7_env_emotional_attachment_siblings",
+        "cancer_l7_env_traditions_important",
+        "cancer_l7_excellent_imagination",
+        "cancer_l7_good_improvisation",
+        "cancer_l7_intuitive_args_hard_to_explain",
+        "cancer_l7_learning_through_authorities",
+        "cancer_l7_learning_through_traditions",
+        "cancer_l7_mind_attached_to_past",
+        "cancer_l7_need_emotional_feedback",
+        "cancer_l7_risk_difficulty_concentrating",
+        "cancer_l7_risk_emotionality_interferes_learning",
+        "cancer_l7_risk_mental_drifting",
+        "cancer_l7_sensitivity_to_dialogue_atmosphere",
+        "cancer_l7_speech_can_become_tangled",
+        "cancer_l7_speech_expresses_emotion",
+        "cancer_l7_sticky_memory_emotions",
+        "cancer_l7_sticky_memory_images",
+        "cancer_l7_sticky_memory_smells",
+        "cancer_l7_thought_hard_to_express",
+    )
+
+    S411B_CANCER_FROZEN_OVERRIDES: tuple[str, ...] = (
+        "cancer_bio_afflicted_disregard_for_facts",
+        "cancer_bio_afflicted_everyday_momentary_thinking",
+        "cancer_bio_afflicted_habit_bound_momentary_reasoning",
+        "cancer_bio_afflicted_losing_central_meaning",
+        "cancer_bio_afflicted_losing_the_thread",
+        "cancer_bio_afflicted_scatter_distractibility",
+        "cancer_bio_afflicted_thinking_trapped_by_habits",
+        "cancer_bio_afflicted_thinking_trapped_by_outdated_beliefs",
+        "cancer_bio_afflicted_loss_of_focus",
+    )
+
+    S411B_CANCER_NEW_OVERRIDES: dict[str, str] = {
+        "cancer_bio_can_be_hurt_in_communication": (
+            "May be hurt or offended in communication."
+        ),
+        "cancer_bio_can_be_knocked_off_balance_in_speech": (
+            "May be knocked off balance or confused in speech."
+        ),
+        "cancer_bio_communication_colored_by_emotionality": (
+            "Communication may be colored by emotionality."
+        ),
+        "cancer_bio_depth_substantive_nature": "May show depth and substance.",
+        "cancer_bio_humanities_aptitude": (
+            "May show aptitude for the humanities."
+        ),
+        "cancer_bio_learning_colored_by_emotionality": (
+            "Learning may be colored by emotionality."
+        ),
+        "cancer_bio_learns_around_familiar_people": (
+            "Learns well around familiar or close people."
+        ),
+        "cancer_bio_motivation_comfortable_environment": (
+            "Learning may be motivated by a comfortable environment."
+        ),
+        "cancer_bio_motivation_familiar_group": (
+            "Learning may be motivated by a familiar group."
+        ),
+        "cancer_bio_motivation_favorite_teacher": (
+            "Learning may be motivated when facts are connected to a favorite "
+            "or respected teacher."
+        ),
+        "cancer_bio_motivation_strong_emotion": (
+            "Learning may be motivated by strong emotion."
+        ),
+        "cancer_bio_motivation_tradition": (
+            "Learning may be motivated by tradition."
+        ),
+        "cancer_bio_notice_rhyme": "May notice rhyme.",
+        "cancer_bio_notice_subtext": "May notice subtext.",
+        "cancer_bio_psychologically_dissect_texts": (
+            "May analyze texts from a psychological perspective."
+        ),
+        "cancer_bio_see_hidden_meaning": "May see hidden meaning.",
+        "cancer_bio_storyteller_talent": (
+            "May show storyteller talent or potential."
+        ),
+        "cancer_bio_thinking_colored_by_emotionality": (
+            "Thinking may be colored by emotionality."
+        ),
+        "cancer_bio_writer_association": (
+            "May show writing aptitude or potential."
+        ),
+        "cancer_l7_arguments_arise_intuitively": (
+            "Arguments may arise intuitively."
+        ),
+        "cancer_l7_dev_avoid_stuck_in_details": (
+            "Growth area: avoid getting stuck in details."
+        ),
+        "cancer_l7_dev_retain_central_idea": (
+            "Growth area: retain the central idea."
+        ),
+        "cancer_l7_dev_separate_emotion_from_argument": (
+            "Growth area: separate emotion from rational argument."
+        ),
+        "cancer_l7_dev_structured_speech_training": (
+            "Growth area: practice structuring speech."
+        ),
+        "cancer_l7_dev_subjectivity_risk": "Subjectivity can become a risk.",
+        "cancer_l7_env_narrow_pleasant_circle": (
+            "May keep a narrow circle of people found pleasant."
+        ),
+        "cancer_l7_env_possible_social_withdrawal": (
+            "May withdraw socially in connection with sensitivity or "
+            "vulnerability."
+        ),
+        "cancer_l7_learn_comfortable_environment": (
+            "A comfortable, gentle environment supports learning."
+        ),
+        "cancer_l7_learn_small_segments": (
+            "Dividing information into small pieces or segments supports "
+            "learning."
+        ),
+        "cancer_l7_searches_for_roots": (
+            "May search for the roots or origin of an idea."
+        ),
+        "cancer_l7_viewpoint_depends_on_tastes": (
+            "Viewpoint may depend on tastes, views, or habits."
+        ),
+    }
+
+    S411B_CANCER_NEEDS_REVIEW: tuple[str, ...] = (
+        "cancer_bio_depends_on_moon_sign",
+        "cancer_bio_emotional_intelligence_source_claim",
+    )
+
+    S411B_VIRGO_APPROVED_RAW: tuple[str, ...] = (
+        "virgo_bio_deliberately_correct_speech",
+        "virgo_bio_grounded_thinking",
+        "virgo_bio_independent_analysis_learning",
+        "virgo_bio_learning_on_the_fly",
+        "virgo_bio_strong_attention",
+        "virgo_bio_strong_erudition",
+        "virgo_l7_analytical_thinking",
+        "virgo_l7_dispersion_into_small_details",
+        "virgo_l7_env_limited_social_circle",
+        "virgo_l7_env_low_emotionality_siblings",
+        "virgo_l7_limited_contact_circle",
+        "virgo_l7_practical_learning",
+        "virgo_l7_precision_of_formulations",
+        "virgo_l7_selective_thinking",
+        "virgo_l7_strong_tactical_thinking",
+        "virgo_l7_strongest_logic_after_preparation",
+        "virgo_l7_tendency_to_clarify_details",
+        "virgo_l7_weaker_strategic_overview",
+    )
+
+    S411B_VIRGO_OVERRIDES: dict[str, str] = {
+        "virgo_bio_afflicted_cannot_see_forest_for_trees": (
+            "May lose sight of the forest for the trees."
+        ),
+        "virgo_bio_afflicted_collecting_facts_without_central_idea": (
+            "May collect facts without a central idea."
+        ),
+        "virgo_bio_afflicted_collecting_facts_without_conclusion": (
+            "May collect facts without reaching a conclusion."
+        ),
+        "virgo_bio_afflicted_pettiness": (
+            "Thinking or communication may become petty."
+        ),
+        "virgo_bio_afflicted_tediousness": (
+            "Thinking or communication may become tedious."
+        ),
+        "virgo_bio_high_mastery_of_words": (
+            "May show potential for very high mastery of words."
+        ),
+        "virgo_bio_legal_aptitude": "May show legal aptitude.",
+        "virgo_bio_less_accumulation_for_its_own_sake": (
+            "Learning merely for the sake of accumulating knowledge is "
+            "described as less characteristic."
+        ),
+        "virgo_bio_literary_aptitude": "May show literary aptitude.",
+        "virgo_bio_motivation_curiosity": (
+            "Learning may be motivated by curiosity."
+        ),
+        "virgo_bio_motivation_practical_usefulness": (
+            "Learning may be motivated by practical usefulness."
+        ),
+        "virgo_bio_occupation_associations": (
+            "Occupational themes associated with this placement include "
+            "writers, scientists, officials, and backstage negotiators; "
+            "these are not career assignments."
+        ),
+        "virgo_bio_skill_operating_facts": (
+            "May be skilled at working with facts."
+        ),
+        "virgo_bio_somewhat_dry_thinking_learning": (
+            "Thinking and learning may be somewhat dry."
+        ),
+        "virgo_bio_speech_lacks_expressive_zest": (
+            "Speech may lack expressive flair."
+        ),
+        "virgo_bio_sticky_strong_memory": "Sticky or strong memory.",
+        "virgo_bio_strongly_articulated_wording": (
+            "Strongly articulated or stamped wording."
+        ),
+        "virgo_bio_technical_aptitude": "May show technical aptitude.",
+        "virgo_bio_writing_aptitude": "May show writing aptitude.",
+        "virgo_l7_dev_avoid_micromanagement": (
+            "Growth area: avoid micromanagement."
+        ),
+        "virgo_l7_dev_build_schemes": "Growth area: build schemes.",
+        "virgo_l7_dev_construct_methodology": (
+            "Growth area: develop a methodology."
+        ),
+        "virgo_l7_dev_put_each_detail_in_place": (
+            "Growth area: put each detail into its place."
+        ),
+        "virgo_l7_dev_remove_unnecessary": (
+            "Growth area: remove unnecessary elements."
+        ),
+        "virgo_l7_diary_recording_tendency": (
+            "May have a tendency to keep a diary or records."
+        ),
+        "virgo_l7_emotionally_cool": (
+            "May be emotionally cool or not easily moved by emotion."
+        ),
+        "virgo_l7_env_connections_from_duty": (
+            "May maintain connections from duty or propriety."
+        ),
+        "virgo_l7_env_practical_sibling_communication": (
+            "Practical or useful communication with siblings."
+        ),
+        "virgo_l7_fixation_on_everyday_details": (
+            "May fixate on everyday or routine details."
+        ),
+        "virgo_l7_learning_algorithms": "Algorithms support learning.",
+        "virgo_l7_learning_compile_others_opinions": (
+            "Compiling other people's opinions supports learning."
+        ),
+        "virgo_l7_learning_notes": "Notes support learning.",
+        "virgo_l7_learning_schemes": "Schemes support learning.",
+        "virgo_l7_learning_tables": "Tables support learning.",
+        "virgo_l7_observation_keeping": "May keep observations.",
+        "virgo_l7_proper_intonation": "Proper or correct intonation.",
+        "virgo_l7_risk_losing_whole_picture": (
+            "May lose the whole picture because of details."
+        ),
+        "virgo_l7_risk_routine_fixation": "May become fixated on routine.",
+        "virgo_l7_selects_significant_arguments": (
+            "May identify or select significant arguments."
+        ),
+        "virgo_l7_simple_direct_communication": (
+            "Simple or direct communication style."
+        ),
+        "virgo_l7_statistics_tracking": "May track statistics.",
+    }
+
+    def test_cancer_family_fully_reviewed(self):
+        report = build_human_copy_catalog()
+        family = next(f for f in report.families if f.family_key == "sign:Cancer")
+        self.assertEqual(family.total_facts, 74)
+        self.assertEqual(family.approved_override, 40)
+        self.assertEqual(family.approved_raw, 32)
+        self.assertEqual(family.needs_review, 2)
+        self.assertEqual(family.unreviewed, 0)
+        self.assertEqual(family.reviewed_count, 74)
+        self.assertEqual(family.presentation_ready_count, 72)
+        self.assertEqual(family.review_coverage, 1.0)
+        self.assertEqual(family.presentation_ready_coverage, round(72 / 74, 6))
+
+    def test_virgo_family_fully_reviewed(self):
+        report = build_human_copy_catalog()
+        family = next(f for f in report.families if f.family_key == "sign:Virgo")
+        self.assertEqual(family.total_facts, 60)
+        self.assertEqual(family.approved_override, 41)
+        self.assertEqual(family.approved_raw, 18)
+        self.assertEqual(family.needs_review, 1)
+        self.assertEqual(family.unreviewed, 0)
+        self.assertEqual(family.reviewed_count, 60)
+        self.assertEqual(family.presentation_ready_count, 59)
+        self.assertEqual(family.review_coverage, 1.0)
+        self.assertEqual(family.presentation_ready_coverage, round(59 / 60, 6))
+
+    def test_sign_layer_complete_after_s411b(self):
+        from app.services.mercury_human_copy_catalog import build_sign_review_queue
+
+        queue = build_sign_review_queue()
+        self.assertEqual(queue.review_complete_family_count, 12)
+        self.assertEqual(queue.presentation_ready_complete_family_count, 4)
+        self.assertEqual(list(queue.incomplete_queue), [])
+        self.assertEqual(list(queue.suggested_batches), [])
+        self.assertEqual(queue.sign_total_facts, 730)
+        self.assertEqual(queue.sign_reviewed_facts, 730)
+        self.assertEqual(queue.sign_unreviewed_facts, 0)
+        self.assertEqual(queue.sign_presentation_ready_facts, 711)
+        self.assertEqual(queue.sign_needs_review_facts, 19)
+        ready_complete = {
+            e.sign_name
+            for e in queue.all_sign_families
+            if e.is_presentation_ready_complete
+        }
+        self.assertEqual(ready_complete, {"Taurus", "Capricorn", "Leo", "Libra"})
+
+    def test_s411b_registries_and_wording_corrections(self):
+        by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
+        self.assertEqual(len(self.S411B_CANCER_APPROVED_RAW), 32)
+        self.assertEqual(len(self.S411B_CANCER_NEW_OVERRIDES), 31)
+        self.assertEqual(len(self.S411B_CANCER_FROZEN_OVERRIDES), 9)
+        self.assertEqual(len(self.S411B_VIRGO_APPROVED_RAW), 18)
+        self.assertEqual(len(self.S411B_VIRGO_OVERRIDES), 41)
+        for fact_id in (
+            *self.S411B_CANCER_APPROVED_RAW,
+            *self.S411B_VIRGO_APPROVED_RAW,
+        ):
+            with self.subTest(raw=fact_id):
+                self.assertIn(fact_id, APPROVED_RAW_FACT_IDS)
+                self.assertNotIn(fact_id, HUMAN_COPY_OVERRIDES)
+                self.assertNotIn(fact_id, NEEDS_REVIEW_FACT_IDS)
+                entry = build_catalog_entry(by_id[fact_id])
+                self.assertEqual(entry.review_status, STATUS_APPROVED_RAW)
+                self.assertEqual(entry.human_text, entry.canonical_text)
+        for fact_id, human in {
+            **self.S411B_CANCER_NEW_OVERRIDES,
+            **self.S411B_VIRGO_OVERRIDES,
+        }.items():
+            with self.subTest(override=fact_id):
+                self.assertEqual(HUMAN_COPY_OVERRIDES[fact_id], human)
+                self.assertNotIn(fact_id, APPROVED_RAW_FACT_IDS)
+                self.assertNotIn(fact_id, NEEDS_REVIEW_FACT_IDS)
+                entry = build_catalog_entry(by_id[fact_id])
+                self.assertEqual(entry.review_status, STATUS_APPROVED_OVERRIDE)
+                self.assertEqual(entry.canonical_text, by_id[fact_id].text)
+                self.assertNotEqual(entry.canonical_text, human)
+        for fact_id in self.S411B_CANCER_FROZEN_OVERRIDES:
+            with self.subTest(frozen=fact_id):
+                self.assertIn(fact_id, HUMAN_COPY_OVERRIDES)
+                self.assertNotIn(fact_id, APPROVED_RAW_FACT_IDS)
+                self.assertNotIn(fact_id, NEEDS_REVIEW_FACT_IDS)
+        for fact_id in (
+            *self.S411B_CANCER_NEEDS_REVIEW,
+            "virgo_bio_minor_domicile_near_sync",
+        ):
+            with self.subTest(needs=fact_id):
+                self.assertIn(fact_id, NEEDS_REVIEW_FACT_IDS)
+                self.assertNotIn(fact_id, HUMAN_COPY_OVERRIDES)
+                self.assertNotIn(fact_id, APPROVED_RAW_FACT_IDS)
+                entry = build_catalog_entry(by_id[fact_id])
+                self.assertEqual(entry.review_status, STATUS_NEEDS_REVIEW)
+                self.assertEqual(entry.human_text, entry.canonical_text)
+        self.assertEqual(
+            HUMAN_COPY_OVERRIDES["cancer_bio_depth_substantive_nature"],
+            "May show depth and substance.",
+        )
+        self.assertEqual(
+            HUMAN_COPY_OVERRIDES["cancer_bio_motivation_favorite_teacher"],
+            "Learning may be motivated when facts are connected to a favorite "
+            "or respected teacher.",
+        )
+        self.assertEqual(
+            HUMAN_COPY_OVERRIDES["cancer_bio_psychologically_dissect_texts"],
+            "May analyze texts from a psychological perspective.",
+        )
+        self.assertEqual(
+            HUMAN_COPY_OVERRIDES["cancer_l7_dev_structured_speech_training"],
+            "Growth area: practice structuring speech.",
+        )
+        self.assertEqual(
+            HUMAN_COPY_OVERRIDES["cancer_l7_learn_comfortable_environment"],
+            "A comfortable, gentle environment supports learning.",
+        )
+        self.assertEqual(
+            HUMAN_COPY_OVERRIDES["virgo_bio_less_accumulation_for_its_own_sake"],
+            "Learning merely for the sake of accumulating knowledge is "
+            "described as less characteristic.",
+        )
+        self.assertEqual(
+            HUMAN_COPY_OVERRIDES["virgo_bio_skill_operating_facts"],
+            "May be skilled at working with facts.",
+        )
+        self.assertEqual(
+            HUMAN_COPY_OVERRIDES["virgo_bio_speech_lacks_expressive_zest"],
+            "Speech may lack expressive flair.",
+        )
+        self.assertEqual(
+            HUMAN_COPY_OVERRIDES["virgo_l7_diary_recording_tendency"],
+            "May have a tendency to keep a diary or records.",
+        )
+        self.assertEqual(
+            HUMAN_COPY_OVERRIDES["virgo_l7_emotionally_cool"],
+            "May be emotionally cool or not easily moved by emotion.",
+        )
+        self.assertEqual(
+            HUMAN_COPY_OVERRIDES["virgo_l7_dev_construct_methodology"],
+            "Growth area: develop a methodology.",
+        )
+        # Sticky emotional memories stay approved_raw (not generic strong_memory).
+        for sticky_id in (
+            "cancer_l7_sticky_memory_emotions",
+            "cancer_l7_sticky_memory_images",
+            "cancer_l7_sticky_memory_smells",
+        ):
+            self.assertIn(sticky_id, APPROVED_RAW_FACT_IDS)
+            self.assertNotIn(sticky_id, HUMAN_COPY_OVERRIDES)
+        self.assertIn("Gemini", by_id["virgo_bio_less_accumulation_for_its_own_sake"].text)
+        self.assertEqual(len(NEEDS_REVIEW_FACT_IDS), 19)
+        self.assertEqual(len(HUMAN_COPY_OVERRIDES), 397)
+        self.assertEqual(len(APPROVED_RAW_FACT_IDS), 338)
         self.assertTrue(
             set(HUMAN_COPY_OVERRIDES).isdisjoint(APPROVED_RAW_FACT_IDS)
         )
