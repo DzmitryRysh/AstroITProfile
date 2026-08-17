@@ -14,7 +14,7 @@ from collections.abc import Iterable
 from app.schemas.mercury_source_profile import SourceFact
 
 # Curated human-facing overrides. Keys are stable SourceFact.id values.
-# S4.0 pilot + S4.2 golden-exposure batch. Presentation only.
+# S4.0 pilot + S4.2 golden-exposure + S4.2.1 live-UI polish. Presentation only.
 HUMAN_COPY_OVERRIDES: dict[str, str] = {
     # --- S4.0 pilot ---
     "pluto_sq_conflictual_communication": (
@@ -30,7 +30,7 @@ HUMAN_COPY_OVERRIDES: dict[str, str] = {
         "Words can have strong impact and can hurt deeply."
     ),
     "pluto_sq_destroy_dig_defeat_through_speech": (
-        "Thinking and speech can become destructive and oriented toward "
+        "Thinking and speech can become destructive and focused on "
         "defeating the other side."
     ),
     "leo_l7_self_justifying_speech": (
@@ -133,6 +133,23 @@ HUMAN_COPY_OVERRIDES: dict[str, str] = {
     "pisces_l7_dev_distinguish_own_vs_suggested": (
         "Growth area: distinguish one's own thoughts from suggested or "
         "imposed illusions."
+    ),
+    # --- S4.2.1 live-UI polish (Vlad + one Avdey wording tweak above) ---
+    "moon_sq_felt_and_thought_may_diverge": (
+        "What is felt may differ from what is thought or said."
+    ),
+    "taurus_practical_concrete_orientation": (
+        "Practical, concrete thinking."
+    ),
+    "taurus_conversation_needs_practical_purpose": (
+        "Prefers conversations with a practical or result-oriented purpose."
+    ),
+    "taurus_calm_authoritative_communication": (
+        "Communication tends to be calm and authoritative."
+    ),
+    "taurus_bio_slowness_dispute_disadvantage": (
+        "A slower response pace can be a disadvantage in fast-moving "
+        "arguments."
     ),
 }
 

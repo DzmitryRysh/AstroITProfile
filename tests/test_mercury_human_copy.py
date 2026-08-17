@@ -100,8 +100,8 @@ class HumanCopyModuleTests(unittest.TestCase):
         self.assertNotIn("unmapped_x", result)
 
     def test_pilot_override_count(self):
-        # S4.0 (11) + S4.2 golden-exposure batch (25).
-        self.assertEqual(len(HUMAN_COPY_OVERRIDES), 36)
+        # S4.0 (11) + S4.2 (25) + S4.2.1 live-UI polish (5).
+        self.assertEqual(len(HUMAN_COPY_OVERRIDES), 41)
 
     def test_s42_override_ids_exist_and_raw_text_unchanged(self):
         by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
@@ -188,6 +188,126 @@ class HumanCopyModuleTests(unittest.TestCase):
             HUMAN_COPY_OVERRIDES["leo_l7_dev_creativity"],
             "Growth area: strengthen creative expression.",
         )
+
+    def test_s421_vlad_live_ui_polish_overrides(self):
+        by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
+        expected = {
+            "moon_sq_felt_and_thought_may_diverge": (
+                "What is felt and what is thought / said may diverge.",
+                "What is felt may differ from what is thought or said.",
+            ),
+            "taurus_practical_concrete_orientation": (
+                "Practical / concrete orientation.",
+                "Practical, concrete thinking.",
+            ),
+            "taurus_conversation_needs_practical_purpose": (
+                "Conversation should have a practical / result-oriented purpose.",
+                "Prefers conversations with a practical or result-oriented purpose.",
+            ),
+            "taurus_calm_authoritative_communication": (
+                "Calm / authoritative communication style.",
+                "Communication tends to be calm and authoritative.",
+            ),
+            "taurus_bio_slowness_dispute_disadvantage": (
+                "May lose disputes because of slowness.",
+                "A slower response pace can be a disadvantage in fast-moving "
+                "arguments.",
+            ),
+        }
+        self.assertEqual(len(expected), 5)
+        for fact_id, (raw, human) in expected.items():
+            with self.subTest(fact_id=fact_id):
+                self.assertIn(fact_id, by_id)
+                self.assertEqual(by_id[fact_id].text, raw)
+                self.assertEqual(HUMAN_COPY_OVERRIDES[fact_id], human)
+                fact = _fact(fact_id, raw)
+                self.assertEqual(get_human_fact_text(fact), human)
+                self.assertEqual(fact.text, raw)
+
+    def test_s421_avdey_destroy_override_wording_polish(self):
+        by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
+        fact_id = "pluto_sq_destroy_dig_defeat_through_speech"
+        raw = by_id[fact_id].text
+        self.assertEqual(
+            raw,
+            "Tendency to destroy / dig / defeat through thinking and speech.",
+        )
+        human = (
+            "Thinking and speech can become destructive and focused on "
+            "defeating the other side."
+        )
+        self.assertEqual(HUMAN_COPY_OVERRIDES[fact_id], human)
+        fact = _fact(fact_id, raw, polarity="risk")
+        self.assertEqual(get_human_fact_text(fact), human)
+        self.assertEqual(fact.text, raw)
+        self.assertNotIn("oriented toward", human)
+
+    def test_s421_vlad_avdey_structure_unchanged(self):
+        from datetime import date, time
+
+        from app.schemas.mercury_source_profile import MercurySourceProfileRequest
+        from app.services.mercury_source_profile import build_mercury_source_profile
+
+        vlad = build_mercury_source_profile(
+            MercurySourceProfileRequest(
+                birth_date=date(1986, 5, 16),
+                birth_time=time(15, 0),
+                birth_place="Dnipro, Ukraine",
+            )
+        )
+        avdey = build_mercury_source_profile(
+            MercurySourceProfileRequest(
+                birth_date=date(1986, 7, 14),
+                birth_time=time(7, 10),
+                birth_place="Simferopol, Ukraine",
+            )
+        )
+        self.assertEqual(
+            [s.signal for s in vlad.repeated_signals],
+            [
+                "analytical_thinking",
+                "persuasion",
+                "lifelong_learning",
+                "foreign_languages",
+            ],
+        )
+        self.assertEqual(
+            [(c.tag_a, c.tag_b) for c in vlad.contrasting_signals],
+            [
+                ("deliberate_processing", "fast_thinking"),
+                ("deliberate_processing", "mental_switching_pressure"),
+            ],
+        )
+        self.assertEqual(
+            [s.signal for s in avdey.repeated_signals],
+            [
+                "analytical_thinking",
+                "technical_ability",
+                "debate",
+                "argumentation",
+                "nonstandard_thinking",
+                "sales",
+            ],
+        )
+        self.assertEqual(
+            [(c.tag_a, c.tag_b) for c in avdey.contrasting_signals],
+            [("superficiality", "analytical_thinking")],
+        )
+        for fact_id in (
+            "moon_sq_felt_and_thought_may_diverge",
+            "taurus_practical_concrete_orientation",
+            "pluto_sq_destroy_dig_defeat_through_speech",
+        ):
+            profile = vlad if fact_id.startswith(("moon_", "taurus_")) else avdey
+            # facts_by_id lives on synthesis; raw arrays preserve canonical text.
+            all_facts = (
+                list(profile.sign_facts)
+                + list(profile.house_facts)
+                + list(profile.aspect_facts)
+                + list(profile.motion_facts)
+            )
+            match = next(f for f in all_facts if f.id == fact_id)
+            self.assertEqual(match.text, next(f for f in ALL_SOURCE_FACTS if f.id == fact_id).text)
 
 
 if __name__ == "__main__":
