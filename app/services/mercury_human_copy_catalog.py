@@ -461,3 +461,323 @@ def format_family_detail(
     _section("APPROVED RAW", approved_raw)
     _section("APPROVED OVERRIDE", approved_override)
     return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# S4.6 — Sign family review queue (maintenance workload only)
+# ---------------------------------------------------------------------------
+
+# Zodiac display order for all-12 sign reports (not priority order).
+ZODIAC_SIGN_ORDER: tuple[str, ...] = (
+    "Aries",
+    "Taurus",
+    "Gemini",
+    "Cancer",
+    "Leo",
+    "Virgo",
+    "Libra",
+    "Scorpio",
+    "Sagittarius",
+    "Capricorn",
+    "Aquarius",
+    "Pisces",
+)
+
+SIGN_FAMILY_KEYS: tuple[str, ...] = tuple(
+    f"sign:{name}" for name in ZODIAC_SIGN_ORDER
+)
+
+@dataclass(frozen=True)
+class SignReviewQueueEntry:
+    """One Mercury sign family in the human-copy review queue.
+
+    estimated_review_load is an explicit workload tuple — not a quality score:
+      (unreviewed, review_recommended_unreviewed, needs_review)
+    """
+
+    family_key: str
+    sign_name: str
+    total_facts: int
+    approved_override: int
+    approved_raw: int
+    needs_review: int
+    unreviewed: int
+    review_recommended_unreviewed: int
+    reviewed_count: int
+    presentation_ready_count: int
+    review_coverage: float
+    presentation_ready_coverage: float
+    is_review_complete: bool
+    is_presentation_ready_complete: bool
+    estimated_review_load: tuple[int, int, int]
+
+
+@dataclass(frozen=True)
+class NeedsReviewBacklogItem:
+    fact_id: str
+    family_key: str
+    canonical_text: str
+
+
+@dataclass(frozen=True)
+class SuggestedSignReviewBatch:
+    batch_index: int
+    family_keys: tuple[str, ...]
+    sign_names: tuple[str, ...]
+    unreviewed_workload: int
+    review_recommended_workload: int
+
+
+@dataclass(frozen=True)
+class SignReviewQueueReport:
+    all_sign_families: tuple[SignReviewQueueEntry, ...]
+    completed_families: tuple[SignReviewQueueEntry, ...]
+    incomplete_queue: tuple[SignReviewQueueEntry, ...]
+    suggested_batches: tuple[SuggestedSignReviewBatch, ...]
+    needs_review_backlog: tuple[NeedsReviewBacklogItem, ...]
+    sign_total_facts: int
+    sign_reviewed_facts: int
+    sign_presentation_ready_facts: int
+    sign_unreviewed_facts: int
+    sign_needs_review_facts: int
+    review_complete_family_count: int
+    presentation_ready_complete_family_count: int
+
+
+def _sign_review_priority_key(entry: SignReviewQueueEntry) -> tuple:
+    """Maintenance workload priority — not astrology importance.
+
+    Order incomplete families by:
+      1. higher unreviewed
+      2. higher review_recommended_unreviewed
+      3. lower presentation_ready_coverage
+      4. stable family_key
+    """
+    return (
+        -entry.unreviewed,
+        -entry.review_recommended_unreviewed,
+        entry.presentation_ready_coverage,
+        entry.family_key,
+    )
+
+
+def _family_to_sign_queue_entry(family: HumanCopyFamilyCoverage) -> SignReviewQueueEntry:
+    return SignReviewQueueEntry(
+        family_key=family.family_key,
+        sign_name=family.factor_key,
+        total_facts=family.total_facts,
+        approved_override=family.approved_override,
+        approved_raw=family.approved_raw,
+        needs_review=family.needs_review,
+        unreviewed=family.unreviewed,
+        review_recommended_unreviewed=family.review_recommended_unreviewed,
+        reviewed_count=family.reviewed_count,
+        presentation_ready_count=family.presentation_ready_count,
+        review_coverage=family.review_coverage,
+        presentation_ready_coverage=family.presentation_ready_coverage,
+        is_review_complete=family.unreviewed == 0,
+        is_presentation_ready_complete=(
+            family.presentation_ready_count == family.total_facts
+        ),
+        estimated_review_load=(
+            family.unreviewed,
+            family.review_recommended_unreviewed,
+            family.needs_review,
+        ),
+    )
+
+
+def _pack_sign_batches(
+    incomplete: Sequence[SignReviewQueueEntry],
+) -> tuple[SuggestedSignReviewBatch, ...]:
+    """Workload-balance incomplete signs: heaviest remaining + lightest remaining.
+
+    Maintenance batching only — not astrology similarity / element / modality.
+
+    Algorithm:
+      1. Start from the already priority-sorted incomplete queue
+         (non-increasing unreviewed workload).
+      2. Pair the highest remaining workload family with the lowest remaining
+         workload family (front + back of the remaining list).
+      3. Remove both; emit that pair as one batch (heaviest first).
+      4. Repeat.
+      5. If an odd count remains, the final middle family is a singleton batch.
+    """
+    remaining = list(incomplete)
+    chunks: list[tuple[SignReviewQueueEntry, ...]] = []
+    while remaining:
+        if len(remaining) == 1:
+            chunks.append((remaining.pop(0),))
+            break
+        heaviest = remaining.pop(0)
+        lightest = remaining.pop(-1)
+        chunks.append((heaviest, lightest))
+
+    batches: list[SuggestedSignReviewBatch] = []
+    for batch_index, members in enumerate(chunks, start=1):
+        batches.append(
+            SuggestedSignReviewBatch(
+                batch_index=batch_index,
+                family_keys=tuple(member.family_key for member in members),
+                sign_names=tuple(member.sign_name for member in members),
+                unreviewed_workload=sum(member.unreviewed for member in members),
+                review_recommended_workload=sum(
+                    member.review_recommended_unreviewed for member in members
+                ),
+            )
+        )
+    return tuple(batches)
+
+
+def build_sign_review_queue(
+    report: HumanCopyCatalogReport | None = None,
+) -> SignReviewQueueReport:
+    """Build deterministic Mercury sign-family human-copy review queue."""
+    catalog = report if report is not None else build_human_copy_catalog()
+    sign_families = {
+        family.family_key: family
+        for family in catalog.families
+        if family.factor_type == "sign"
+    }
+    missing = [key for key in SIGN_FAMILY_KEYS if key not in sign_families]
+    if missing:
+        raise HumanCopyCatalogError(f"Missing sign families in catalog: {missing}")
+
+    all_entries = tuple(
+        _family_to_sign_queue_entry(sign_families[key]) for key in SIGN_FAMILY_KEYS
+    )
+    completed = tuple(entry for entry in all_entries if entry.is_review_complete)
+    incomplete = tuple(
+        sorted(
+            (entry for entry in all_entries if not entry.is_review_complete),
+            key=_sign_review_priority_key,
+        )
+    )
+    backlog = tuple(
+        NeedsReviewBacklogItem(
+            fact_id=entry.fact_id,
+            family_key=entry.family_key,
+            canonical_text=entry.canonical_text,
+        )
+        for entry in catalog.entries
+        if entry.review_status == STATUS_NEEDS_REVIEW and entry.factor_type == "sign"
+    )
+    backlog = tuple(sorted(backlog, key=lambda item: (item.family_key, item.fact_id)))
+
+    return SignReviewQueueReport(
+        all_sign_families=all_entries,
+        completed_families=completed,
+        incomplete_queue=incomplete,
+        suggested_batches=_pack_sign_batches(incomplete),
+        needs_review_backlog=backlog,
+        sign_total_facts=sum(entry.total_facts for entry in all_entries),
+        sign_reviewed_facts=sum(entry.reviewed_count for entry in all_entries),
+        sign_presentation_ready_facts=sum(
+            entry.presentation_ready_count for entry in all_entries
+        ),
+        sign_unreviewed_facts=sum(entry.unreviewed for entry in all_entries),
+        sign_needs_review_facts=sum(entry.needs_review for entry in all_entries),
+        review_complete_family_count=sum(
+            1 for entry in all_entries if entry.is_review_complete
+        ),
+        presentation_ready_complete_family_count=sum(
+            1 for entry in all_entries if entry.is_presentation_ready_complete
+        ),
+    )
+
+
+def format_sign_review_queue(queue: SignReviewQueueReport) -> str:
+    """Developer-readable Mercury sign human-copy review queue."""
+    lines = [
+        "MERCURY SIGN HUMAN-COPY REVIEW QUEUE",
+        "",
+        "Priority = maintenance workload only "
+        "(unreviewed, recommended-unreviewed, ready-coverage). "
+        "Not astrology importance.",
+        "",
+        f"Sign families: {len(queue.all_sign_families)}",
+        f"Review-complete: {queue.review_complete_family_count}",
+        f"Presentation-ready-complete: "
+        f"{queue.presentation_ready_complete_family_count}",
+        f"Sign facts: {queue.sign_total_facts}",
+        f"Sign reviewed facts: {queue.sign_reviewed_facts}",
+        f"Sign presentation-ready facts: {queue.sign_presentation_ready_facts}",
+        f"Sign unreviewed facts: {queue.sign_unreviewed_facts}",
+        f"Sign needs_review facts: {queue.sign_needs_review_facts}",
+        "",
+        "Completed:",
+    ]
+    if not queue.completed_families:
+        lines.append("  (none)")
+    else:
+        for entry in queue.completed_families:
+            ready_note = (
+                "ready-complete"
+                if entry.is_presentation_ready_complete
+                else (
+                    f"ready {entry.presentation_ready_count}/"
+                    f"{entry.total_facts}"
+                )
+            )
+            lines.append(
+                f"  {entry.sign_name:<12} "
+                f"{entry.reviewed_count}/{entry.total_facts} reviewed   "
+                f"{ready_note}"
+            )
+
+    lines.append("")
+    lines.append("Remaining queue:")
+    if not queue.incomplete_queue:
+        lines.append("  (none)")
+    else:
+        for index, entry in enumerate(queue.incomplete_queue, start=1):
+            lines.append(f"{index}. {entry.sign_name}")
+            lines.append(f"   family: {entry.family_key}")
+            lines.append(f"   total: {entry.total_facts}")
+            lines.append(f"   unreviewed: {entry.unreviewed}")
+            lines.append(
+                f"   recommended-unreviewed: {entry.review_recommended_unreviewed}"
+            )
+            lines.append(f"   needs_review: {entry.needs_review}")
+            lines.append(
+                f"   reviewed: {entry.reviewed_count}/{entry.total_facts} "
+                f"({entry.review_coverage:.0%})"
+            )
+            lines.append(
+                f"   ready: {entry.presentation_ready_count}/{entry.total_facts} "
+                f"({entry.presentation_ready_coverage:.0%})"
+            )
+            lines.append(
+                f"   estimated_review_load: "
+                f"unreviewed={entry.estimated_review_load[0]}, "
+                f"recommended={entry.estimated_review_load[1]}, "
+                f"needs_review={entry.estimated_review_load[2]}"
+            )
+
+    lines.append("")
+    lines.append(
+        "Suggested workload-balanced review batches "
+        "(heaviest + lightest remaining; not semantic / astrology groups):"
+    )
+    if not queue.suggested_batches:
+        lines.append("  (none)")
+    else:
+        for batch in queue.suggested_batches:
+            names = " + ".join(batch.sign_names)
+            lines.append(
+                f"  Batch {batch.batch_index}: {names} "
+                f"(unreviewed={batch.unreviewed_workload}, "
+                f"recommended={batch.review_recommended_workload})"
+            )
+
+    lines.append("")
+    lines.append("Needs-review backlog (sign families):")
+    if not queue.needs_review_backlog:
+        lines.append("  (none)")
+    else:
+        for item in queue.needs_review_backlog:
+            sign = item.family_key.split(":", 1)[-1]
+            lines.append(f"  {sign} · {item.fact_id}")
+            lines.append(f"    {item.canonical_text}")
+
+    return "\n".join(lines)

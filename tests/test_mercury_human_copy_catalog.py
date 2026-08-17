@@ -566,6 +566,236 @@ class TaurusFamilyS45BTests(unittest.TestCase):
         self.assertTrue(taurus_ids.isdisjoint(NEEDS_REVIEW_FACT_IDS))
 
 
+class SignReviewQueueS46Tests(unittest.TestCase):
+    def test_all_twelve_signs_appear_exactly_once(self):
+        from app.services.mercury_human_copy_catalog import (
+            SIGN_FAMILY_KEYS,
+            ZODIAC_SIGN_ORDER,
+            build_sign_review_queue,
+        )
+
+        queue = build_sign_review_queue()
+        keys = [entry.family_key for entry in queue.all_sign_families]
+        self.assertEqual(keys, list(SIGN_FAMILY_KEYS))
+        self.assertEqual(len(keys), 12)
+        self.assertEqual(len(set(keys)), 12)
+        self.assertEqual(
+            [entry.sign_name for entry in queue.all_sign_families],
+            list(ZODIAC_SIGN_ORDER),
+        )
+
+    def test_taurus_and_sagittarius_completion_flags(self):
+        from app.services.mercury_human_copy_catalog import build_sign_review_queue
+
+        queue = build_sign_review_queue()
+        by_key = {entry.family_key: entry for entry in queue.all_sign_families}
+        taurus = by_key["sign:Taurus"]
+        sag = by_key["sign:Sagittarius"]
+        self.assertTrue(taurus.is_review_complete)
+        self.assertTrue(taurus.is_presentation_ready_complete)
+        self.assertTrue(sag.is_review_complete)
+        self.assertFalse(sag.is_presentation_ready_complete)
+        self.assertEqual(sag.needs_review, 3)
+        self.assertEqual(sag.presentation_ready_count, 55)
+        completed_keys = {entry.family_key for entry in queue.completed_families}
+        self.assertIn("sign:Taurus", completed_keys)
+        self.assertIn("sign:Sagittarius", completed_keys)
+        incomplete_keys = {entry.family_key for entry in queue.incomplete_queue}
+        self.assertNotIn("sign:Taurus", incomplete_keys)
+        self.assertNotIn("sign:Sagittarius", incomplete_keys)
+
+    def test_queue_ordering_deterministic_and_workload_based(self):
+        from app.services.mercury_human_copy_catalog import (
+            _sign_review_priority_key,
+            build_sign_review_queue,
+        )
+
+        first = build_sign_review_queue()
+        second = build_sign_review_queue()
+        self.assertEqual(
+            [e.family_key for e in first.incomplete_queue],
+            [e.family_key for e in second.incomplete_queue],
+        )
+        self.assertEqual(
+            [b.family_keys for b in first.suggested_batches],
+            [b.family_keys for b in second.suggested_batches],
+        )
+        ordered = list(first.incomplete_queue)
+        self.assertEqual(
+            ordered,
+            sorted(ordered, key=_sign_review_priority_key),
+        )
+        # No polarity/orb/astrology weighting fields exist on the priority key.
+        sample_key = _sign_review_priority_key(ordered[0])
+        self.assertEqual(len(sample_key), 4)
+        self.assertIsInstance(sample_key[0], int)
+        self.assertIsInstance(sample_key[1], int)
+        self.assertIsInstance(sample_key[2], float)
+        self.assertIsInstance(sample_key[3], str)
+
+    def test_queue_priority_order_unchanged(self):
+        from app.services.mercury_human_copy_catalog import build_sign_review_queue
+
+        queue = build_sign_review_queue()
+        self.assertEqual(
+            [entry.sign_name for entry in queue.incomplete_queue],
+            [
+                "Capricorn",
+                "Aquarius",
+                "Pisces",
+                "Scorpio",
+                "Cancer",
+                "Virgo",
+                "Libra",
+                "Aries",
+                "Gemini",
+                "Leo",
+            ],
+        )
+
+    def test_suggested_batches_heaviest_lightest_partition(self):
+        from app.services.mercury_human_copy_catalog import build_sign_review_queue
+
+        queue = build_sign_review_queue()
+        incomplete_keys = [entry.family_key for entry in queue.incomplete_queue]
+        completed_keys = {entry.family_key for entry in queue.completed_families}
+        batch_keys: list[str] = []
+        for batch in queue.suggested_batches:
+            self.assertGreaterEqual(len(batch.family_keys), 1)
+            self.assertLessEqual(len(batch.family_keys), 2)
+            for key in batch.family_keys:
+                self.assertIn(key, incomplete_keys)
+                self.assertNotIn(key, completed_keys)
+                self.assertNotIn(key, batch_keys)
+                batch_keys.append(key)
+        self.assertEqual(sorted(batch_keys), sorted(incomplete_keys))
+        self.assertEqual(len(batch_keys), len(set(batch_keys)))
+        self.assertEqual(len(queue.suggested_batches), 5)
+        self.assertEqual(
+            [batch.unreviewed_workload for batch in queue.suggested_batches],
+            [117, 122, 121, 124, 125],
+        )
+        self.assertEqual(
+            [batch.sign_names for batch in queue.suggested_batches],
+            [
+                ("Capricorn", "Leo"),
+                ("Aquarius", "Gemini"),
+                ("Pisces", "Aries"),
+                ("Scorpio", "Libra"),
+                ("Cancer", "Virgo"),
+            ],
+        )
+        # Recommended totals come from live catalog fields, not hardcodes in packer.
+        by_name = {entry.sign_name: entry for entry in queue.incomplete_queue}
+        expected_recommended = [
+            by_name["Capricorn"].review_recommended_unreviewed
+            + by_name["Leo"].review_recommended_unreviewed,
+            by_name["Aquarius"].review_recommended_unreviewed
+            + by_name["Gemini"].review_recommended_unreviewed,
+            by_name["Pisces"].review_recommended_unreviewed
+            + by_name["Aries"].review_recommended_unreviewed,
+            by_name["Scorpio"].review_recommended_unreviewed
+            + by_name["Libra"].review_recommended_unreviewed,
+            by_name["Cancer"].review_recommended_unreviewed
+            + by_name["Virgo"].review_recommended_unreviewed,
+        ]
+        self.assertEqual(
+            [batch.review_recommended_workload for batch in queue.suggested_batches],
+            expected_recommended,
+        )
+        self.assertEqual(expected_recommended, [18, 26, 23, 18, 20])
+        workloads = [batch.unreviewed_workload for batch in queue.suggested_batches]
+        self.assertEqual(max(workloads) - min(workloads), 8)
+
+    def test_pack_heaviest_lightest_and_odd_singleton(self):
+        from app.services.mercury_human_copy_catalog import (
+            SignReviewQueueEntry,
+            _pack_sign_batches,
+        )
+
+        def entry(name: str, unreviewed: int) -> SignReviewQueueEntry:
+            return SignReviewQueueEntry(
+                family_key=f"sign:{name}",
+                sign_name=name,
+                total_facts=unreviewed,
+                approved_override=0,
+                approved_raw=0,
+                needs_review=0,
+                unreviewed=unreviewed,
+                review_recommended_unreviewed=0,
+                reviewed_count=0,
+                presentation_ready_count=0,
+                review_coverage=0.0,
+                presentation_ready_coverage=0.0,
+                is_review_complete=False,
+                is_presentation_ready_complete=False,
+                estimated_review_load=(unreviewed, 0, 0),
+            )
+
+        # Priority-sorted stand-ins: heaviest first.
+        odd = (
+            entry("H1", 90),
+            entry("H2", 80),
+            entry("M", 50),
+            entry("L2", 40),
+            entry("L1", 30),
+        )
+        batches = _pack_sign_batches(odd)
+        self.assertEqual(
+            [b.sign_names for b in batches],
+            [("H1", "L1"), ("H2", "L2"), ("M",)],
+        )
+        self.assertEqual(
+            [b.unreviewed_workload for b in batches],
+            [120, 120, 50],
+        )
+        # Batching uses unreviewed workload ends only — no element/modality fields.
+        even = (entry("A", 10), entry("B", 8), entry("C", 6), entry("D", 4))
+        even_batches = _pack_sign_batches(even)
+        self.assertEqual(
+            [b.sign_names for b in even_batches],
+            [("A", "D"), ("B", "C")],
+        )
+
+    def test_needs_review_backlog_contains_sagittarius_three(self):
+        from app.services.mercury_human_copy_catalog import build_sign_review_queue
+
+        queue = build_sign_review_queue()
+        backlog_ids = {item.fact_id for item in queue.needs_review_backlog}
+        self.assertEqual(
+            backlog_ids,
+            {
+                "sag_bio_impartiality_disrupted",
+                "sag_bio_learnability_disrupted",
+                "sag_bio_major_exile",
+            },
+        )
+        for item in queue.needs_review_backlog:
+            self.assertEqual(item.family_key, "sign:Sagittarius")
+            self.assertTrue(item.canonical_text)
+
+    def test_queue_does_not_mutate_registries_or_totals(self):
+        from app.services.mercury_human_copy_catalog import (
+            APPROVED_RAW_FACT_IDS,
+            NEEDS_REVIEW_FACT_IDS,
+            build_human_copy_catalog,
+            build_sign_review_queue,
+        )
+
+        before_overrides = dict(HUMAN_COPY_OVERRIDES)
+        before_raw = set(APPROVED_RAW_FACT_IDS)
+        before_needs = set(NEEDS_REVIEW_FACT_IDS)
+        catalog = build_human_copy_catalog()
+        queue = build_sign_review_queue(catalog)
+        self.assertEqual(catalog.total_facts, 1590)
+        self.assertEqual(dict(HUMAN_COPY_OVERRIDES), before_overrides)
+        self.assertEqual(set(APPROVED_RAW_FACT_IDS), before_raw)
+        self.assertEqual(set(NEEDS_REVIEW_FACT_IDS), before_needs)
+        self.assertEqual(queue.review_complete_family_count, 2)
+        self.assertEqual(queue.presentation_ready_complete_family_count, 1)
+        self.assertEqual(len(queue.incomplete_queue), 10)
+
+
 class RuntimeRegressionTests(unittest.TestCase):
     def test_human_ui_fallback_unchanged(self):
         # Override path.
