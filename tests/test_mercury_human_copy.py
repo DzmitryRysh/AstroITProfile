@@ -100,8 +100,8 @@ class HumanCopyModuleTests(unittest.TestCase):
         self.assertNotIn("unmapped_x", result)
 
     def test_pilot_override_count(self):
-        # S4.0 (11) + S4.2 (25) + S4.2.1 (5) + S4.2.2 Dzmitry (23).
-        self.assertEqual(len(HUMAN_COPY_OVERRIDES), 64)
+        # S4.0–S4.2.2 (64) + S4.4B Sagittarius family (24).
+        self.assertEqual(len(HUMAN_COPY_OVERRIDES), 88)
 
     def test_s42_override_ids_exist_and_raw_text_unchanged(self):
         by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
@@ -524,6 +524,36 @@ class HumanCopyModuleTests(unittest.TestCase):
                 HUMAN_COPY_OVERRIDES[fact_id],
             )
             self.assertNotEqual(synthesis.facts_by_id[fact_id].text, HUMAN_COPY_OVERRIDES[fact_id])
+
+    def test_s44b_sagittarius_overrides_and_raw_invariant(self):
+        by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
+        self.assertEqual(
+            HUMAN_COPY_OVERRIDES["sag_bio_afflicted_coarse_rude_communication"],
+            "Communication can become coarse or rude.",
+        )
+        afflicted_raw = by_id["sag_bio_afflicted_coarse_rude_communication"].text
+        human = get_human_fact_text(_fact(
+            "sag_bio_afflicted_coarse_rude_communication", afflicted_raw
+        ))
+        self.assertIn("hard_aspected proxy", afflicted_raw)
+        self.assertIn("при поражении", afflicted_raw)
+        self.assertNotIn("hard_aspected", human)
+        self.assertNotIn("при поражении", human)
+        self.assertEqual(afflicted_raw, by_id["sag_bio_afflicted_coarse_rude_communication"].text)
+
+        occupation = HUMAN_COPY_OVERRIDES["sag_bio_occupation_associations"]
+        self.assertIn("not career assignments", occupation)
+        self.assertEqual(
+            get_human_fact_text(
+                _fact(
+                    "sag_tendency_to_attach_labels",
+                    by_id["sag_tendency_to_attach_labels"].text,
+                )
+            ),
+            "Tendency to attach labels.",
+        )
+        self.assertNotIn("sag_tendency_to_attach_labels", HUMAN_COPY_OVERRIDES)
+        self.assertNotIn("sag_bio_major_exile", HUMAN_COPY_OVERRIDES)
 
 
 if __name__ == "__main__":

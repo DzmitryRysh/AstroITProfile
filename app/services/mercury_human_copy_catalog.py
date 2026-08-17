@@ -34,9 +34,10 @@ ALL_REVIEW_STATUSES: tuple[str, ...] = (
 )
 
 # Explicit presentation decisions only (not overrides — those live in
-# HUMAN_COPY_OVERRIDES). Seeded from live S4 review of unique canonical texts.
+# HUMAN_COPY_OVERRIDES). S4.3 seed + S4.4B Sagittarius family review.
 APPROVED_RAW_FACT_IDS: frozenset[str] = frozenset(
     {
+        # S4.3 seed
         "pluto_sq_strong_persuasiveness",
         "pluto_sq_powerful_words",
         "pluto_sq_debate_ability",
@@ -52,12 +53,32 @@ APPROVED_RAW_FACT_IDS: frozenset[str] = frozenset(
         "uranus_cj_spontaneous_creativity",
         "mars_tr_persuasive",
         "jupiter_sx_oratory_and_persuasion",
+        # S4.4B Sagittarius approved_raw
+        "sag_searches_higher_meaning_in_ordinary",
+        "sag_bio_central_idea_grasping",
+        "sag_bio_independent_research_learning",
+        "sag_bio_learning_through_teaching",
+        "sag_bio_monologue_learning",
+        "sag_difficulty_theory_to_practice",
+        "sag_theory_to_practice_gap_risk",
+        "sag_learning_encyclopedias",
+        "sag_learning_pass_knowledge_to_others",
+        "sag_learning_setting_a_goal",
+        "sag_learning_university_textbooks",
+        "sag_teacher_like_with_siblings",
+        "sag_tendency_to_attach_labels",
     }
 )
 
-# Live-reviewed unresolved presentation cases. Empty is intentional for S4.3.
-NEEDS_REVIEW_FACT_IDS: frozenset[str] = frozenset()
-
+# Explicit needs_review decisions. S4.4B holds framework/status statements
+# for a later cross-family presentation policy.
+NEEDS_REVIEW_FACT_IDS: frozenset[str] = frozenset(
+    {
+        "sag_bio_impartiality_disrupted",
+        "sag_bio_learnability_disrupted",
+        "sag_bio_major_exile",
+    }
+)
 
 class HumanCopyCatalogError(ValueError):
     """Raised when presentation review registries are inconsistent."""

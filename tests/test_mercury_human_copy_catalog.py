@@ -45,6 +45,92 @@ SEED_APPROVED_RAW_EXPECTED: dict[str, str] = {
     "jupiter_sx_oratory_and_persuasion": "Oratory and persuasion.",
 }
 
+S44B_SAGITTARIUS_APPROVED_RAW: tuple[str, ...] = (
+    "sag_searches_higher_meaning_in_ordinary",
+    "sag_bio_central_idea_grasping",
+    "sag_bio_independent_research_learning",
+    "sag_bio_learning_through_teaching",
+    "sag_bio_monologue_learning",
+    "sag_difficulty_theory_to_practice",
+    "sag_theory_to_practice_gap_risk",
+    "sag_learning_encyclopedias",
+    "sag_learning_pass_knowledge_to_others",
+    "sag_learning_setting_a_goal",
+    "sag_learning_university_textbooks",
+    "sag_teacher_like_with_siblings",
+    "sag_tendency_to_attach_labels",
+)
+
+S44B_SAGITTARIUS_OVERRIDES: dict[str, str] = {
+    "sag_bio_afflicted_accuracy_problems": "Accuracy problems can appear.",
+    "sag_bio_afflicted_coarse_rude_communication": (
+        "Communication can become coarse or rude."
+    ),
+    "sag_bio_afflicted_common_sense_detachment": (
+        "Thinking may detach from common sense."
+    ),
+    "sag_bio_afflicted_dubious_philosophy_drift": (
+        "May drift toward dubious or murky philosophies."
+    ),
+    "sag_bio_afflicted_illusions": "May become prone to illusions.",
+    "sag_bio_afflicted_labeling": "May tend toward labeling others.",
+    "sag_bio_afflicted_memory_problems": "Memory problems can appear.",
+    "sag_bio_afflicted_practice_detachment": (
+        "Religious or philosophical frameworks may detach thinking from practice."
+    ),
+    "sag_bio_afflicted_strange_religion_drift": (
+        "May drift toward strange religions."
+    ),
+    "sag_bio_expert_aptitude": "May show aptitude for expert-level work.",
+    "sag_bio_foreign_language_aptitude": (
+        "May show aptitude for foreign languages."
+    ),
+    "sag_bio_humanities_aptitude": "May show aptitude for the humanities.",
+    "sag_bio_pr_aptitude": "May show aptitude for PR.",
+    "sag_bio_teacher_instructor_quality": (
+        "May show teacher or instructor qualities."
+    ),
+    "sag_bio_authority_learning_motivation": (
+        "Learning may be motivated by authority."
+    ),
+    "sag_bio_fashion_learning_motivation": (
+        "Learning may be motivated by the chance to become fashionable."
+    ),
+    "sag_bio_status_display_learning_motivation": (
+        "Learning may be motivated by the chance to display status."
+    ),
+    "sag_bio_universal_wisdom_learning_motivation": (
+        "Learning may be motivated by a sense of touching higher or "
+        "universal wisdom."
+    ),
+    "sag_bio_fitting_facts_under_philosophy_ideology": (
+        "May fit or pull facts under a philosophy or ideology."
+    ),
+    "sag_calculation_errors_neglect_precision": (
+        "May make calculation errors or neglect precision."
+    ),
+    "sag_learning_practical_life_motive": (
+        "Finding a practical life motive for why the learning matters "
+        "supports learning."
+    ),
+    "sag_lecturing_labeling_siblings": "May lecture or label siblings.",
+    "sag_seeks_socially_significant_fashionable": (
+        "May seek socially significant or fashionable people or themes in "
+        "the environment."
+    ),
+    "sag_bio_occupation_associations": (
+        "Occupational themes associated with this placement can include "
+        "science, expertise, writing, politics, and propaganda-oriented "
+        "journalism — not career assignments."
+    ),
+}
+
+S44B_SAGITTARIUS_NEEDS_REVIEW: tuple[str, ...] = (
+    "sag_bio_impartiality_disrupted",
+    "sag_bio_learnability_disrupted",
+    "sag_bio_major_exile",
+)
+
 SKIPPED_AMBIGUOUS_SEED_TEXTS: tuple[str, ...] = (
     "Technical talent.",
     "Strong sense of humor.",
@@ -81,10 +167,6 @@ class CatalogIntegrityTests(unittest.TestCase):
         self.assertFalse(entry_raw.uses_override)
         self.assertEqual(entry_raw.human_text, entry_raw.canonical_text)
 
-        # needs_review empty in S4.3; simulate derivation path.
-        self.assertEqual(NEEDS_REVIEW_FACT_IDS, frozenset())
-        self.assertEqual(derive_review_status("nonexistent_unreviewed_id"), STATUS_UNREVIEWED)
-
         unreviewed_id = next(
             fact.id
             for fact in ALL_SOURCE_FACTS
@@ -97,17 +179,27 @@ class CatalogIntegrityTests(unittest.TestCase):
         self.assertEqual(entry_unreviewed.human_text, entry_unreviewed.canonical_text)
 
         # needs_review: canonical fallback text, status remains needs_review (not ready).
-        probe_id = unreviewed_id
-        with unittest.mock.patch.object(
-            catalog_mod,
-            "NEEDS_REVIEW_FACT_IDS",
-            frozenset({probe_id}),
-        ):
-            self.assertEqual(catalog_mod.derive_review_status(probe_id), STATUS_NEEDS_REVIEW)
-            entry_needs = catalog_mod.build_catalog_entry(by_id[probe_id])
+        # Prefer a live needs_review ID when present (S4.4B+).
+        if NEEDS_REVIEW_FACT_IDS:
+            probe_id = next(iter(NEEDS_REVIEW_FACT_IDS))
+            entry_needs = build_catalog_entry(by_id[probe_id])
             self.assertEqual(entry_needs.review_status, STATUS_NEEDS_REVIEW)
             self.assertFalse(entry_needs.uses_override)
             self.assertEqual(entry_needs.human_text, entry_needs.canonical_text)
+        else:
+            probe_id = unreviewed_id
+            with unittest.mock.patch.object(
+                catalog_mod,
+                "NEEDS_REVIEW_FACT_IDS",
+                frozenset({probe_id}),
+            ):
+                self.assertEqual(
+                    catalog_mod.derive_review_status(probe_id), STATUS_NEEDS_REVIEW
+                )
+                entry_needs = catalog_mod.build_catalog_entry(by_id[probe_id])
+                self.assertEqual(entry_needs.review_status, STATUS_NEEDS_REVIEW)
+                self.assertFalse(entry_needs.uses_override)
+                self.assertEqual(entry_needs.human_text, entry_needs.canonical_text)
 
     def test_audit_does_not_auto_decide_status(self):
         by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
@@ -251,8 +343,9 @@ class CoverageAndFamilyTests(unittest.TestCase):
 class SeedApprovedRawTests(unittest.TestCase):
     def test_seeded_approved_raw_ids(self):
         by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
-        self.assertEqual(set(SEED_APPROVED_RAW_EXPECTED), set(APPROVED_RAW_FACT_IDS))
-        self.assertEqual(len(APPROVED_RAW_FACT_IDS), 15)
+        self.assertTrue(set(SEED_APPROVED_RAW_EXPECTED).issubset(APPROVED_RAW_FACT_IDS))
+        self.assertEqual(len(SEED_APPROVED_RAW_EXPECTED), 15)
+        self.assertEqual(len(APPROVED_RAW_FACT_IDS), 28)
         for fact_id, expected_text in SEED_APPROVED_RAW_EXPECTED.items():
             with self.subTest(fact_id=fact_id):
                 self.assertEqual(by_id[fact_id].text, expected_text)
@@ -269,6 +362,95 @@ class SeedApprovedRawTests(unittest.TestCase):
             self.assertGreaterEqual(len(by_text[text]), 2, text)
             for fact_id in by_text[text]:
                 self.assertNotIn(fact_id, APPROVED_RAW_FACT_IDS)
+
+
+class SagittariusFamilyS44BTests(unittest.TestCase):
+    def test_sagittarius_family_fully_reviewed(self):
+        report = build_human_copy_catalog()
+        family = next(f for f in report.families if f.family_key == "sign:Sagittarius")
+        self.assertEqual(family.total_facts, 58)
+        self.assertEqual(family.unreviewed, 0)
+        self.assertEqual(family.approved_override, 42)
+        self.assertEqual(family.approved_raw, 13)
+        self.assertEqual(family.needs_review, 3)
+        self.assertEqual(family.reviewed_count, 58)
+        self.assertEqual(family.presentation_ready_count, 55)
+        self.assertEqual(family.review_coverage, 1.0)
+        self.assertAlmostEqual(family.presentation_ready_coverage, 55 / 58, places=6)
+
+    def test_sagittarius_approved_raw_ids(self):
+        by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
+        self.assertEqual(len(S44B_SAGITTARIUS_APPROVED_RAW), 13)
+        for fact_id in S44B_SAGITTARIUS_APPROVED_RAW:
+            with self.subTest(fact_id=fact_id):
+                self.assertIn(fact_id, APPROVED_RAW_FACT_IDS)
+                self.assertNotIn(fact_id, HUMAN_COPY_OVERRIDES)
+                self.assertNotIn(fact_id, NEEDS_REVIEW_FACT_IDS)
+                entry = build_catalog_entry(by_id[fact_id])
+                self.assertEqual(entry.review_status, STATUS_APPROVED_RAW)
+                self.assertFalse(entry.uses_override)
+                self.assertEqual(entry.human_text, entry.canonical_text)
+                self.assertEqual(entry.canonical_text, by_id[fact_id].text)
+
+    def test_sagittarius_new_overrides(self):
+        by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
+        self.assertEqual(len(S44B_SAGITTARIUS_OVERRIDES), 24)
+        for fact_id, human in S44B_SAGITTARIUS_OVERRIDES.items():
+            with self.subTest(fact_id=fact_id):
+                self.assertIn(fact_id, by_id)
+                self.assertEqual(HUMAN_COPY_OVERRIDES[fact_id], human)
+                entry = build_catalog_entry(by_id[fact_id])
+                self.assertEqual(entry.review_status, STATUS_APPROVED_OVERRIDE)
+                self.assertTrue(entry.uses_override)
+                self.assertEqual(entry.human_text, human)
+                self.assertEqual(entry.canonical_text, by_id[fact_id].text)
+                self.assertNotEqual(entry.canonical_text, human)
+
+        afflicted = build_catalog_entry(by_id["sag_bio_afflicted_accuracy_problems"])
+        self.assertNotIn("hard_aspected", afflicted.human_text)
+        self.assertNotIn("при поражении", afflicted.human_text)
+        self.assertNotIn("Source affliction", afflicted.human_text)
+
+        aptitude = build_catalog_entry(by_id["sag_bio_expert_aptitude"])
+        self.assertNotIn("source-described", aptitude.human_text.lower())
+
+        motive = build_catalog_entry(by_id["sag_bio_authority_learning_motivation"])
+        self.assertEqual(motive.human_text, "Learning may be motivated by authority.")
+
+        occupation = build_catalog_entry(by_id["sag_bio_occupation_associations"])
+        self.assertIn("not career assignments", occupation.human_text)
+        self.assertNotIn("recommended career", occupation.human_text.lower())
+        self.assertNotIn("hiring", occupation.human_text.lower())
+
+    def test_sagittarius_needs_review_ids(self):
+        by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
+        self.assertEqual(set(S44B_SAGITTARIUS_NEEDS_REVIEW), set(NEEDS_REVIEW_FACT_IDS))
+        self.assertEqual(len(NEEDS_REVIEW_FACT_IDS), 3)
+        for fact_id in S44B_SAGITTARIUS_NEEDS_REVIEW:
+            with self.subTest(fact_id=fact_id):
+                self.assertNotIn(fact_id, HUMAN_COPY_OVERRIDES)
+                self.assertNotIn(fact_id, APPROVED_RAW_FACT_IDS)
+                entry = build_catalog_entry(by_id[fact_id])
+                self.assertEqual(entry.review_status, STATUS_NEEDS_REVIEW)
+                self.assertFalse(entry.uses_override)
+                self.assertEqual(entry.human_text, entry.canonical_text)
+
+    def test_global_totals_after_s44b(self):
+        report = build_human_copy_catalog()
+        self.assertEqual(report.total_facts, 1590)
+        self.assertEqual(report.approved_override_count, 88)
+        self.assertEqual(report.approved_raw_count, 28)
+        self.assertEqual(report.needs_review_count, 3)
+        self.assertEqual(report.unreviewed_count, 1471)
+        self.assertEqual(
+            report.approved_override_count
+            + report.approved_raw_count
+            + report.needs_review_count
+            + report.unreviewed_count,
+            1590,
+        )
+        self.assertEqual(report.reviewed_count, 119)
+        self.assertEqual(report.presentation_ready_count, 116)
 
 
 class RuntimeRegressionTests(unittest.TestCase):

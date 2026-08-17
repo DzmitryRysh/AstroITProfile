@@ -14,7 +14,7 @@ from collections.abc import Iterable
 from app.schemas.mercury_source_profile import SourceFact
 
 # Curated human-facing overrides. Keys are stable SourceFact.id values.
-# S4.0 + S4.2 + S4.2.1 + S4.2.2 Dzmitry polish. Presentation only.
+# S4.0–S4.2.2 + S4.4B Sagittarius family review. Presentation only.
 HUMAN_COPY_OVERRIDES: dict[str, str] = {
     # --- S4.0 pilot ---
     "pluto_sq_conflictual_communication": (
@@ -224,6 +224,85 @@ HUMAN_COPY_OVERRIDES: dict[str, str] = {
     ),
     "jupiter_sx_native_and_foreign_languages": (
         "Communication may have a strong connection with foreign languages."
+    ),
+    # --- S4.4B Sagittarius family review (24) ---
+    "sag_bio_afflicted_accuracy_problems": (
+        "Accuracy problems can appear."
+    ),
+    "sag_bio_afflicted_coarse_rude_communication": (
+        "Communication can become coarse or rude."
+    ),
+    "sag_bio_afflicted_common_sense_detachment": (
+        "Thinking may detach from common sense."
+    ),
+    "sag_bio_afflicted_dubious_philosophy_drift": (
+        "May drift toward dubious or murky philosophies."
+    ),
+    "sag_bio_afflicted_illusions": (
+        "May become prone to illusions."
+    ),
+    "sag_bio_afflicted_labeling": (
+        "May tend toward labeling others."
+    ),
+    "sag_bio_afflicted_memory_problems": (
+        "Memory problems can appear."
+    ),
+    "sag_bio_afflicted_practice_detachment": (
+        "Religious or philosophical frameworks may detach thinking from "
+        "practice."
+    ),
+    "sag_bio_afflicted_strange_religion_drift": (
+        "May drift toward strange religions."
+    ),
+    "sag_bio_expert_aptitude": (
+        "May show aptitude for expert-level work."
+    ),
+    "sag_bio_foreign_language_aptitude": (
+        "May show aptitude for foreign languages."
+    ),
+    "sag_bio_humanities_aptitude": (
+        "May show aptitude for the humanities."
+    ),
+    "sag_bio_pr_aptitude": (
+        "May show aptitude for PR."
+    ),
+    "sag_bio_teacher_instructor_quality": (
+        "May show teacher or instructor qualities."
+    ),
+    "sag_bio_authority_learning_motivation": (
+        "Learning may be motivated by authority."
+    ),
+    "sag_bio_fashion_learning_motivation": (
+        "Learning may be motivated by the chance to become fashionable."
+    ),
+    "sag_bio_status_display_learning_motivation": (
+        "Learning may be motivated by the chance to display status."
+    ),
+    "sag_bio_universal_wisdom_learning_motivation": (
+        "Learning may be motivated by a sense of touching higher or "
+        "universal wisdom."
+    ),
+    "sag_bio_fitting_facts_under_philosophy_ideology": (
+        "May fit or pull facts under a philosophy or ideology."
+    ),
+    "sag_calculation_errors_neglect_precision": (
+        "May make calculation errors or neglect precision."
+    ),
+    "sag_learning_practical_life_motive": (
+        "Finding a practical life motive for why the learning matters "
+        "supports learning."
+    ),
+    "sag_lecturing_labeling_siblings": (
+        "May lecture or label siblings."
+    ),
+    "sag_seeks_socially_significant_fashionable": (
+        "May seek socially significant or fashionable people or themes in "
+        "the environment."
+    ),
+    "sag_bio_occupation_associations": (
+        "Occupational themes associated with this placement can include "
+        "science, expertise, writing, politics, and propaganda-oriented "
+        "journalism — not career assignments."
     ),
 }
 
