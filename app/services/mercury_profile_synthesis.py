@@ -22,6 +22,7 @@ from app.schemas.mercury_source_profile import (
     SynthesisTension as SynthesisTensionSchema,
     SynthesisTraceability as SynthesisTraceabilitySchema,
 )
+from app.services.mercury_human_copy import presentation_overrides_for_facts
 
 DETAIL_ONLY_CATEGORIES = frozenset(
     {
@@ -117,6 +118,7 @@ class MercuryProfileSynthesis:
     source_details: tuple[SynthesisDetailBucket, ...]
     traceability: SynthesisTraceability
     facts_by_id: dict[str, SourceFact] = field(repr=False)
+    presentation_text_by_fact_id: dict[str, str] = field(default_factory=dict)
 
 
 def _provenance_key(fact: SourceFact) -> str:
@@ -434,6 +436,7 @@ def build_mercury_profile_synthesis(
         source_details=source_details,
         traceability=traceability,
         facts_by_id=facts_by_id,
+        presentation_text_by_fact_id=presentation_overrides_for_facts(canonical),
     )
 
 
@@ -509,6 +512,7 @@ def serialize_mercury_profile_synthesis(
             unclassified_fact_count=synthesis.traceability.unclassified_fact_count,
         ),
         facts_by_id=dict(synthesis.facts_by_id),
+        presentation_text_by_fact_id=dict(synthesis.presentation_text_by_fact_id),
     )
 
 

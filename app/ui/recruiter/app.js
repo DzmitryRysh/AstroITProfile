@@ -554,14 +554,26 @@
     return map;
   }
 
-  function renderPreviewFactItem(fact) {
+  function presentationTextMap(synthesis) {
+    return (synthesis && synthesis.presentation_text_by_fact_id) || {};
+  }
+
+  function humanFactText(fact, presentationMap) {
+    if (!fact) return "";
+    const map = presentationMap || {};
+    if (fact.id && map[fact.id]) return map[fact.id];
+    return fact.text;
+  }
+
+  function renderPreviewFactItem(fact, presentationMap) {
     if (!fact) return "";
     const isRisk = fact.polarity === "risk";
     const marker = isRisk
       ? `<span class="risk-mark" title="Possible difficulty">Risk</span>`
       : `<span class="fact-bullet" aria-hidden="true">•</span>`;
     const provenance = compactProvenanceLabel(`${fact.factor_type}:${fact.factor_key}`);
-    return `<li class="fact-item${isRisk ? " fact-risk" : ""}">${marker}<span class="fact-text">${escapeHtml(fact.text)}<span class="fact-provenance">${escapeHtml(provenance)}</span></span></li>`;
+    const text = humanFactText(fact, presentationMap);
+    return `<li class="fact-item${isRisk ? " fact-risk" : ""}">${marker}<span class="fact-text">${escapeHtml(text)}<span class="fact-provenance">${escapeHtml(provenance)}</span></span></li>`;
   }
 
   function renderStrongestPatterns(synthesis, audience, displayName) {
@@ -602,14 +614,15 @@
     </section>`;
   }
 
-  function renderGroupedFactItem(fact) {
+  function renderGroupedFactItem(fact, presentationMap) {
     if (!fact) return "";
     const isRisk = fact.polarity === "risk";
     const marker = isRisk
       ? `<span class="risk-mark" title="Possible difficulty">Risk</span>`
       : `<span class="fact-bullet" aria-hidden="true">•</span>`;
     // Factor heading already establishes provenance — do not repeat it on every row.
-    return `<li class="fact-item${isRisk ? " fact-risk" : ""}">${marker}<span class="fact-text">${escapeHtml(fact.text)}</span></li>`;
+    const text = humanFactText(fact, presentationMap);
+    return `<li class="fact-item${isRisk ? " fact-risk" : ""}">${marker}<span class="fact-text">${escapeHtml(text)}</span></li>`;
   }
 
   function factorTypeRank(factorType) {
@@ -645,14 +658,17 @@
       .map((key) => groups.get(key));
   }
 
-  function renderSectionFactorExplore(section, facts) {
+  function renderSectionFactorExplore(section, facts, presentationMap) {
     const groups = groupSectionFactsByFactor(section, facts);
     if (!groups.length) return "";
     const rows = groups.map((group) => {
       const label = factorCardTitle(group.factor_type, group.factor_key);
       const n = group.facts.length;
       const countLabel = n === 1 ? "1 observation" : `${n} observations`;
-      const items = group.facts.map(renderGroupedFactItem).filter(Boolean).join("");
+      const items = group.facts
+        .map((fact) => renderGroupedFactItem(fact, presentationMap))
+        .filter(Boolean)
+        .join("");
       return `<details class="section-factor-group">
         <summary>
           <span class="section-factor-label">${escapeHtml(label)}</span>
@@ -670,10 +686,10 @@
     </div>`;
   }
 
-  function renderSectionBody(section, facts) {
+  function renderSectionBody(section, facts, presentationMap) {
     const previewIds = section.preview_fact_ids || [];
     const previewItems = previewIds
-      .map((id) => renderPreviewFactItem(facts.get(id)))
+      .map((id) => renderPreviewFactItem(facts.get(id), presentationMap))
       .filter(Boolean)
       .join("");
     const total = Number(section.resolved_fact_count) || (section.resolved_fact_ids || []).length;
@@ -689,7 +705,7 @@
           <summary class="section-explore-summary">
             <span class="explore-all-label">${escapeHtml(exploreLabel)}</span>
           </summary>
-          ${renderSectionFactorExplore(section, facts)}
+          ${renderSectionFactorExplore(section, facts, presentationMap)}
           <button type="button" class="section-show-less" onclick="this.closest('details.section-explore').open=false">Show less</button>
         </details>`
       : "";
@@ -703,6 +719,7 @@
   function renderSynthesisSections(synthesis, audience) {
     if (!synthesis || !synthesis.sections) return "";
     const facts = synthesisFactMap(synthesis);
+    const presentation = presentationTextMap(synthesis);
     return (synthesis.sections || []).map((section) => {
       if (!section.resolved_fact_count) return "";
       // Watch-outs render separately as a secondary collapsed block.
@@ -710,7 +727,7 @@
       const title = sectionDisplayTitle(section, audience);
       return `<section class="panel synthesis-section level-1" data-section-key="${escapeHtml(section.key)}">
         <div class="panel-head"><h2>${escapeHtml(title)}</h2></div>
-        ${renderSectionBody(section, facts)}
+        ${renderSectionBody(section, facts, presentation)}
       </section>`;
     }).join("");
   }
@@ -720,6 +737,7 @@
     const section = (synthesis.sections || []).find((item) => item.key === "context_risks");
     if (!section || !section.resolved_fact_count) return "";
     const facts = synthesisFactMap(synthesis);
+    const presentation = presentationTextMap(synthesis);
     const title = sectionDisplayTitle(section, audience);
     const countLabel = section.resolved_fact_count === 1
       ? "1 source-backed observation"
@@ -731,7 +749,7 @@
           <span class="factor-summary-meta">${escapeHtml(countLabel)}</span>
         </summary>
         <div class="watchouts-body">
-          ${renderSectionBody(section, facts)}
+          ${renderSectionBody(section, facts, presentation)}
         </div>
       </details>
     </section>`;

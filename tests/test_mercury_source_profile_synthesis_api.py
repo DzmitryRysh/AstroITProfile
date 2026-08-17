@@ -191,6 +191,56 @@ class MercurySourceProfileSynthesisApiTests(unittest.TestCase):
         self.assertIsNone(raw.synthesis)
 
 
+class MercuryHumanPresentationApiTests(unittest.TestCase):
+    def test_presentation_map_additive_raw_intact(self):
+        from app.services.mercury_human_copy import HUMAN_COPY_OVERRIDES
+
+        response = create_mercury_source_profile(_avdey_request())
+        synthesis = response.synthesis
+        self.assertIsNotNone(synthesis)
+
+        conflict_id = "pluto_sq_conflictual_communication"
+        raw = "Toxic conflictual atmosphere around communication."
+        human = "Communication can become highly conflictual and toxic."
+        self.assertEqual(synthesis.facts_by_id[conflict_id].text, raw)
+        self.assertEqual(synthesis.presentation_text_by_fact_id[conflict_id], human)
+
+        for fact_id, text in synthesis.presentation_text_by_fact_id.items():
+            self.assertEqual(text, HUMAN_COPY_OVERRIDES[fact_id])
+            self.assertNotEqual(synthesis.facts_by_id[fact_id].text, text)
+
+        # Unoverridden facts are omitted from the presentation map.
+        plain = next(
+            fid
+            for fid, fact in synthesis.facts_by_id.items()
+            if fid not in HUMAN_COPY_OVERRIDES
+        )
+        self.assertNotIn(plain, synthesis.presentation_text_by_fact_id)
+
+        # Structural invariants unchanged vs raw build.
+        raw_profile = build_mercury_source_profile(_avdey_request())
+        self.assertEqual(
+            [s.signal for s in response.repeated_signals],
+            [s.signal for s in raw_profile.repeated_signals],
+        )
+        self.assertEqual(
+            [(c.tag_a, c.tag_b) for c in response.contrasting_signals],
+            [(c.tag_a, c.tag_b) for c in raw_profile.contrasting_signals],
+        )
+        self.assertEqual(response.coverage.status, raw_profile.coverage.status)
+        self.assertEqual(
+            synthesis.traceability.total_fact_count,
+            len(synthesis.facts_by_id),
+        )
+        unresolved = {f.id for f in synthesis.facts_by_id.values() if f.unresolved}
+        conditional = {
+            fid
+            for group in synthesis.conditional_details
+            for fid in group.fact_ids
+        }
+        self.assertEqual(unresolved, conditional)
+
+
 class MercurySynthesisProductAuditTests(unittest.TestCase):
     """UI-oriented stats for the five golden profiles (report helpers)."""
 

@@ -494,5 +494,118 @@ class SynthesisImmutabilityOfSourceLayerTests(unittest.TestCase):
         self.assertEqual(len(CONTRAST_PAIRS), 6)
 
 
+class SynthesisHumanPresentationCopyTests(unittest.TestCase):
+    """S4.0: additive presentation copy; canonical facts unchanged."""
+
+    EXPECTED_RAW = {
+        "pluto_sq_conflictual_communication": (
+            "Toxic conflictual atmosphere around communication."
+        ),
+        "pluto_sq_extremely_sharp_speech": (
+            "Razor-sharp speech with poisonous / venomous quality and high "
+            "potential to hurt through words."
+        ),
+        "leo_afflicted_superior_manner": (
+            "Source affliction tendency (activated via project hard_aspected "
+            "proxy for 'при поражении'): superior / lordly communication manner."
+        ),
+        "h1_support_intellectual_work": (
+            "Support for intellectual profession and transport-related profession."
+        ),
+    }
+
+    def test_presentation_mapping_additive_and_raw_preserved(self):
+        from app.services.mercury_human_copy import HUMAN_COPY_OVERRIDES
+
+        profile = _avdey()
+        before_repeats = [s.model_dump() for s in profile.repeated_signals]
+        before_contrasts = [c.model_dump() for c in profile.contrasting_signals]
+        before_counts = (
+            len(profile.sign_facts),
+            len(profile.house_facts),
+            len(profile.aspect_facts),
+            len(profile.motion_facts),
+        )
+        synthesis = build_mercury_profile_synthesis(profile)
+
+        # Presentation map only for curated overrides present in this profile.
+        for fact_id, human in synthesis.presentation_text_by_fact_id.items():
+            self.assertIn(fact_id, HUMAN_COPY_OVERRIDES)
+            self.assertEqual(human, HUMAN_COPY_OVERRIDES[fact_id])
+            self.assertIn(fact_id, synthesis.facts_by_id)
+            # Critical invariant: raw text remains canonical and differs from human.
+            self.assertNotEqual(
+                synthesis.facts_by_id[fact_id].text,
+                human,
+                fact_id,
+            )
+
+        for fact_id, raw in self.EXPECTED_RAW.items():
+            self.assertIn(fact_id, synthesis.facts_by_id)
+            self.assertEqual(synthesis.facts_by_id[fact_id].text, raw)
+            self.assertEqual(
+                synthesis.presentation_text_by_fact_id[fact_id],
+                HUMAN_COPY_OVERRIDES[fact_id],
+            )
+
+        # Unoverridden facts are not duplicated into the presentation map.
+        unoverridden = [
+            fid
+            for fid in synthesis.facts_by_id
+            if fid not in HUMAN_COPY_OVERRIDES
+        ]
+        self.assertTrue(unoverridden)
+        for fid in unoverridden:
+            self.assertNotIn(fid, synthesis.presentation_text_by_fact_id)
+
+        # Repeat / contrast / counts unchanged on source profile.
+        self.assertEqual(
+            [s.model_dump() for s in profile.repeated_signals],
+            before_repeats,
+        )
+        self.assertEqual(
+            [c.model_dump() for c in profile.contrasting_signals],
+            before_contrasts,
+        )
+        self.assertEqual(
+            (
+                len(profile.sign_facts),
+                len(profile.house_facts),
+                len(profile.aspect_facts),
+                len(profile.motion_facts),
+            ),
+            before_counts,
+        )
+        self.assertEqual(
+            len(synthesis.strongest_patterns),
+            len(profile.repeated_signals),
+        )
+
+    def test_golden_profiles_presentation_does_not_change_structure(self):
+        from app.services.mercury_human_copy import HUMAN_COPY_OVERRIDES
+
+        builders = {
+            "avdey": _avdey,
+            "vlad": _vlad,
+            "dzmitry": _dzmitry,
+            "andrey": _andrey,
+            "milka": _milka,
+        }
+        for name, builder in builders.items():
+            with self.subTest(name=name):
+                profile = builder()
+                synthesis = build_mercury_profile_synthesis(profile)
+                for fact_id, human in synthesis.presentation_text_by_fact_id.items():
+                    fact = synthesis.facts_by_id[fact_id]
+                    self.assertEqual(human, HUMAN_COPY_OVERRIDES[fact_id])
+                    self.assertNotEqual(fact.text, human)
+                self.assertEqual(
+                    len(synthesis.strongest_patterns),
+                    len(profile.repeated_signals),
+                )
+                self.assertEqual(len(synthesis.sections), 6)
+                self.assertEqual(synthesis.traceability.unclassified_fact_count, 0)
+
+
 if __name__ == "__main__":
     unittest.main()

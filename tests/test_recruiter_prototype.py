@@ -133,8 +133,10 @@ class RecruiterUxPolishTests(unittest.TestCase):
         self.assertIn("fact-risk", self.js)
         self.assertIn("motion-rx", self.js)
         self.assertIn("Retrograde", self.js)
-        # Presentation only — preserve source wording; no euphemism layer.
+        # Presentation only — preserve source wording in evidence; human copy is additive.
         self.assertIn("escapeHtml(fact.text)", self.js)
+        self.assertIn("humanFactText", self.js)
+        self.assertIn("presentation_text_by_fact_id", self.js)
         self.assertNotIn("communication challenge", self.js.lower())
         self.assertNotIn("confidence risk", self.js.lower())
         self.assertNotIn("red flags", self.js.lower())
@@ -223,7 +225,7 @@ class RecruiterUxPolishTests(unittest.TestCase):
         watchouts_fn = self.js.split("function renderContextWatchOuts", 1)[1].split(
             "function renderTensionRows", 1
         )[0]
-        self.assertIn("renderSectionBody(section, facts)", watchouts_fn)
+        self.assertIn("renderSectionBody(section, facts, presentation)", watchouts_fn)
         self.assertIn("watchouts-body", watchouts_fn)
 
         # Secondary details zone groups conditional / evidence / why.
@@ -437,10 +439,25 @@ class RecruiterUxPolishTests(unittest.TestCase):
         self.assertIn("1 observation", explore_fn)
         self.assertIn("observations", explore_fn)
         self.assertNotIn('class="section-factor-group" open', self.js)
-        # Expanded rows omit repeated provenance; risk preserved.
+        # Expanded rows omit repeated provenance; risk preserved; human copy preferred.
         self.assertNotIn("fact-provenance", grouped_item_fn)
         self.assertIn("risk-mark", grouped_item_fn)
-        self.assertIn("escapeHtml(fact.text)", grouped_item_fn)
+        self.assertIn("humanFactText(fact, presentationMap)", grouped_item_fn)
+        self.assertIn("escapeHtml(text)", grouped_item_fn)
+        # Preview prefers presentation copy when available.
+        preview_fn = self.js.split("function renderPreviewFactItem", 1)[1].split(
+            "function renderStrongestPatterns", 1
+        )[0]
+        self.assertIn("humanFactText(fact, presentationMap)", preview_fn)
+        self.assertIn("function humanFactText", self.js)
+        self.assertIn("presentationTextMap", self.js)
+        self.assertIn("presentation_text_by_fact_id", self.js)
+        # Full source evidence still uses RAW canonical text.
+        evidence_fn = self.js.split("function renderFactItem", 1)[1].split(
+            "function ", 1
+        )[0]
+        self.assertIn("escapeHtml(fact.text)", evidence_fn)
+        self.assertNotIn("humanFactText", evidence_fn)
         # Preview hidden while explore open (no duplicate visible IDs).
         self.assertIn(".section-body:has(> .section-explore[open]) > .section-preview", self.css)
         self.assertIn(".section-factor-group", self.css)

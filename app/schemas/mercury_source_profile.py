@@ -117,6 +117,7 @@ class MercuryProfileSynthesisResponse(BaseModel):
     source_details: list[SynthesisDetailBucket] = Field(default_factory=list)
     traceability: SynthesisTraceability
     facts_by_id: dict[str, SourceFact] = Field(default_factory=dict)
+    presentation_text_by_fact_id: dict[str, str] = Field(default_factory=dict)
 
 
 class MercurySourceProfileResponse(BaseModel):
