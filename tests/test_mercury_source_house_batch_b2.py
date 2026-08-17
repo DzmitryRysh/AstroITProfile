@@ -12,8 +12,10 @@ from app.services.mercury_source_knowledge import ALL_SOURCE_FACTS, SUPPORTED_HO
 from app.services.mercury_source_knowledge_b2_houses import (
     B2_HOUSE_PACKS,
     HOUSE_5,
+    HOUSE_5_BIO,
     HOUSE_6,
     HOUSE_7,
+    REF_H5_BIO,
     REF_H5_L7,
     REF_H6_L7,
     REF_H7_L7,
@@ -47,10 +49,12 @@ class HouseBatchB2CoverageTests(unittest.TestCase):
 
     def test_b2_source_references_and_counts(self):
         self.assertEqual(len(HOUSE_5), 14)
+        self.assertEqual(len(HOUSE_5_BIO), 13)
         self.assertEqual(len(HOUSE_6), 14)
         self.assertEqual(len(HOUSE_7), 16)
-        self.assertEqual(len(B2_HOUSE_PACKS), 44)
+        self.assertEqual(len(B2_HOUSE_PACKS), 57)
         self.assertTrue(all(item.source_reference == REF_H5_L7 for item in HOUSE_5))
+        self.assertTrue(all(item.source_reference == REF_H5_BIO for item in HOUSE_5_BIO))
         self.assertTrue(all(item.source_reference == REF_H6_L7 for item in HOUSE_6))
         self.assertTrue(all(item.source_reference == REF_H7_L7 for item in HOUSE_7))
         self.assertTrue(all(item.factor_type == "house" for item in B2_HOUSE_PACKS))
@@ -61,10 +65,10 @@ class HouseBatchB2CoverageTests(unittest.TestCase):
         self.assertEqual(dupes, [])
 
     def test_house_5_6_7_activate(self):
-        for house, expected_ref, sample_id in (
-            ("5", REF_H5_L7, "h5_creativity_connected_with_intellectual_work"),
-            ("6", REF_H6_L7, "h6_duties_performed_diligently"),
-            ("7", REF_H7_L7, "h7_master_of_dialogue"),
+        for house, expected_refs, sample_id in (
+            ("5", {REF_H5_L7, REF_H5_BIO}, "h5_creativity_connected_with_intellectual_work"),
+            ("6", {REF_H6_L7}, "h6_duties_performed_diligently"),
+            ("7", {REF_H7_L7}, "h7_master_of_dialogue"),
         ):
             with self.subTest(house=house):
                 profile = build_source_profile_from_factors(
@@ -80,8 +84,9 @@ class HouseBatchB2CoverageTests(unittest.TestCase):
                 self.assertIn(f"house:{house}", profile.coverage.covered_factors)
                 self.assertNotIn(f"house:{house}", profile.coverage.missing_factors)
                 self.assertIn(sample_id, _ids(profile.house_facts))
-                self.assertTrue(
-                    all(item.source_reference == expected_ref for item in profile.house_facts)
+                self.assertEqual(
+                    {item.source_reference for item in profile.house_facts},
+                    expected_refs,
                 )
 
 

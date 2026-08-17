@@ -1,11 +1,9 @@
-"""Mercury Source Profile v2 — House Batch B2 (Lesson 7 only).
+"""Mercury Source Profile v2 — House Batch B2.
 
-Houses: 5, 6, 7
-Source: Lesson 7 — Mercury
+House 5 has Lesson 7 + Bioastrology (dual-source parity).
+Houses 6 and 7 remain Lesson 7 only until their Bioastrology passes.
 
 SOURCE FIRST → SYNTHESIS SECOND.
-B2 is intentionally LESSON7_ONLY: no Bioastrology Mercury-in-house
-passages were supplied for these houses.
 
 Local SourceFactDef/_f avoid circular import with mercury_source_knowledge.py.
 """
@@ -56,6 +54,7 @@ def _f(
 
 
 REF_H5_L7 = "lesson7_mercury_house_5"
+REF_H5_BIO = "bioastrology_mercury_house_5"
 REF_H6_L7 = "lesson7_mercury_house_6"
 REF_H7_L7 = "lesson7_mercury_house_7"
 
@@ -122,6 +121,67 @@ HOUSE_5: tuple[SourceFactDef, ...] = (
        "Romantic topics in conversation can displace the feelings themselves.",
        "risk", "romantic_talk_displaces_feelings",
        source_reference=REF_H5_L7),
+)
+
+# ---------------------------------------------------------------------------
+# Mercury in House 5 — Bioastrology (dual-source parity; HOUSE_5 L7 is frozen)
+# ---------------------------------------------------------------------------
+HOUSE_5_BIO: tuple[SourceFactDef, ...] = (
+    _f("h5_bio_mercury_qualities_colored_by_children", "house", "5",
+       "source_specific",
+       "Mercury-related qualities may be colored by themes involving children.",
+       "neutral",
+       source_reference=REF_H5_BIO),
+    _f("h5_bio_mercury_qualities_colored_by_creativity", "house", "5",
+       "source_specific",
+       "Mercury-related qualities may be colored by creative themes.",
+       "neutral",
+       source_reference=REF_H5_BIO),
+    _f("h5_bio_mercury_qualities_colored_by_risk", "house", "5",
+       "source_specific",
+       "Mercury-related qualities may be colored by themes involving risk.",
+       "neutral",
+       source_reference=REF_H5_BIO),
+    _f("h5_bio_entrepreneurial_qualities", "house", "5", "work_application",
+       "May support entrepreneurial qualities.",
+       "strength",
+       source_reference=REF_H5_BIO),
+    _f("h5_bio_sales_qualities", "house", "5", "work_application",
+       "May support qualities associated with sales.",
+       "strength", "sales",
+       source_reference=REF_H5_BIO),
+    _f("h5_bio_gift_for_writing", "house", "5", "communication",
+       "May support a gift for writing.",
+       "strength",
+       source_reference=REF_H5_BIO),
+    _f("h5_bio_books_as_hobby", "house", "5", "learning",
+       "Books may be a prominent hobby interest.",
+       "neutral",
+       source_reference=REF_H5_BIO),
+    _f("h5_bio_trips_as_hobby", "house", "5", "mobility",
+       "Trips may be a prominent hobby interest.",
+       "neutral",
+       source_reference=REF_H5_BIO),
+    _f("h5_bio_learning_as_hobby", "house", "5", "learning",
+       "Learning may be a prominent hobby interest.",
+       "neutral",
+       source_reference=REF_H5_BIO),
+    _f("h5_bio_favorable_acquaintances", "house", "5", "environment",
+       "Favorable association with acquaintances.",
+       "strength",
+       source_reference=REF_H5_BIO),
+    _f("h5_bio_parallel_romances", "house", "5", "source_specific",
+       "There may be parallel romantic relationships.",
+       "neutral",
+       source_reference=REF_H5_BIO),
+    _f("h5_bio_twins_association", "house", "5", "source_specific",
+       "There may be an association with twins.",
+       "neutral",
+       source_reference=REF_H5_BIO),
+    _f("h5_bio_multiple_children_association", "house", "5", "source_specific",
+       "There may be an association with multiple children.",
+       "neutral",
+       source_reference=REF_H5_BIO),
 )
 
 # ---------------------------------------------------------------------------
@@ -269,5 +329,7 @@ HOUSE_7: tuple[SourceFactDef, ...] = (
        source_reference=REF_H7_L7, unresolved=True),
 )
 
-B2_HOUSE_PACKS: tuple[SourceFactDef, ...] = HOUSE_5 + HOUSE_6 + HOUSE_7
+B2_HOUSE_PACKS: tuple[SourceFactDef, ...] = (
+    HOUSE_5 + HOUSE_5_BIO + HOUSE_6 + HOUSE_7
+)
 B2_SUPPORTED_HOUSE_KEYS = frozenset({"5", "6", "7"})
