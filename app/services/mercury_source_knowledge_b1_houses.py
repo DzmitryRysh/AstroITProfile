@@ -1,11 +1,9 @@
-"""Mercury Source Profile v2 — House Batch B1 (Lesson 7 only).
+"""Mercury Source Profile v2 — House Batch B1.
 
-Houses: 2, 3, 4
-Source: Lesson 7 — Mercury in the chart
+House 2 has Lesson 7 + Bioastrology (dual-source parity).
+Houses 3, 4 remain Lesson 7 only until their Bioastrology passes.
 
 SOURCE FIRST → SYNTHESIS SECOND.
-B1 is intentionally LESSON7_ONLY: no Bioastrology Mercury-in-house
-passages were supplied for these houses.
 
 Local SourceFactDef/_f avoid circular import with mercury_source_knowledge.py.
 """
@@ -56,6 +54,7 @@ def _f(
 
 
 REF_H2_L7 = "lesson7_mercury_house_2"
+REF_H2_BIO = "bioastrology_mercury_house_2"
 REF_H3_L7 = "lesson7_mercury_house_3"
 REF_H4_L7 = "lesson7_mercury_house_4"
 
@@ -145,6 +144,44 @@ HOUSE_2: tuple[SourceFactDef, ...] = (
        "Source-described money-loss risk in House 2 context: excessive self-confidence.",
        "risk", "money_loss_overconfidence",
        source_reference=REF_H2_L7),
+)
+
+# ---------------------------------------------------------------------------
+# Mercury in House 2 — Bioastrology (dual-source parity; HOUSE_2 L7 is frozen)
+# ---------------------------------------------------------------------------
+HOUSE_2_BIO: tuple[SourceFactDef, ...] = (
+    _f("h2_bio_intellect_becomes_practical_applied", "house", "2", "thinking",
+       "Over time, intellect may become more practical and applied.",
+       "neutral",
+       source_reference=REF_H2_BIO),
+    _f("h2_bio_intellect_oriented_toward_money", "house", "2", "thinking",
+       "Over time, intellect may become more oriented toward money.",
+       "neutral",
+       source_reference=REF_H2_BIO),
+    _f("h2_bio_intellect_oriented_toward_health", "house", "2", "thinking",
+       "Over time, intellect may become more oriented toward health.",
+       "neutral",
+       source_reference=REF_H2_BIO),
+    _f("h2_bio_favorable_earning_through_information", "house", "2", "work_application",
+       "Favorable earning potential through information.",
+       "strength",
+       source_reference=REF_H2_BIO),
+    _f("h2_bio_two_or_three_parallel_income_sources", "house", "2", "work_application",
+       "There may be two or three parallel sources of income.",
+       "neutral",
+       source_reference=REF_H2_BIO),
+    _f("h2_bio_intellectual_transport_profession", "house", "2", "work_application",
+       "Favorable association with intellectual and transport-related professions.",
+       "strength", "intellectual_work", "transport_profession",
+       source_reference=REF_H2_BIO),
+    _f("h2_bio_consultant_qualities", "house", "2", "work_application",
+       "May support qualities associated with consulting.",
+       "strength", "consulting",
+       source_reference=REF_H2_BIO),
+    _f("h2_bio_sales_qualities", "house", "2", "work_application",
+       "May support qualities associated with sales.",
+       "strength", "sales",
+       source_reference=REF_H2_BIO),
 )
 
 # ---------------------------------------------------------------------------
@@ -290,5 +327,5 @@ HOUSE_4: tuple[SourceFactDef, ...] = (
        source_reference=REF_H4_L7),
 )
 
-B1_HOUSE_PACKS: tuple[SourceFactDef, ...] = HOUSE_2 + HOUSE_3 + HOUSE_4
+B1_HOUSE_PACKS: tuple[SourceFactDef, ...] = HOUSE_2 + HOUSE_2_BIO + HOUSE_3 + HOUSE_4
 B1_SUPPORTED_HOUSE_KEYS = frozenset({"2", "3", "4"})
