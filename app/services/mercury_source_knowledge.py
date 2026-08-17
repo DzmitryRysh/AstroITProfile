@@ -17,6 +17,8 @@ Sign Batch A3 dual-source packs (Lesson 7 + Bioastrology):
 Leo has Lesson 7 + Bioastrology.
 Taurus / Sagittarius have Lesson 7 + Bioastrology (dual-source parity complete).
 
+House 1 has Lesson 7 + Bioastrology (dual-source parity).
+
 House Batch B1 (Lesson 7 only):
 - Houses 2, 3, 4
 
@@ -127,6 +129,7 @@ REF_LEO = "bioastrology_mercury_leo"
 REF_LEO_L7 = "lesson7_mercury_leo"
 REF_LEO_BIO = REF_LEO
 REF_H1 = "bioastrology_mercury_house_1"
+REF_H1_L7 = "lesson7_mercury_house_1"
 REF_RX = "methodology_mercury_retrograde"
 REF_PLUTO_SQ = "bioastrology_mercury_pluto_square"
 REF_SATURN_HARM = "bioastrology_mercury_saturn_harmonious"
@@ -459,6 +462,121 @@ HOUSE_1: tuple[SourceFactDef, ...] = (
        "Support for sales qualities.",
        "strength", "sales",
        source_reference=REF_H1),
+)
+
+# ---------------------------------------------------------------------------
+# Mercury in House 1 — Lesson 7 (dual-source parity; Bio HOUSE_1 is frozen)
+# ---------------------------------------------------------------------------
+HOUSE_1_LESSON7: tuple[SourceFactDef, ...] = (
+    _f("h1_l7_very_high_communicativeness", "house", "1", "communication",
+       "Very high communicativeness.",
+       "strength",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_quick_situational_adjustment", "house", "1", "thinking",
+       "Quickly adjusts or restructures according to the situation.",
+       "strength",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_appears_younger_than_age_vs_peers", "house", "1", "communication",
+       "Appears younger than one's age, especially compared with peers.",
+       "neutral",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_active_curiosity", "house", "1", "thinking",
+       "Active curiosity.",
+       "strength",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_initiative_in_contacts", "house", "1", "communication",
+       "Initiative in contacts.",
+       "strength",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_talkativeness", "house", "1", "communication",
+       "Talkativeness.",
+       "neutral", "talkative",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_liveliness", "house", "1", "communication",
+       "Liveliness.",
+       "neutral",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_bodily_mobility", "house", "1", "source_specific",
+       "Bodily mobility.",
+       "neutral",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_quick_wittedness", "house", "1", "thinking",
+       "Quick-wittedness or mental resourcefulness.",
+       "strength",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_precise_movements", "house", "1", "source_specific",
+       "Movements are precise.",
+       "neutral",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_fast_movements", "house", "1", "source_specific",
+       "Movements are fast.",
+       "neutral",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_expressive_gesticulation", "house", "1", "communication",
+       "Good or expressive gesticulation.",
+       "neutral",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_teaching_association", "house", "1", "source_specific",
+       "Favorable association with teaching.",
+       "strength",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_commerce_association", "house", "1", "source_specific",
+       "Favorable association with commerce.",
+       "strength",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_accounting_association", "house", "1", "source_specific",
+       "Favorable association with accounting.",
+       "strength",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_secretary_association", "house", "1", "source_specific",
+       "Favorable association with working in the role of secretary.",
+       "strength",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_scientist_association", "house", "1", "source_specific",
+       "Favorable association with working in the role of scientist.",
+       "strength",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_mathematician_association", "house", "1", "source_specific",
+       "Favorable association with working in the role of mathematician.",
+       "strength",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_impression_of_fussiness", "house", "1", "risk",
+       "May give an impression of fussiness.",
+       "risk",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_nervousness", "house", "1", "risk",
+       "Nervousness.",
+       "risk",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_restlessness", "house", "1", "risk",
+       "Restlessness.",
+       "risk",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_undirected_activity", "house", "1", "risk",
+       "Activity may lack direction.",
+       "risk",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_starts_but_does_not_complete_tasks", "house", "1", "risk",
+       "May take on tasks but fail to bring them to completion.",
+       "risk",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_logic_displaces_intuition", "house", "1", "thinking",
+       "Logic may displace intuition.",
+       "risk",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_excessive_talkativeness", "house", "1", "risk",
+       "Excessive talkativeness.",
+       "risk",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_two_facedness", "house", "1", "risk",
+       "Two-facedness or duplicity.",
+       "risk",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_youthfulness_leads_to_lack_of_respect", "house", "1", "risk",
+       "Youthful appearance or quality may lead to others not taking the person "
+       "seriously.",
+       "risk",
+       source_reference=REF_H1_L7),
 )
 
 # ---------------------------------------------------------------------------
@@ -1821,6 +1939,7 @@ ALL_SOURCE_FACTS: tuple[SourceFactDef, ...] = (
     + LEO_GENERAL
     + LEO_AFFLICTED
     + HOUSE_1
+    + HOUSE_1_LESSON7
     + RETROGRADE
     + PLUTO_SQUARE
     + SATURN_TRINE
