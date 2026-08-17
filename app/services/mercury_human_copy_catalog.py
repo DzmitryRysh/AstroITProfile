@@ -34,7 +34,7 @@ ALL_REVIEW_STATUSES: tuple[str, ...] = (
 )
 
 # Explicit presentation decisions only (not overrides — those live in
-# HUMAN_COPY_OVERRIDES). S4.3 seed + S4.4B–S4.5B + S4.7B–S4.8B.
+# HUMAN_COPY_OVERRIDES). S4.3 seed + S4.4B–S4.5B + S4.7B–S4.9B.
 APPROVED_RAW_FACT_IDS: frozenset[str] = frozenset(
     {
         # S4.3 seed
@@ -228,12 +228,69 @@ APPROVED_RAW_FACT_IDS: frozenset[str] = frozenset(
         "gemini_l7_support_multi_person_communication",
         "gemini_l7_support_teachers",
         "gemini_l7_understands_quickly",
+        # S4.9B Pisces approved_raw
+        "pisces_bio_context_dependent_memory",
+        "pisces_bio_learning_audio",
+        "pisces_bio_learning_books",
+        "pisces_bio_learning_flow_state",
+        "pisces_bio_public_speaking_requires_preparation",
+        "pisces_bio_public_speaking_requires_training",
+        "pisces_bio_selective_memory",
+        "pisces_l7_calm_communication",
+        "pisces_l7_creative_reinterpretation_learning",
+        "pisces_l7_emotional_speech",
+        "pisces_l7_env_adapts_to_collective_stereotypes",
+        "pisces_l7_env_avoids_polemics",
+        "pisces_l7_env_possible_misunderstanding",
+        "pisces_l7_env_sibling_illusions",
+        "pisces_l7_env_soulful_siblings",
+        "pisces_l7_harmonious_communication",
+        "pisces_l7_image_based_perception",
+        "pisces_l7_learning_images",
+        "pisces_l7_learning_intuitive_impression",
+        "pisces_l7_learning_listening",
+        "pisces_l7_learning_photos",
+        "pisces_l7_learning_solitude",
+        "pisces_l7_learning_video",
+        "pisces_l7_overall_impression_over_isolated_fact",
+        "pisces_l7_speaks_through_parables",
+        "pisces_l7_speaks_through_riddles",
+        "pisces_l7_speech_may_lack_central_idea",
+        "pisces_l7_unclear_speech",
+        "pisces_l7_unconventional_learning",
+        # S4.9B Aries approved_raw
+        "aries_bio_learns_through_disputes",
+        "aries_bio_learns_through_practical_implementation",
+        "aries_bio_monologue_communication",
+        "aries_bio_strong_through_speed_not_depth",
+        "aries_bio_strong_through_speed_not_endurance",
+        "aries_bio_tends_not_to_hear_others",
+        "aries_l7_communication_as_polemics",
+        "aries_l7_detects_logic_weak_points",
+        "aries_l7_difficult_to_reach_through_dialogue",
+        "aries_l7_difficulty_hearing_others",
+        "aries_l7_env_contacts_impulsive",
+        "aries_l7_env_sees_opponent_in_others",
+        "aries_l7_env_sibling_argumentative",
+        "aries_l7_env_sibling_competitive",
+        "aries_l7_fast_thinking",
+        "aries_l7_hurried_thinking",
+        "aries_l7_inattentive_thinking",
+        "aries_l7_mediation_difficult",
+        "aries_l7_ordinary_communication_becomes_argument",
+        "aries_l7_perceives_interlocutors_as_opponents",
+        "aries_l7_primarily_hears_self",
+        "aries_l7_questioner_and_answerer",
+        "aries_l7_ready_answer",
+        "aries_l7_repeats_own_position",
+        "aries_l7_retains_existing_formulation",
+        "aries_l7_risk_haste_errors",
     }
 )
 
 # Explicit needs_review decisions. Cross-family presentation policy backlog:
 # placement/framework status, medical-adjacent, genius/rank-adjacent,
-# metaphysical source claims.
+# metaphysical source claims, sexual/intimate motivation wording.
 NEEDS_REVIEW_FACT_IDS: frozenset[str] = frozenset(
     {
         # Sagittarius framework/status
@@ -247,6 +304,15 @@ NEEDS_REVIEW_FACT_IDS: frozenset[str] = frozenset(
         "aquarius_l7_claircognizance",
         # Gemini framework/status (S4.8B)
         "gemini_bio_major_domicile_sync",
+        # Pisces framework / genius / metaphysical (S4.9B)
+        "pisces_bio_minor_exile",
+        "pisces_bio_universal_cosmic_intellect_synthesis",
+        "pisces_bio_unusually_strong_intuition",
+        "pisces_l7_high_intuition",
+        "pisces_l7_correct_decisions_nonrational_routes",
+        "pisces_l7_mystical_thinking",
+        # Aries sexual/intimate motivation (S4.9B)
+        "aries_bio_source_sexual_motivation_wording",
     }
 )
 

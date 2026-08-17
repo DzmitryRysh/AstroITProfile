@@ -345,7 +345,7 @@ class SeedApprovedRawTests(unittest.TestCase):
         by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
         self.assertTrue(set(SEED_APPROVED_RAW_EXPECTED).issubset(APPROVED_RAW_FACT_IDS))
         self.assertEqual(len(SEED_APPROVED_RAW_EXPECTED), 15)
-        self.assertEqual(len(APPROVED_RAW_FACT_IDS), 184)
+        self.assertEqual(len(APPROVED_RAW_FACT_IDS), 239)
         for fact_id, expected_text in SEED_APPROVED_RAW_EXPECTED.items():
             with self.subTest(fact_id=fact_id):
                 self.assertEqual(by_id[fact_id].text, expected_text)
@@ -440,13 +440,13 @@ class SagittariusFamilyS44BTests(unittest.TestCase):
                 self.assertFalse(entry.uses_override)
                 self.assertEqual(entry.human_text, entry.canonical_text)
 
-    def test_global_totals_after_s48b(self):
+    def test_global_totals_after_s49b(self):
         report = build_human_copy_catalog()
         self.assertEqual(report.total_facts, 1590)
-        self.assertEqual(report.approved_override_count, 192)
-        self.assertEqual(report.approved_raw_count, 184)
-        self.assertEqual(report.needs_review_count, 8)
-        self.assertEqual(report.unreviewed_count, 1206)
+        self.assertEqual(report.approved_override_count, 251)
+        self.assertEqual(report.approved_raw_count, 239)
+        self.assertEqual(report.needs_review_count, 15)
+        self.assertEqual(report.unreviewed_count, 1085)
         self.assertEqual(
             report.approved_override_count
             + report.approved_raw_count
@@ -454,8 +454,8 @@ class SagittariusFamilyS44BTests(unittest.TestCase):
             + report.unreviewed_count,
             1590,
         )
-        self.assertEqual(report.reviewed_count, 384)
-        self.assertEqual(report.presentation_ready_count, 376)
+        self.assertEqual(report.reviewed_count, 505)
+        self.assertEqual(report.presentation_ready_count, 490)
 
 
 class TaurusFamilyS45BTests(unittest.TestCase):
@@ -640,12 +640,10 @@ class SignReviewQueueS46Tests(unittest.TestCase):
         self.assertEqual(
             [entry.sign_name for entry in queue.incomplete_queue],
             [
-                "Pisces",
                 "Scorpio",
                 "Cancer",
                 "Virgo",
                 "Libra",
-                "Aries",
             ],
         )
         completed = {entry.sign_name for entry in queue.completed_families}
@@ -658,6 +656,8 @@ class SignReviewQueueS46Tests(unittest.TestCase):
                 "Leo",
                 "Aquarius",
                 "Gemini",
+                "Pisces",
+                "Aries",
             },
         )
 
@@ -671,10 +671,14 @@ class SignReviewQueueS46Tests(unittest.TestCase):
         self.assertNotIn("sign:Leo", incomplete_keys)
         self.assertNotIn("sign:Aquarius", incomplete_keys)
         self.assertNotIn("sign:Gemini", incomplete_keys)
+        self.assertNotIn("sign:Pisces", incomplete_keys)
+        self.assertNotIn("sign:Aries", incomplete_keys)
         self.assertIn("sign:Capricorn", completed_keys)
         self.assertIn("sign:Leo", completed_keys)
         self.assertIn("sign:Aquarius", completed_keys)
         self.assertIn("sign:Gemini", completed_keys)
+        self.assertIn("sign:Pisces", completed_keys)
+        self.assertIn("sign:Aries", completed_keys)
         batch_keys: list[str] = []
         for batch in queue.suggested_batches:
             self.assertGreaterEqual(len(batch.family_keys), 1)
@@ -769,7 +773,7 @@ class SignReviewQueueS46Tests(unittest.TestCase):
             [("A", "D"), ("B", "C")],
         )
 
-    def test_needs_review_backlog_contains_policy_eight(self):
+    def test_needs_review_backlog_contains_policy_fifteen(self):
         from app.services.mercury_human_copy_catalog import build_sign_review_queue
 
         queue = build_sign_review_queue()
@@ -785,9 +789,16 @@ class SignReviewQueueS46Tests(unittest.TestCase):
                 "aquarius_l7_source_genius_intellect_wording",
                 "aquarius_l7_claircognizance",
                 "gemini_bio_major_domicile_sync",
+                "pisces_bio_minor_exile",
+                "pisces_bio_universal_cosmic_intellect_synthesis",
+                "pisces_bio_unusually_strong_intuition",
+                "pisces_l7_high_intuition",
+                "pisces_l7_correct_decisions_nonrational_routes",
+                "pisces_l7_mystical_thinking",
+                "aries_bio_source_sexual_motivation_wording",
             },
         )
-        self.assertEqual(len(queue.needs_review_backlog), 8)
+        self.assertEqual(len(queue.needs_review_backlog), 15)
 
     def test_queue_does_not_mutate_registries_or_totals(self):
         from app.services.mercury_human_copy_catalog import (
@@ -806,9 +817,9 @@ class SignReviewQueueS46Tests(unittest.TestCase):
         self.assertEqual(dict(HUMAN_COPY_OVERRIDES), before_overrides)
         self.assertEqual(set(APPROVED_RAW_FACT_IDS), before_raw)
         self.assertEqual(set(NEEDS_REVIEW_FACT_IDS), before_needs)
-        self.assertEqual(queue.review_complete_family_count, 6)
+        self.assertEqual(queue.review_complete_family_count, 8)
         self.assertEqual(queue.presentation_ready_complete_family_count, 3)
-        self.assertEqual(len(queue.incomplete_queue), 6)
+        self.assertEqual(len(queue.incomplete_queue), 4)
 
 
 class CapricornLeoFamilyS47BTests(unittest.TestCase):
@@ -1112,19 +1123,14 @@ class CapricornLeoFamilyS47BTests(unittest.TestCase):
         self.assertTrue(
             set(APPROVED_RAW_FACT_IDS).isdisjoint(NEEDS_REVIEW_FACT_IDS)
         )
-        self.assertEqual(
-            set(NEEDS_REVIEW_FACT_IDS),
+        self.assertTrue(
             {
                 "sag_bio_impartiality_disrupted",
                 "sag_bio_learnability_disrupted",
                 "sag_bio_major_exile",
-                "aquarius_bio_afflicted_source_adhd_effect_wording",
-                "aquarius_bio_source_genius_intellect_archetype",
-                "aquarius_l7_source_genius_intellect_wording",
-                "aquarius_l7_claircognizance",
-                "gemini_bio_major_domicile_sync",
-            },
+            }.issubset(NEEDS_REVIEW_FACT_IDS)
         )
+        self.assertEqual(len(NEEDS_REVIEW_FACT_IDS), 15)
         # Capricorn common-sense approval is ID-local; Taurus twin stays raw.
         self.assertIn("capricorn_l7_common_sense_reliance", APPROVED_RAW_FACT_IDS)
         self.assertIn("taurus_relies_on_common_sense", APPROVED_RAW_FACT_IDS)
@@ -1455,7 +1461,383 @@ class AquariusGeminiFamilyS48BTests(unittest.TestCase):
         self.assertTrue(
             set(APPROVED_RAW_FACT_IDS).isdisjoint(NEEDS_REVIEW_FACT_IDS)
         )
-        self.assertEqual(len(NEEDS_REVIEW_FACT_IDS), 8)
+        self.assertEqual(len(NEEDS_REVIEW_FACT_IDS), 15)
+
+
+class PiscesAriesFamilyS49BTests(unittest.TestCase):
+    S49B_PISCES_APPROVED_RAW: tuple[str, ...] = (
+        "pisces_bio_context_dependent_memory",
+        "pisces_bio_learning_audio",
+        "pisces_bio_learning_books",
+        "pisces_bio_learning_flow_state",
+        "pisces_bio_public_speaking_requires_preparation",
+        "pisces_bio_public_speaking_requires_training",
+        "pisces_bio_selective_memory",
+        "pisces_l7_calm_communication",
+        "pisces_l7_creative_reinterpretation_learning",
+        "pisces_l7_emotional_speech",
+        "pisces_l7_env_adapts_to_collective_stereotypes",
+        "pisces_l7_env_avoids_polemics",
+        "pisces_l7_env_possible_misunderstanding",
+        "pisces_l7_env_sibling_illusions",
+        "pisces_l7_env_soulful_siblings",
+        "pisces_l7_harmonious_communication",
+        "pisces_l7_image_based_perception",
+        "pisces_l7_learning_images",
+        "pisces_l7_learning_intuitive_impression",
+        "pisces_l7_learning_listening",
+        "pisces_l7_learning_photos",
+        "pisces_l7_learning_solitude",
+        "pisces_l7_learning_video",
+        "pisces_l7_overall_impression_over_isolated_fact",
+        "pisces_l7_speaks_through_parables",
+        "pisces_l7_speaks_through_riddles",
+        "pisces_l7_speech_may_lack_central_idea",
+        "pisces_l7_unclear_speech",
+        "pisces_l7_unconventional_learning",
+    )
+
+    S49B_PISCES_OVERRIDES: dict[str, str] = {
+        "pisces_bio_afflicted_crumpled_speech": (
+            "Speech may become fragmented or poorly formed."
+        ),
+        "pisces_bio_afflicted_information_chaos": (
+            "Thinking can become contradictory and informationally chaotic."
+        ),
+        "pisces_bio_afflicted_lack_of_central_idea": (
+            "Thinking may lack a central idea."
+        ),
+        "pisces_bio_afflicted_lack_of_logic": "Thinking may lack logic.",
+        "pisces_bio_afflicted_lack_of_structure": (
+            "Thinking may lack structure."
+        ),
+        "pisces_bio_afflicted_lying_distortion": (
+            "Communication may involve lying or distortion."
+        ),
+        "pisces_bio_afflicted_mystification": (
+            "Communication may involve mystification."
+        ),
+        "pisces_bio_afflicted_suggestibility": (
+            "May become highly suggestible."
+        ),
+        "pisces_bio_afflicted_unclear_speech": "Speech may become unclear.",
+        "pisces_bio_afflicted_words_exceed_completed_actions": (
+            "Words may greatly exceed completed actions or results."
+        ),
+        "pisces_bio_humanities_aptitude": (
+            "May show aptitude for the humanities."
+        ),
+        "pisces_bio_languages_aptitude": (
+            "May show aptitude for languages."
+        ),
+        "pisces_bio_learning_emotional_psychological_attunement": (
+            "Learning through emotional or psychological attunement with real "
+            "people."
+        ),
+        "pisces_bio_learning_youtube_content_video": (
+            "Learning can happen through YouTube or other video content."
+        ),
+        "pisces_bio_lose_grip_on_factual_reality": (
+            "Thinking or learning can lose touch with factual reality."
+        ),
+        "pisces_bio_loses_disputes_insufficient_assertiveness": (
+            "May often lose disputes because of insufficient assertiveness or "
+            "forcefulness."
+        ),
+        "pisces_bio_lyrical_talent": "May show lyrical talent.",
+        "pisces_bio_memory_range_chart_context": (
+            "Memory may range from exceptional to very poor depending on chart "
+            "context."
+        ),
+        "pisces_bio_motivation_emotional_atmosphere": (
+            "Learning may be motivated by emotional atmosphere."
+        ),
+        "pisces_bio_motivation_kindred_people": (
+            "Learning may be motivated by a sense of being among intellectually "
+            "or emotionally kindred people."
+        ),
+        "pisces_bio_motivation_mystery": (
+            "Learning may be motivated by mystery."
+        ),
+        "pisces_bio_motivation_mystico_psychological_engagement": (
+            "Learning may be motivated by emotionally engaging mystical or "
+            "psychological material."
+        ),
+        "pisces_bio_poetic_talent": "May show poetic talent.",
+        "pisces_l7_captivity_in_illusions": (
+            "May become caught in illusions."
+        ),
+        "pisces_l7_compressed_crumpled_speech": (
+            "Speech may become compressed or disjointed."
+        ),
+        "pisces_l7_dev_alternate_speech_with_silence": (
+            "Growth area: alternate speech flow with conscious silence."
+        ),
+        "pisces_l7_dev_formulate_central_idea": (
+            "Growth area: formulate the central idea."
+        ),
+        "pisces_l7_exceptionally_strong_imagination": (
+            "May show exceptionally strong imagination."
+        ),
+        "pisces_l7_learning_absorbing_overall_impression": (
+            "Learning by absorbing or forming an overall impression."
+        ),
+        "pisces_l7_manipulation_susceptibility": (
+            "May be susceptible to manipulation."
+        ),
+        "pisces_l7_nonobvious_logic": (
+            "Logic may be difficult to comprehend or non-obvious."
+        ),
+        "pisces_l7_sensitivity_to_hidden_intonation": (
+            "Sensitivity to hidden or underlying intonation."
+        ),
+        "pisces_l7_soulful_communication": (
+            "Soulful or emotionally attuned communication."
+        ),
+        "pisces_l7_suggestibility": "May be suggestible.",
+        "pisces_l7_words_can_diverge_from_reality": (
+            "Words can diverge from reality."
+        ),
+    }
+
+    S49B_PISCES_NEEDS_REVIEW: tuple[str, ...] = (
+        "pisces_bio_minor_exile",
+        "pisces_bio_universal_cosmic_intellect_synthesis",
+        "pisces_bio_unusually_strong_intuition",
+        "pisces_l7_high_intuition",
+        "pisces_l7_correct_decisions_nonrational_routes",
+        "pisces_l7_mystical_thinking",
+    )
+
+    S49B_ARIES_APPROVED_RAW: tuple[str, ...] = (
+        "aries_bio_learns_through_disputes",
+        "aries_bio_learns_through_practical_implementation",
+        "aries_bio_monologue_communication",
+        "aries_bio_strong_through_speed_not_depth",
+        "aries_bio_strong_through_speed_not_endurance",
+        "aries_bio_tends_not_to_hear_others",
+        "aries_l7_communication_as_polemics",
+        "aries_l7_detects_logic_weak_points",
+        "aries_l7_difficult_to_reach_through_dialogue",
+        "aries_l7_difficulty_hearing_others",
+        "aries_l7_env_contacts_impulsive",
+        "aries_l7_env_sees_opponent_in_others",
+        "aries_l7_env_sibling_argumentative",
+        "aries_l7_env_sibling_competitive",
+        "aries_l7_fast_thinking",
+        "aries_l7_hurried_thinking",
+        "aries_l7_inattentive_thinking",
+        "aries_l7_mediation_difficult",
+        "aries_l7_ordinary_communication_becomes_argument",
+        "aries_l7_perceives_interlocutors_as_opponents",
+        "aries_l7_primarily_hears_self",
+        "aries_l7_questioner_and_answerer",
+        "aries_l7_ready_answer",
+        "aries_l7_repeats_own_position",
+        "aries_l7_retains_existing_formulation",
+        "aries_l7_risk_haste_errors",
+    )
+
+    S49B_ARIES_OVERRIDES: dict[str, str] = {
+        "aries_bio_ability_to_argue": (
+            "May show an ability or tendency to argue."
+        ),
+        "aries_bio_engineering_ability": (
+            "May show engineering ability or potential."
+        ),
+        "aries_bio_learns_through_trial_and_error": (
+            "Learns through trial and error."
+        ),
+        "aries_bio_legal_ability": (
+            "May show legal ability or potential."
+        ),
+        "aries_bio_martian_speed_coloring": (
+            "Thinking, communication, and learning may be colored by speed and "
+            "urgency."
+        ),
+        "aries_bio_motivation_challenge": (
+            "Learning may be motivated by challenge."
+        ),
+        "aries_bio_motivation_contest_challenge": (
+            "Learning may be motivated by being challenged to a fight or contest."
+        ),
+        "aries_bio_motivation_obstacle": (
+            "Learning may be motivated by an obstacle."
+        ),
+        "aries_bio_oratory_ability": (
+            "May show oratory ability or potential."
+        ),
+        "aries_bio_sales_ability": (
+            "May show sales ability or potential."
+        ),
+        "aries_bio_technical_practicality": (
+            "Thinking and learning may be practical and technically oriented."
+        ),
+        "aries_bio_vocal_ability": (
+            "May show vocal ability or potential."
+        ),
+        "aries_l7_dev_listen_without_interrupting": (
+            "Growth area: listen without interrupting."
+        ),
+        "aries_l7_dev_pause_before_forms": (
+            "Growth area: pause before filling documents or forms."
+        ),
+        "aries_l7_dev_slow_down_before_answering": (
+            "Growth area: slow down before answering."
+        ),
+        "aries_l7_dev_verify_dates": "Growth area: verify dates.",
+        "aries_l7_dev_verify_facts": "Growth area: verify facts.",
+        "aries_l7_learn_via_arguing": "Arguing supports learning.",
+        "aries_l7_learn_via_competition": "Competition supports learning.",
+        "aries_l7_learn_via_immediate_application": (
+            "Immediate real-life application of knowledge supports learning."
+        ),
+        "aries_l7_learn_via_practice": "Practice supports learning.",
+        "aries_l7_learn_via_proving": (
+            "Trying to prove a point can support learning."
+        ),
+        "aries_l7_may_disregard_facts_vs_theory": (
+            "May disregard facts when they do not fit an existing theory."
+        ),
+        "aries_l7_risk_not_hearing_other_viewpoint": (
+            "May have difficulty hearing another point of view while learning."
+        ),
+    }
+
+    def test_pisces_family_fully_reviewed(self):
+        report = build_human_copy_catalog()
+        family = next(f for f in report.families if f.family_key == "sign:Pisces")
+        self.assertEqual(family.total_facts, 71)
+        self.assertEqual(family.approved_override, 36)
+        self.assertEqual(family.approved_raw, 29)
+        self.assertEqual(family.needs_review, 6)
+        self.assertEqual(family.unreviewed, 0)
+        self.assertEqual(family.reviewed_count, 71)
+        self.assertEqual(family.presentation_ready_count, 65)
+        self.assertEqual(family.review_coverage, 1.0)
+        self.assertEqual(family.presentation_ready_coverage, round(65 / 71, 6))
+
+    def test_aries_family_fully_reviewed(self):
+        report = build_human_copy_catalog()
+        family = next(f for f in report.families if f.family_key == "sign:Aries")
+        self.assertEqual(family.total_facts, 51)
+        self.assertEqual(family.approved_override, 24)
+        self.assertEqual(family.approved_raw, 26)
+        self.assertEqual(family.needs_review, 1)
+        self.assertEqual(family.unreviewed, 0)
+        self.assertEqual(family.reviewed_count, 51)
+        self.assertEqual(family.presentation_ready_count, 50)
+        self.assertEqual(family.review_coverage, 1.0)
+        self.assertEqual(family.presentation_ready_coverage, round(50 / 51, 6))
+
+    def test_s49b_registries_and_wording_corrections(self):
+        by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
+        self.assertEqual(len(self.S49B_PISCES_APPROVED_RAW), 29)
+        self.assertEqual(len(self.S49B_PISCES_OVERRIDES), 35)
+        self.assertEqual(len(self.S49B_PISCES_NEEDS_REVIEW), 6)
+        self.assertEqual(len(self.S49B_ARIES_APPROVED_RAW), 26)
+        self.assertEqual(len(self.S49B_ARIES_OVERRIDES), 24)
+        for fact_id in (
+            *self.S49B_PISCES_APPROVED_RAW,
+            *self.S49B_ARIES_APPROVED_RAW,
+        ):
+            with self.subTest(raw=fact_id):
+                self.assertIn(fact_id, APPROVED_RAW_FACT_IDS)
+                self.assertNotIn(fact_id, HUMAN_COPY_OVERRIDES)
+                self.assertNotIn(fact_id, NEEDS_REVIEW_FACT_IDS)
+                entry = build_catalog_entry(by_id[fact_id])
+                self.assertEqual(entry.review_status, STATUS_APPROVED_RAW)
+                self.assertEqual(entry.human_text, entry.canonical_text)
+        for fact_id, human in {
+            **self.S49B_PISCES_OVERRIDES,
+            **self.S49B_ARIES_OVERRIDES,
+        }.items():
+            with self.subTest(override=fact_id):
+                self.assertEqual(HUMAN_COPY_OVERRIDES[fact_id], human)
+                self.assertNotIn(fact_id, APPROVED_RAW_FACT_IDS)
+                self.assertNotIn(fact_id, NEEDS_REVIEW_FACT_IDS)
+                entry = build_catalog_entry(by_id[fact_id])
+                self.assertEqual(entry.review_status, STATUS_APPROVED_OVERRIDE)
+                self.assertEqual(entry.canonical_text, by_id[fact_id].text)
+                self.assertNotEqual(entry.canonical_text, human)
+        for fact_id in (
+            *self.S49B_PISCES_NEEDS_REVIEW,
+            "aries_bio_source_sexual_motivation_wording",
+        ):
+            with self.subTest(needs=fact_id):
+                self.assertIn(fact_id, NEEDS_REVIEW_FACT_IDS)
+                self.assertNotIn(fact_id, HUMAN_COPY_OVERRIDES)
+                self.assertNotIn(fact_id, APPROVED_RAW_FACT_IDS)
+                entry = build_catalog_entry(by_id[fact_id])
+                self.assertEqual(entry.review_status, STATUS_NEEDS_REVIEW)
+                self.assertEqual(entry.human_text, entry.canonical_text)
+        # Limited wording corrections exact; canonical unchanged.
+        self.assertEqual(
+            HUMAN_COPY_OVERRIDES["pisces_bio_afflicted_crumpled_speech"],
+            "Speech may become fragmented or poorly formed.",
+        )
+        self.assertIn("crumpled", by_id["pisces_bio_afflicted_crumpled_speech"].text)
+        self.assertEqual(
+            HUMAN_COPY_OVERRIDES["pisces_bio_afflicted_information_chaos"],
+            "Thinking can become contradictory and informationally chaotic.",
+        )
+        self.assertEqual(
+            HUMAN_COPY_OVERRIDES["pisces_bio_humanities_aptitude"],
+            "May show aptitude for the humanities.",
+        )
+        self.assertEqual(
+            HUMAN_COPY_OVERRIDES["pisces_bio_learning_youtube_content_video"],
+            "Learning can happen through YouTube or other video content.",
+        )
+        self.assertEqual(
+            HUMAN_COPY_OVERRIDES["pisces_bio_lose_grip_on_factual_reality"],
+            "Thinking or learning can lose touch with factual reality.",
+        )
+        self.assertEqual(
+            HUMAN_COPY_OVERRIDES[
+                "pisces_bio_loses_disputes_insufficient_assertiveness"
+            ],
+            "May often lose disputes because of insufficient assertiveness or "
+            "forcefulness.",
+        )
+        self.assertEqual(
+            HUMAN_COPY_OVERRIDES[
+                "pisces_bio_motivation_mystico_psychological_engagement"
+            ],
+            "Learning may be motivated by emotionally engaging mystical or "
+            "psychological material.",
+        )
+        self.assertEqual(
+            HUMAN_COPY_OVERRIDES["pisces_l7_compressed_crumpled_speech"],
+            "Speech may become compressed or disjointed.",
+        )
+        self.assertIn("crumpled", by_id["pisces_l7_compressed_crumpled_speech"].text)
+        self.assertEqual(
+            HUMAN_COPY_OVERRIDES["aries_bio_technical_practicality"],
+            "Thinking and learning may be practical and technically oriented.",
+        )
+        self.assertEqual(
+            HUMAN_COPY_OVERRIDES["aries_l7_learn_via_proving"],
+            "Trying to prove a point can support learning.",
+        )
+        self.assertEqual(
+            HUMAN_COPY_OVERRIDES["aries_l7_risk_not_hearing_other_viewpoint"],
+            "May have difficulty hearing another point of view while learning.",
+        )
+        self.assertNotIn(
+            "aries_bio_source_sexual_motivation_wording",
+            HUMAN_COPY_OVERRIDES,
+        )
+        self.assertEqual(len(NEEDS_REVIEW_FACT_IDS), 15)
+        self.assertTrue(
+            set(HUMAN_COPY_OVERRIDES).isdisjoint(APPROVED_RAW_FACT_IDS)
+        )
+        self.assertTrue(
+            set(HUMAN_COPY_OVERRIDES).isdisjoint(NEEDS_REVIEW_FACT_IDS)
+        )
+        self.assertTrue(
+            set(APPROVED_RAW_FACT_IDS).isdisjoint(NEEDS_REVIEW_FACT_IDS)
+        )
 
 
 class RuntimeRegressionTests(unittest.TestCase):

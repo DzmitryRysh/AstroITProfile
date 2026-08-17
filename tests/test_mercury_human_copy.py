@@ -101,7 +101,7 @@ class HumanCopyModuleTests(unittest.TestCase):
 
     def test_pilot_override_count(self):
         # S4.0–S4.4B (88) + S4.5B Taurus family (8).
-        self.assertEqual(len(HUMAN_COPY_OVERRIDES), 192)
+        self.assertEqual(len(HUMAN_COPY_OVERRIDES), 251)
 
     def test_s42_override_ids_exist_and_raw_text_unchanged(self):
         by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}

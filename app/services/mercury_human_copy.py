@@ -14,7 +14,7 @@ from collections.abc import Iterable
 from app.schemas.mercury_source_profile import SourceFact
 
 # Curated human-facing overrides. Keys are stable SourceFact.id values.
-# S4.0–S4.7B + S4.8B Aquarius/Gemini family review. Presentation only.
+# S4.0–S4.8B + S4.9B Pisces/Aries family review. Presentation only.
 HUMAN_COPY_OVERRIDES: dict[str, str] = {
     # --- S4.0 pilot ---
     "pluto_sq_conflictual_communication": (
@@ -584,6 +584,175 @@ HUMAN_COPY_OVERRIDES: dict[str, str] = {
     ),
     "gemini_l7_high_working_memory_speed": (
         "Very high working-memory speed."
+    ),
+    # --- S4.9B Pisces family review (35) ---
+    "pisces_bio_afflicted_crumpled_speech": (
+        "Speech may become fragmented or poorly formed."
+    ),
+    "pisces_bio_afflicted_information_chaos": (
+        "Thinking can become contradictory and informationally chaotic."
+    ),
+    "pisces_bio_afflicted_lack_of_central_idea": (
+        "Thinking may lack a central idea."
+    ),
+    "pisces_bio_afflicted_lack_of_logic": (
+        "Thinking may lack logic."
+    ),
+    "pisces_bio_afflicted_lack_of_structure": (
+        "Thinking may lack structure."
+    ),
+    "pisces_bio_afflicted_lying_distortion": (
+        "Communication may involve lying or distortion."
+    ),
+    "pisces_bio_afflicted_mystification": (
+        "Communication may involve mystification."
+    ),
+    "pisces_bio_afflicted_suggestibility": (
+        "May become highly suggestible."
+    ),
+    "pisces_bio_afflicted_unclear_speech": (
+        "Speech may become unclear."
+    ),
+    "pisces_bio_afflicted_words_exceed_completed_actions": (
+        "Words may greatly exceed completed actions or results."
+    ),
+    "pisces_bio_humanities_aptitude": (
+        "May show aptitude for the humanities."
+    ),
+    "pisces_bio_languages_aptitude": (
+        "May show aptitude for languages."
+    ),
+    "pisces_bio_learning_emotional_psychological_attunement": (
+        "Learning through emotional or psychological attunement with real "
+        "people."
+    ),
+    "pisces_bio_learning_youtube_content_video": (
+        "Learning can happen through YouTube or other video content."
+    ),
+    "pisces_bio_lose_grip_on_factual_reality": (
+        "Thinking or learning can lose touch with factual reality."
+    ),
+    "pisces_bio_loses_disputes_insufficient_assertiveness": (
+        "May often lose disputes because of insufficient assertiveness or "
+        "forcefulness."
+    ),
+    "pisces_bio_lyrical_talent": "May show lyrical talent.",
+    "pisces_bio_memory_range_chart_context": (
+        "Memory may range from exceptional to very poor depending on chart "
+        "context."
+    ),
+    "pisces_bio_motivation_emotional_atmosphere": (
+        "Learning may be motivated by emotional atmosphere."
+    ),
+    "pisces_bio_motivation_kindred_people": (
+        "Learning may be motivated by a sense of being among intellectually "
+        "or emotionally kindred people."
+    ),
+    "pisces_bio_motivation_mystery": (
+        "Learning may be motivated by mystery."
+    ),
+    "pisces_bio_motivation_mystico_psychological_engagement": (
+        "Learning may be motivated by emotionally engaging mystical or "
+        "psychological material."
+    ),
+    "pisces_bio_poetic_talent": "May show poetic talent.",
+    "pisces_l7_captivity_in_illusions": (
+        "May become caught in illusions."
+    ),
+    "pisces_l7_compressed_crumpled_speech": (
+        "Speech may become compressed or disjointed."
+    ),
+    "pisces_l7_dev_alternate_speech_with_silence": (
+        "Growth area: alternate speech flow with conscious silence."
+    ),
+    "pisces_l7_dev_formulate_central_idea": (
+        "Growth area: formulate the central idea."
+    ),
+    "pisces_l7_exceptionally_strong_imagination": (
+        "May show exceptionally strong imagination."
+    ),
+    "pisces_l7_learning_absorbing_overall_impression": (
+        "Learning by absorbing or forming an overall impression."
+    ),
+    "pisces_l7_manipulation_susceptibility": (
+        "May be susceptible to manipulation."
+    ),
+    "pisces_l7_nonobvious_logic": (
+        "Logic may be difficult to comprehend or non-obvious."
+    ),
+    "pisces_l7_sensitivity_to_hidden_intonation": (
+        "Sensitivity to hidden or underlying intonation."
+    ),
+    "pisces_l7_soulful_communication": (
+        "Soulful or emotionally attuned communication."
+    ),
+    "pisces_l7_suggestibility": "May be suggestible.",
+    "pisces_l7_words_can_diverge_from_reality": (
+        "Words can diverge from reality."
+    ),
+    # --- S4.9B Aries family review (24) ---
+    "aries_bio_ability_to_argue": (
+        "May show an ability or tendency to argue."
+    ),
+    "aries_bio_engineering_ability": (
+        "May show engineering ability or potential."
+    ),
+    "aries_bio_learns_through_trial_and_error": (
+        "Learns through trial and error."
+    ),
+    "aries_bio_legal_ability": (
+        "May show legal ability or potential."
+    ),
+    "aries_bio_martian_speed_coloring": (
+        "Thinking, communication, and learning may be colored by speed and "
+        "urgency."
+    ),
+    "aries_bio_motivation_challenge": (
+        "Learning may be motivated by challenge."
+    ),
+    "aries_bio_motivation_contest_challenge": (
+        "Learning may be motivated by being challenged to a fight or contest."
+    ),
+    "aries_bio_motivation_obstacle": (
+        "Learning may be motivated by an obstacle."
+    ),
+    "aries_bio_oratory_ability": (
+        "May show oratory ability or potential."
+    ),
+    "aries_bio_sales_ability": (
+        "May show sales ability or potential."
+    ),
+    "aries_bio_technical_practicality": (
+        "Thinking and learning may be practical and technically oriented."
+    ),
+    "aries_bio_vocal_ability": (
+        "May show vocal ability or potential."
+    ),
+    "aries_l7_dev_listen_without_interrupting": (
+        "Growth area: listen without interrupting."
+    ),
+    "aries_l7_dev_pause_before_forms": (
+        "Growth area: pause before filling documents or forms."
+    ),
+    "aries_l7_dev_slow_down_before_answering": (
+        "Growth area: slow down before answering."
+    ),
+    "aries_l7_dev_verify_dates": "Growth area: verify dates.",
+    "aries_l7_dev_verify_facts": "Growth area: verify facts.",
+    "aries_l7_learn_via_arguing": "Arguing supports learning.",
+    "aries_l7_learn_via_competition": "Competition supports learning.",
+    "aries_l7_learn_via_immediate_application": (
+        "Immediate real-life application of knowledge supports learning."
+    ),
+    "aries_l7_learn_via_practice": "Practice supports learning.",
+    "aries_l7_learn_via_proving": (
+        "Trying to prove a point can support learning."
+    ),
+    "aries_l7_may_disregard_facts_vs_theory": (
+        "May disregard facts when they do not fit an existing theory."
+    ),
+    "aries_l7_risk_not_hearing_other_viewpoint": (
+        "May have difficulty hearing another point of view while learning."
     ),
 }
 
