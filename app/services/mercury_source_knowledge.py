@@ -31,7 +31,9 @@ House Batch B1:
 House Batch B2:
 - Houses 5, 6, 7
 
-House Batch B3 (Lesson 7 only):
+House 8 has Lesson 7 + Bioastrology (dual-source parity).
+
+House Batch B3:
 - Houses 8, 11, 12
 
 Aspect Batch C1 (verified Bioastrology harmonious parity):

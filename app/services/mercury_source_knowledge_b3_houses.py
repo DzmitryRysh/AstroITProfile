@@ -1,11 +1,9 @@
-"""Mercury Source Profile v2 — House Batch B3 (Lesson 7 only).
+"""Mercury Source Profile v2 — House Batch B3.
 
-Houses: 8, 11, 12
-Source: Lesson 7 — Mercury
+House 8 has Lesson 7 + Bioastrology (dual-source parity).
+Houses 11 and 12 remain Lesson 7 only until their Bioastrology passes.
 
 SOURCE FIRST → SYNTHESIS SECOND.
-B3 is intentionally LESSON7_ONLY: no Bioastrology Mercury-in-house
-passages were supplied for these houses.
 
 Local SourceFactDef/_f avoid circular import with mercury_source_knowledge.py.
 """
@@ -56,6 +54,7 @@ def _f(
 
 
 REF_H8_L7 = "lesson7_mercury_house_8"
+REF_H8_BIO = "bioastrology_mercury_house_8"
 REF_H11_L7 = "lesson7_mercury_house_11"
 REF_H12_L7 = "lesson7_mercury_house_12"
 
@@ -141,6 +140,113 @@ HOUSE_8: tuple[SourceFactDef, ...] = (
        "not a medical diagnosis or validated health prediction.",
        "risk", "source_finger_injury_risk",
        source_reference=REF_H8_L7),
+)
+
+# ---------------------------------------------------------------------------
+# Mercury in House 8 — Bioastrology (dual-source parity; HOUSE_8 L7 is frozen)
+# ---------------------------------------------------------------------------
+HOUSE_8_BIO: tuple[SourceFactDef, ...] = (
+    _f("h8_bio_communication_learning_demanded_in_crises", "house", "8",
+       "source_specific",
+       "Communication and learning may be demanded in crisis situations.",
+       "neutral",
+       source_reference=REF_H8_BIO),
+    _f("h8_bio_communication_learning_demanded_in_finance", "house", "8",
+       "source_specific",
+       "Communication and learning may be demanded in financial matters.",
+       "neutral",
+       source_reference=REF_H8_BIO),
+    _f("h8_bio_communication_learning_demanded_in_psychology", "house", "8",
+       "source_specific",
+       "Communication and learning may be demanded in psychology-related contexts.",
+       "neutral",
+       source_reference=REF_H8_BIO),
+    _f("h8_bio_communication_learning_demanded_in_magic", "house", "8",
+       "source_specific",
+       "Communication and learning may be demanded in magic-related contexts.",
+       "neutral",
+       source_reference=REF_H8_BIO),
+    _f("h8_bio_commercial_resourcefulness", "house", "8", "work_application",
+       "Commercial resourcefulness.",
+       "strength",
+       source_reference=REF_H8_BIO),
+    _f("h8_bio_investments_other_people_money", "house", "8", "work_application",
+       "Circumstances may require calculating investments and other people's money.",
+       "neutral",
+       source_reference=REF_H8_BIO),
+    _f("h8_bio_tongue_enemy_crisis_effect", "house", "8", "risk",
+       "Source-described \"my tongue is my enemy\" crisis effect.",
+       "risk",
+       source_reference=REF_H8_BIO),
+    _f("h8_bio_power_of_word", "house", "8", "communication",
+       "The word may carry strong influence or power.",
+       "strength",
+       source_reference=REF_H8_BIO),
+    _f("h8_bio_solitary_critical_learning_method", "house", "8", "learning",
+       "Learning may occur alone and in a critical mode, through analyzing sources "
+       "and errors, comparing, and evaluating.",
+       "strength",
+       source_reference=REF_H8_BIO),
+    _f("h8_bio_analytical_ability", "house", "8", "thinking",
+       "May support analytical ability.",
+       "strength", "analytical_thinking",
+       source_reference=REF_H8_BIO),
+    _f("h8_bio_detective_ability", "house", "8", "thinking",
+       "May support detective abilities.",
+       "strength",
+       source_reference=REF_H8_BIO),
+    _f("h8_bio_interest_in_energies", "house", "8", "source_specific",
+       "May show strong interest in energies.",
+       "strength",
+       source_reference=REF_H8_BIO),
+    _f("h8_bio_interest_in_sex", "house", "8", "source_specific",
+       "May show strong interest in sex.",
+       "strength",
+       source_reference=REF_H8_BIO),
+    _f("h8_bio_afflicted_gossip", "house", "8", "source_specific",
+       "When Mercury is afflicted, the source associates this placement with "
+       "gossip (afflicted-Mercury dependency; no house-affliction resolver is "
+       "applied; not hard_aspected).",
+       "conditional",
+       source_reference=REF_H8_BIO, unresolved=True),
+    _f("h8_bio_afflicted_hate", "house", "8", "source_specific",
+       "When Mercury is afflicted, the source associates this placement with "
+       "hate (afflicted-Mercury dependency; no house-affliction resolver is "
+       "applied; not hard_aspected).",
+       "conditional",
+       source_reference=REF_H8_BIO, unresolved=True),
+    _f("h8_bio_afflicted_traffic_accident_association", "house", "8",
+       "source_specific",
+       "When Mercury is afflicted, the source associates this placement with "
+       "traffic accidents (afflicted-Mercury dependency; no house-affliction "
+       "resolver is applied; not hard_aspected).",
+       "conditional",
+       source_reference=REF_H8_BIO, unresolved=True),
+    _f("h8_bio_afflicted_vascular_disease_association", "house", "8",
+       "source_specific",
+       "When Mercury is afflicted, the source associates this placement with "
+       "diseases involving blood vessels (afflicted-Mercury dependency; "
+       "no house-affliction resolver is applied; not hard_aspected).",
+       "conditional",
+       source_reference=REF_H8_BIO, unresolved=True),
+    _f("h8_bio_afflicted_joint_disease_association", "house", "8", "source_specific",
+       "When Mercury is afflicted, the source associates this placement with "
+       "diseases involving joints (afflicted-Mercury dependency; no house-affliction "
+       "resolver is applied; not hard_aspected).",
+       "conditional",
+       source_reference=REF_H8_BIO, unresolved=True),
+    _f("h8_bio_afflicted_lung_disease_association", "house", "8", "source_specific",
+       "When Mercury is afflicted, the source associates this placement with "
+       "diseases involving lungs (afflicted-Mercury dependency; no house-affliction "
+       "resolver is applied; not hard_aspected).",
+       "conditional",
+       source_reference=REF_H8_BIO, unresolved=True),
+    _f("h8_bio_afflicted_limb_disease_association", "house", "8", "source_specific",
+       "When Mercury is afflicted, the source associates this placement with "
+       "diseases involving limbs (afflicted-Mercury dependency; no house-affliction "
+       "resolver is applied; not hard_aspected).",
+       "conditional",
+       source_reference=REF_H8_BIO, unresolved=True),
 )
 
 # ---------------------------------------------------------------------------
@@ -329,5 +435,7 @@ HOUSE_12: tuple[SourceFactDef, ...] = (
        source_reference=REF_H12_L7),
 )
 
-B3_HOUSE_PACKS: tuple[SourceFactDef, ...] = HOUSE_8 + HOUSE_11 + HOUSE_12
+B3_HOUSE_PACKS: tuple[SourceFactDef, ...] = (
+    HOUSE_8 + HOUSE_8_BIO + HOUSE_11 + HOUSE_12
+)
 B3_SUPPORTED_HOUSE_KEYS = frozenset({"8", "11", "12"})
