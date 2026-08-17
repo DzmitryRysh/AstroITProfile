@@ -369,6 +369,7 @@
     if (factorType === "house") return `Mercury in House ${factorKey}`;
     if (factorType === "motion") {
       if (String(factorKey).toLowerCase() === "retrograde") return "Retrograde Mercury";
+      if (String(factorKey).toLowerCase() === "direct") return "Direct Mercury";
       return `Mercury ${titleCaseSignal(factorKey)}`;
     }
     if (factorType === "aspect") {
@@ -601,29 +602,102 @@
     </section>`;
   }
 
+  function renderGroupedFactItem(fact) {
+    if (!fact) return "";
+    const isRisk = fact.polarity === "risk";
+    const marker = isRisk
+      ? `<span class="risk-mark" title="Possible difficulty">Risk</span>`
+      : `<span class="fact-bullet" aria-hidden="true">•</span>`;
+    // Factor heading already establishes provenance — do not repeat it on every row.
+    return `<li class="fact-item${isRisk ? " fact-risk" : ""}">${marker}<span class="fact-text">${escapeHtml(fact.text)}</span></li>`;
+  }
+
+  function factorTypeRank(factorType) {
+    const order = { sign: 0, house: 1, motion: 2, aspect: 3 };
+    return Object.prototype.hasOwnProperty.call(order, factorType) ? order[factorType] : 99;
+  }
+
+  function groupSectionFactsByFactor(section, facts) {
+    const groups = new Map();
+    const firstIndex = new Map();
+    (section.resolved_fact_ids || []).forEach((id, index) => {
+      const fact = facts.get(id);
+      if (!fact) return;
+      const key = `${fact.factor_type}:${fact.factor_key}`;
+      if (!groups.has(key)) {
+        groups.set(key, {
+          factor_type: fact.factor_type,
+          factor_key: fact.factor_key,
+          facts: [],
+        });
+        firstIndex.set(key, index);
+      }
+      groups.get(key).facts.push(fact);
+    });
+    return [...groups.keys()]
+      .sort((a, b) => {
+        const groupA = groups.get(a);
+        const groupB = groups.get(b);
+        const rankDiff = factorTypeRank(groupA.factor_type) - factorTypeRank(groupB.factor_type);
+        if (rankDiff !== 0) return rankDiff;
+        return firstIndex.get(a) - firstIndex.get(b);
+      })
+      .map((key) => groups.get(key));
+  }
+
+  function renderSectionFactorExplore(section, facts) {
+    const groups = groupSectionFactsByFactor(section, facts);
+    if (!groups.length) return "";
+    const rows = groups.map((group) => {
+      const label = factorCardTitle(group.factor_type, group.factor_key);
+      const n = group.facts.length;
+      const countLabel = n === 1 ? "1 observation" : `${n} observations`;
+      const items = group.facts.map(renderGroupedFactItem).filter(Boolean).join("");
+      return `<details class="section-factor-group">
+        <summary>
+          <span class="section-factor-label">${escapeHtml(label)}</span>
+          <span class="section-factor-meta">
+            <span class="factor-summary-meta">${escapeHtml(countLabel)}</span>
+            <span class="section-factor-chevron" aria-hidden="true"></span>
+          </span>
+        </summary>
+        <ul class="fact-list section-factor-facts">${items}</ul>
+      </details>`;
+    }).join("");
+    return `<div class="section-factor-explore">
+      <p class="section-factor-explore-label">Profile factors behind this section</p>
+      ${rows}
+    </div>`;
+  }
+
   function renderSectionBody(section, facts) {
     const previewIds = section.preview_fact_ids || [];
-    const previewSet = new Set(previewIds);
     const previewItems = previewIds
       .map((id) => renderPreviewFactItem(facts.get(id)))
       .filter(Boolean)
       .join("");
-    const evidence = `${section.resolved_fact_count} source-backed observations across ${section.factor_count} factor${section.factor_count === 1 ? "" : "s"}`;
-    const remainingIds = (section.resolved_fact_ids || []).filter((id) => !previewSet.has(id));
-    const remainingItems = remainingIds
-      .map((id) => renderPreviewFactItem(facts.get(id)))
-      .filter(Boolean)
-      .join("");
-    const hasMore = remainingIds.length > 0;
-    const viewAll = hasMore
-      ? `<details class="section-view-all">
-          <summary><span class="view-all-label">View all</span><span class="show-less-label">Show less</span></summary>
-          <ul class="fact-list section-remaining-facts">${remainingItems}</ul>
+    const total = Number(section.resolved_fact_count) || (section.resolved_fact_ids || []).length;
+    const evidence = `${total} source-backed observations across ${section.factor_count} factor${section.factor_count === 1 ? "" : "s"}`;
+    const hasMore = total > previewIds.length;
+    const exploreLabel = total === 1
+      ? "Explore all 1 observation"
+      : `Explore all ${total} observations`;
+    // Preferred model: when open, CSS hides preview so factor groups can list ALL
+    // section facts without duplicate visible IDs. Collapse control sits after the groups.
+    const explore = hasMore
+      ? `<details class="section-explore">
+          <summary class="section-explore-summary">
+            <span class="explore-all-label">${escapeHtml(exploreLabel)}</span>
+          </summary>
+          ${renderSectionFactorExplore(section, facts)}
+          <button type="button" class="section-show-less" onclick="this.closest('details.section-explore').open=false">Show less</button>
         </details>`
       : "";
-    return `<p class="section-evidence-meta">${escapeHtml(evidence)}</p>
+    return `<div class="section-body">
+      <p class="section-evidence-meta">${escapeHtml(evidence)}</p>
       <ul class="fact-list section-preview">${previewItems}</ul>
-      ${viewAll}`;
+      ${explore}
+    </div>`;
   }
 
   function renderSynthesisSections(synthesis, audience) {

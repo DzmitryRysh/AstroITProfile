@@ -1188,31 +1188,137 @@ details.more-details > summary::-webkit-details-marker {
   font-weight: 500;
 }
 
-.section-view-all {
+.section-explore {
   margin-top: 0.35rem;
 }
 
-.section-view-all > summary {
+.section-explore > summary.section-explore-summary {
   cursor: pointer;
   color: var(--text-faint);
   font-size: 0.8rem;
   list-style: none;
 }
 
-.section-view-all > summary::-webkit-details-marker {
+.section-explore > summary.section-explore-summary::-webkit-details-marker {
   display: none;
 }
 
-.section-view-all .show-less-label {
+/* Collapse control lives below the factor groups when open. */
+.section-explore[open] > summary.section-explore-summary {
   display: none;
 }
 
-.section-view-all[open] .view-all-label {
+.section-show-less {
+  display: none;
+  margin: 0.65rem 0 0.1rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-faint);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-align: left;
+}
+
+.section-explore[open] > .section-show-less {
+  display: inline-block;
+}
+
+.section-show-less:hover {
+  color: var(--text-muted);
+}
+
+.section-show-less:focus-visible {
+  outline: 2px solid var(--border-strong);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* When exploring, hide preview so no fact ID is visible twice. */
+.section-body:has(> .section-explore[open]) > .section-preview {
   display: none;
 }
 
-.section-view-all[open] .show-less-label {
-  display: inline;
+.section-factor-explore {
+  margin-top: 0.15rem;
+  padding: 0.35rem 0 0.15rem 0.15rem;
+}
+
+.section-factor-explore-label {
+  margin: 0 0 0.45rem;
+  color: var(--text-faint);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.section-factor-group {
+  border-top: 1px solid var(--border);
+  padding: 0.2rem 0;
+}
+
+.section-factor-group:first-of-type {
+  border-top: 0;
+}
+
+.section-factor-group > summary {
+  cursor: pointer;
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.35rem 0.75rem;
+  align-items: baseline;
+  padding: 0.4rem 0.35rem;
+  margin: 0 -0.2rem;
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.section-factor-group > summary::-webkit-details-marker {
+  display: none;
+}
+
+.section-factor-group > summary:hover {
+  background: var(--bg-soft);
+  color: var(--text);
+}
+
+.section-factor-group > summary:focus-visible {
+  outline: 2px solid var(--border-strong);
+  outline-offset: 1px;
+}
+
+.section-factor-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  justify-self: end;
+}
+
+.section-factor-chevron {
+  display: inline-block;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-right: 1.5px solid var(--text-faint);
+  border-bottom: 1.5px solid var(--text-faint);
+  transform: rotate(-45deg);
+  transition: transform 0.15s ease;
+  flex-shrink: 0;
+}
+
+.section-factor-group[open] > summary .section-factor-chevron {
+  transform: rotate(45deg);
+}
+
+.section-factor-label {
+  min-width: 0;
+}
+
+.section-factor-facts {
+  margin: 0 0 0.35rem;
+  padding: 0.15rem 0 0.25rem 0.55rem;
 }
 
 .synthesis-tensions.level-2,

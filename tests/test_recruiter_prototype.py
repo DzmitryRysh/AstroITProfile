@@ -364,11 +364,13 @@ class RecruiterUxPolishTests(unittest.TestCase):
         self.assertIn("section.preview_fact_ids", self.js)
         self.assertIn("sectionDisplayTitle", self.js)
         self.assertIn("if (!section.resolved_fact_count) return \"\"", self.js)
-        self.assertIn("View all", self.js)
+        self.assertIn("Explore all", self.js)
         self.assertIn("Show less", self.js)
-        self.assertIn("section-remaining-facts", self.js)
-        self.assertIn("!previewSet.has(id)", self.js)
-        self.assertNotIn("section-all-facts", self.js)
+        self.assertIn("section-factor-explore", self.js)
+        self.assertIn("groupSectionFactsByFactor", self.js)
+        self.assertNotIn("section-remaining-facts", self.js)
+        self.assertNotIn(">View all<", self.js)
+        self.assertNotIn("View all", self.js)
         # Page-level title only — calculated card has no duplicate profile title.
         self.assertIn("setBrandTitleForProfile", self.js)
         self.assertIn("profileHeaderTitle", self.js)
@@ -376,18 +378,82 @@ class RecruiterUxPolishTests(unittest.TestCase):
         self.assertIn("self-calc-line", self.js)
         self.assertIn("self-aspect-list", self.js)
         self.assertIn("formatAspectChip", self.js)
-        # View all does not re-fetch; remaining facts exclude preview IDs.
-        view_all_block = self.js.split("function renderSectionBody", 1)[1].split(
+        # Explore-all does not re-fetch; uses local synthesis facts.
+        explore_block = self.js.split("function renderSectionBody", 1)[1].split(
             "function renderSynthesisSections", 1
         )[0]
-        self.assertIn("section-remaining-facts", view_all_block)
-        self.assertIn("!previewSet.has(id)", view_all_block)
-        self.assertNotIn("apiPost", view_all_block)
-        self.assertNotIn("mercury-source-profile", view_all_block)
+        self.assertIn("Explore all", explore_block)
+        self.assertIn("renderSectionFactorExplore", explore_block)
+        self.assertNotIn("apiPost", explore_block)
+        self.assertNotIn("mercury-source-profile", explore_block)
         self.assertIn("data-self-demo=\"avdey\"", self.html)
         self.assertIn("data-self-demo=\"vlad\"", self.html)
         self.assertIn("data-self-demo=\"dzmitry\"", self.html)
         self.assertIn("SELF_DEMOS", self.js)
+
+    def test_progressive_section_factor_disclosure(self):
+        body_fn = self.js.split("function renderSectionBody", 1)[1].split(
+            "function renderSynthesisSections", 1
+        )[0]
+        explore_fn = self.js.split("function renderSectionFactorExplore", 1)[1].split(
+            "function renderSectionBody", 1
+        )[0]
+        group_fn = self.js.split("function groupSectionFactsByFactor", 1)[1].split(
+            "function renderSectionFactorExplore", 1
+        )[0]
+        grouped_item_fn = self.js.split("function renderGroupedFactItem", 1)[1].split(
+            "function factorTypeRank", 1
+        )[0]
+        # Flat View-all wall removed.
+        self.assertNotIn("section-remaining-facts", self.js)
+        self.assertNotIn("section-view-all", self.js)
+        self.assertNotIn("View all", self.js)
+        # Explore control with dynamic N.
+        self.assertIn("Explore all ${total} observations", body_fn)
+        self.assertIn("Explore all 1 observation", body_fn)
+        self.assertIn("hasMore = total > previewIds.length", body_fn)
+        # Show less after factor groups (single bottom control).
+        self.assertIn("section-show-less", body_fn)
+        self.assertIn("Show less", body_fn)
+        self.assertEqual(body_fn.count("Show less"), 1)
+        self.assertGreater(
+            body_fn.find("section-show-less"),
+            body_fn.find("renderSectionFactorExplore"),
+        )
+        self.assertNotIn("show-less-label", body_fn)
+        # Factor groups, not flat fact list.
+        self.assertIn("Profile factors behind this section", explore_fn)
+        self.assertIn("section-factor-group", explore_fn)
+        self.assertIn("section-factor-chevron", explore_fn)
+        self.assertIn("factorCardTitle", explore_fn)
+        self.assertIn("factor_type", group_fn)
+        self.assertIn("factor_key", group_fn)
+        self.assertIn("factorTypeRank", group_fn)
+        self.assertIn("sign: 0", self.js)
+        self.assertIn("house: 1", self.js)
+        self.assertIn("motion: 2", self.js)
+        self.assertIn("aspect: 3", self.js)
+        # Counts use observation wording; groups collapsed by default.
+        self.assertIn("1 observation", explore_fn)
+        self.assertIn("observations", explore_fn)
+        self.assertNotIn('class="section-factor-group" open', self.js)
+        # Expanded rows omit repeated provenance; risk preserved.
+        self.assertNotIn("fact-provenance", grouped_item_fn)
+        self.assertIn("risk-mark", grouped_item_fn)
+        self.assertIn("escapeHtml(fact.text)", grouped_item_fn)
+        # Preview hidden while explore open (no duplicate visible IDs).
+        self.assertIn(".section-body:has(> .section-explore[open]) > .section-preview", self.css)
+        self.assertIn(".section-factor-group", self.css)
+        # Chevron open/closed + hover/focus affordances.
+        self.assertIn(".section-factor-chevron", self.css)
+        self.assertIn(".section-factor-group[open] > summary .section-factor-chevron", self.css)
+        self.assertIn(".section-factor-group > summary:hover", self.css)
+        self.assertIn(".section-factor-group > summary:focus-visible", self.css)
+        self.assertIn(".section-explore[open] > .section-show-less", self.css)
+        self.assertIn(".section-explore[open] > summary.section-explore-summary", self.css)
+        # Full source evidence still available in methodology.
+        self.assertIn("Explore full source evidence", self.js)
+        self.assertIn("details-methodology", self.js)
 
     def test_self_profile_partial_coverage_shows_calculated_factors(self):
         self.assertIn("factor-unsupported", self.js)
