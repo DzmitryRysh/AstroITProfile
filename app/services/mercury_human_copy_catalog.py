@@ -34,7 +34,7 @@ ALL_REVIEW_STATUSES: tuple[str, ...] = (
 )
 
 # Explicit presentation decisions only (not overrides — those live in
-# HUMAN_COPY_OVERRIDES). S4.3 seed + S4.4B–S4.5B + S4.7B Capricorn/Leo.
+# HUMAN_COPY_OVERRIDES). S4.3 seed + S4.4B–S4.5B + S4.7B–S4.8B.
 APPROVED_RAW_FACT_IDS: frozenset[str] = frozenset(
     {
         # S4.3 seed
@@ -162,16 +162,91 @@ APPROVED_RAW_FACT_IDS: frozenset[str] = frozenset(
         "leo_thinks_from_own_position",
         "leo_visible_status_motivates_learning",
         "leo_wants_to_demonstrate_results",
+        # S4.8B Aquarius approved_raw
+        "aquarius_bio_creative_thinking",
+        "aquarius_bio_curiosity",
+        "aquarius_bio_erudition",
+        "aquarius_bio_extemporaneous_many_topics",
+        "aquarius_bio_interest_science_fiction",
+        "aquarius_bio_interest_technology",
+        "aquarius_bio_knowledge_fragment_synthesis",
+        "aquarius_bio_learning_audio",
+        "aquarius_bio_learning_books",
+        "aquarius_bio_learning_group_communication",
+        "aquarius_bio_learning_lectures",
+        "aquarius_bio_learning_video",
+        "aquarius_l7_abstraction_ability",
+        "aquarius_l7_book_learning",
+        "aquarius_l7_cycles_many_options_quickly",
+        "aquarius_l7_democratic_communication",
+        "aquarius_l7_discussion_learning",
+        "aquarius_l7_env_broad_social_circle",
+        "aquarius_l7_env_friendly_siblings",
+        "aquarius_l7_env_futuristic_environment",
+        "aquarius_l7_env_unpredictable_siblings",
+        "aquarius_l7_env_unusual_environment",
+        "aquarius_l7_extemporaneous_many_topics",
+        "aquarius_l7_gadgets_can_help",
+        "aquarius_l7_global_thinking",
+        "aquarius_l7_good_memory",
+        "aquarius_l7_group_learning",
+        "aquarius_l7_idealistic_thinking",
+        "aquarius_l7_independent_learning",
+        "aquarius_l7_independent_thinking",
+        "aquarius_l7_lecture_learning",
+        "aquarius_l7_planning_can_help",
+        "aquarius_l7_processes_large_data_quickly",
+        "aquarius_l7_spans_knowledge_areas",
+        "aquarius_l7_speech_varies_with_mood",
+        # S4.8B Gemini approved_raw
+        "gemini_bio_curiosity_motivated_learning",
+        "gemini_bio_demonstrative_teacher_potential",
+        "gemini_bio_intellectual_multitasking",
+        "gemini_bio_rationalism",
+        "gemini_bio_reliance_on_facts",
+        "gemini_bio_strong_memory",
+        "gemini_bio_strong_student_potential",
+        "gemini_l7_env_constantly_renews",
+        "gemini_l7_env_contact_quantity_over_quality",
+        "gemini_l7_env_sibling_easy",
+        "gemini_l7_env_sibling_superficial",
+        "gemini_l7_highly_contact_oriented_thinking",
+        "gemini_l7_learns_easily_in_dialogue",
+        "gemini_l7_logical_thinking",
+        "gemini_l7_may_fail_to_see_whole",
+        "gemini_l7_particular_to_general",
+        "gemini_l7_quantity_may_dominate_quality",
+        "gemini_l7_quick_understanding_may_cause_laziness",
+        "gemini_l7_quick_understanding_may_lose_interest",
+        "gemini_l7_risk_boredom_prolonged_one_subject",
+        "gemini_l7_simplifies_abstractions",
+        "gemini_l7_strong_commercial_ability",
+        "gemini_l7_strong_negotiation_ability",
+        "gemini_l7_support_books",
+        "gemini_l7_support_groups",
+        "gemini_l7_support_lectures",
+        "gemini_l7_support_multi_person_communication",
+        "gemini_l7_support_teachers",
+        "gemini_l7_understands_quickly",
     }
 )
 
-# Explicit needs_review decisions. S4.4B holds framework/status statements
-# for a later cross-family presentation policy.
+# Explicit needs_review decisions. Cross-family presentation policy backlog:
+# placement/framework status, medical-adjacent, genius/rank-adjacent,
+# metaphysical source claims.
 NEEDS_REVIEW_FACT_IDS: frozenset[str] = frozenset(
     {
+        # Sagittarius framework/status
         "sag_bio_impartiality_disrupted",
         "sag_bio_learnability_disrupted",
         "sag_bio_major_exile",
+        # Aquarius sensitive source-policy (S4.8B)
+        "aquarius_bio_afflicted_source_adhd_effect_wording",
+        "aquarius_bio_source_genius_intellect_archetype",
+        "aquarius_l7_source_genius_intellect_wording",
+        "aquarius_l7_claircognizance",
+        # Gemini framework/status (S4.8B)
+        "gemini_bio_major_domicile_sync",
     }
 )
 

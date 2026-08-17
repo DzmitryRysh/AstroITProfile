@@ -14,7 +14,7 @@ from collections.abc import Iterable
 from app.schemas.mercury_source_profile import SourceFact
 
 # Curated human-facing overrides. Keys are stable SourceFact.id values.
-# S4.0–S4.5B + S4.7B Capricorn/Leo family review. Presentation only.
+# S4.0–S4.7B + S4.8B Aquarius/Gemini family review. Presentation only.
 HUMAN_COPY_OVERRIDES: dict[str, str] = {
     # --- S4.0 pilot ---
     "pluto_sq_conflictual_communication": (
@@ -446,6 +446,144 @@ HUMAN_COPY_OVERRIDES: dict[str, str] = {
     ),
     "leo_l7_verbal_escape_skill": (
         "May be able to wriggle out of situations verbally."
+    ),
+    # --- S4.8B Aquarius family review (33) ---
+    "aquarius_bio_afflicted_anomalous_rhythms": (
+        "Mental activity may follow irregular or unusual rhythms."
+    ),
+    "aquarius_bio_afflicted_broad_fragmentary_general_knowledge": (
+        "Knowledge can become broad but fragmentary."
+    ),
+    "aquarius_bio_afflicted_idea_waves_then_irritation_slowdown": (
+        "Waves of many ideas may be followed by irritation or mental "
+        "slowdown."
+    ),
+    "aquarius_bio_afflicted_instability_of_learning": (
+        "Learning can become unstable."
+    ),
+    "aquarius_bio_afflicted_instability_of_thinking": (
+        "Thinking can become unstable."
+    ),
+    "aquarius_bio_afflicted_insufficient_depth_despite_breadth": (
+        "Breadth may come with insufficient depth."
+    ),
+    "aquarius_bio_afflicted_irregular_broken_speech_tempo": (
+        "Speech tempo may become irregular or broken."
+    ),
+    "aquarius_bio_afflicted_loss_of_focus": "May lose focus.",
+    "aquarius_bio_artistic_aptitude": "May show artistic aptitude.",
+    "aquarius_bio_continual_learning_courses": (
+        "Continual learning; may enjoy courses."
+    ),
+    "aquarius_bio_creativity": "Creative ability.",
+    "aquarius_bio_forecasting": "Forecasting ability.",
+    "aquarius_bio_insights": "May show insight.",
+    "aquarius_bio_interest_in_future": "Interest in the future.",
+    "aquarius_bio_inventor_aptitude": (
+        "May show aptitude for invention."
+    ),
+    "aquarius_bio_motivation_extraordinary_new_information": (
+        "Learning may be motivated by extraordinary or unusual new "
+        "information."
+    ),
+    "aquarius_bio_motivation_fresh_information": (
+        "Learning may be motivated by a constant need for fresh information."
+    ),
+    "aquarius_bio_motivation_natural_curiosity": (
+        "Learning may be motivated by natural curiosity."
+    ),
+    "aquarius_bio_planning": "Planning ability.",
+    "aquarius_bio_strong_firm_memory": "Strong or firm memory.",
+    "aquarius_bio_technical_scientific_aptitude": (
+        "May show technical or scientific aptitude."
+    ),
+    "aquarius_bio_uranian_freedom_equality_fraternity_coloring": (
+        "Thinking, communication, and learning may be colored by themes of "
+        "freedom, equality, and fraternity."
+    ),
+    "aquarius_l7_anomalous_mental_rhythm": (
+        "Anomalous or irregular rhythm of mental activity."
+    ),
+    "aquarius_l7_calculator_in_the_head": (
+        "May have a calculator-like way of handling mental calculations."
+    ),
+    "aquarius_l7_develop_concreteness_in_decisions": (
+        "Growth area: make decisions more concrete and specific."
+    ),
+    "aquarius_l7_develop_concreteness_in_wording": (
+        "Growth area: make wording more concrete and specific."
+    ),
+    "aquarius_l7_engage_through_genuine_interest": (
+        "Growth area: engage through genuine interest."
+    ),
+    "aquarius_l7_gets_bored_quickly": "May get bored quickly.",
+    "aquarius_l7_informal_communication": (
+        "Familiar or informal communication."
+    ),
+    "aquarius_l7_lack_of_patience": "May show a lack of patience.",
+    "aquarius_l7_lack_of_systematicity": (
+        "May have difficulty staying systematic."
+    ),
+    "aquarius_l7_quirky_speech_manner": (
+        "Quirky or unusual speech manner."
+    ),
+    "aquarius_l7_scattering_dispersion": (
+        "Attention or interests may become scattered."
+    ),
+    # --- S4.8B Gemini family review (20) ---
+    "gemini_bio_afflicted_excessive_verbal_output": (
+        "Communication may become excessively verbal."
+    ),
+    "gemini_bio_afflicted_lying": (
+        "Communication may involve lying."
+    ),
+    "gemini_bio_afflicted_words_exceed_actions": (
+        "Words may greatly outnumber actions."
+    ),
+    "gemini_bio_communicator_ability": "Communicator ability.",
+    "gemini_bio_driving_ability": (
+        "May show driving ability or potential."
+    ),
+    "gemini_bio_extraordinary_speed": (
+        "Thinking, communication, and learning can be extraordinarily fast."
+    ),
+    "gemini_bio_foreign_language_polyglot": (
+        "May show potential for foreign languages or multilingualism."
+    ),
+    "gemini_bio_informational_omnivorousness": (
+        "May have a broad appetite for information."
+    ),
+    "gemini_bio_learns_from_many_sources": (
+        "Learns from many kinds of sources."
+    ),
+    "gemini_bio_oratory_talent": (
+        "May show oratory talent or potential."
+    ),
+    "gemini_bio_salesperson_ability": "Sales ability.",
+    "gemini_bio_slight_technical_orientation": (
+        "Slight technical orientation."
+    ),
+    "gemini_bio_writing_talent": (
+        "May show writing talent or potential."
+    ),
+    "gemini_l7_dev_avoid_scattering": (
+        "Growth area: avoid scattering across parallel tasks."
+    ),
+    "gemini_l7_dev_focus_one_subject": (
+        "Growth area: focus on one subject."
+    ),
+    "gemini_l7_dev_prioritize_information": (
+        "Growth area: prioritize information."
+    ),
+    "gemini_l7_dev_slow_down": "Growth area: slow down.",
+    "gemini_l7_env_indiscriminate_acquaintances": (
+        "May form acquaintances broadly and indiscriminately."
+    ),
+    "gemini_l7_group_listening": (
+        "Can track individual people while working with a large group."
+    ),
+    "gemini_l7_high_working_memory_speed": (
+        "Very high working-memory speed."
     ),
 }
 

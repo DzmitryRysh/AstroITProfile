@@ -345,7 +345,7 @@ class SeedApprovedRawTests(unittest.TestCase):
         by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
         self.assertTrue(set(SEED_APPROVED_RAW_EXPECTED).issubset(APPROVED_RAW_FACT_IDS))
         self.assertEqual(len(SEED_APPROVED_RAW_EXPECTED), 15)
-        self.assertEqual(len(APPROVED_RAW_FACT_IDS), 120)
+        self.assertEqual(len(APPROVED_RAW_FACT_IDS), 184)
         for fact_id, expected_text in SEED_APPROVED_RAW_EXPECTED.items():
             with self.subTest(fact_id=fact_id):
                 self.assertEqual(by_id[fact_id].text, expected_text)
@@ -430,8 +430,7 @@ class SagittariusFamilyS44BTests(unittest.TestCase):
 
     def test_sagittarius_needs_review_ids(self):
         by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
-        self.assertEqual(set(S44B_SAGITTARIUS_NEEDS_REVIEW), set(NEEDS_REVIEW_FACT_IDS))
-        self.assertEqual(len(NEEDS_REVIEW_FACT_IDS), 3)
+        self.assertTrue(set(S44B_SAGITTARIUS_NEEDS_REVIEW).issubset(NEEDS_REVIEW_FACT_IDS))
         for fact_id in S44B_SAGITTARIUS_NEEDS_REVIEW:
             with self.subTest(fact_id=fact_id):
                 self.assertNotIn(fact_id, HUMAN_COPY_OVERRIDES)
@@ -441,13 +440,13 @@ class SagittariusFamilyS44BTests(unittest.TestCase):
                 self.assertFalse(entry.uses_override)
                 self.assertEqual(entry.human_text, entry.canonical_text)
 
-    def test_global_totals_after_s47b(self):
+    def test_global_totals_after_s48b(self):
         report = build_human_copy_catalog()
         self.assertEqual(report.total_facts, 1590)
-        self.assertEqual(report.approved_override_count, 139)
-        self.assertEqual(report.approved_raw_count, 120)
-        self.assertEqual(report.needs_review_count, 3)
-        self.assertEqual(report.unreviewed_count, 1328)
+        self.assertEqual(report.approved_override_count, 192)
+        self.assertEqual(report.approved_raw_count, 184)
+        self.assertEqual(report.needs_review_count, 8)
+        self.assertEqual(report.unreviewed_count, 1206)
         self.assertEqual(
             report.approved_override_count
             + report.approved_raw_count
@@ -455,8 +454,8 @@ class SagittariusFamilyS44BTests(unittest.TestCase):
             + report.unreviewed_count,
             1590,
         )
-        self.assertEqual(report.reviewed_count, 262)
-        self.assertEqual(report.presentation_ready_count, 259)
+        self.assertEqual(report.reviewed_count, 384)
+        self.assertEqual(report.presentation_ready_count, 376)
 
 
 class TaurusFamilyS45BTests(unittest.TestCase):
@@ -641,20 +640,25 @@ class SignReviewQueueS46Tests(unittest.TestCase):
         self.assertEqual(
             [entry.sign_name for entry in queue.incomplete_queue],
             [
-                "Aquarius",
                 "Pisces",
                 "Scorpio",
                 "Cancer",
                 "Virgo",
                 "Libra",
                 "Aries",
-                "Gemini",
             ],
         )
         completed = {entry.sign_name for entry in queue.completed_families}
         self.assertEqual(
             completed,
-            {"Taurus", "Sagittarius", "Capricorn", "Leo"},
+            {
+                "Taurus",
+                "Sagittarius",
+                "Capricorn",
+                "Leo",
+                "Aquarius",
+                "Gemini",
+            },
         )
 
     def test_suggested_batches_heaviest_lightest_partition(self):
@@ -665,8 +669,12 @@ class SignReviewQueueS46Tests(unittest.TestCase):
         completed_keys = {entry.family_key for entry in queue.completed_families}
         self.assertNotIn("sign:Capricorn", incomplete_keys)
         self.assertNotIn("sign:Leo", incomplete_keys)
+        self.assertNotIn("sign:Aquarius", incomplete_keys)
+        self.assertNotIn("sign:Gemini", incomplete_keys)
         self.assertIn("sign:Capricorn", completed_keys)
         self.assertIn("sign:Leo", completed_keys)
+        self.assertIn("sign:Aquarius", completed_keys)
+        self.assertIn("sign:Gemini", completed_keys)
         batch_keys: list[str] = []
         for batch in queue.suggested_batches:
             self.assertGreaterEqual(len(batch.family_keys), 1)
@@ -761,7 +769,7 @@ class SignReviewQueueS46Tests(unittest.TestCase):
             [("A", "D"), ("B", "C")],
         )
 
-    def test_needs_review_backlog_contains_sagittarius_three(self):
+    def test_needs_review_backlog_contains_policy_eight(self):
         from app.services.mercury_human_copy_catalog import build_sign_review_queue
 
         queue = build_sign_review_queue()
@@ -772,11 +780,14 @@ class SignReviewQueueS46Tests(unittest.TestCase):
                 "sag_bio_impartiality_disrupted",
                 "sag_bio_learnability_disrupted",
                 "sag_bio_major_exile",
+                "aquarius_bio_afflicted_source_adhd_effect_wording",
+                "aquarius_bio_source_genius_intellect_archetype",
+                "aquarius_l7_source_genius_intellect_wording",
+                "aquarius_l7_claircognizance",
+                "gemini_bio_major_domicile_sync",
             },
         )
-        for item in queue.needs_review_backlog:
-            self.assertEqual(item.family_key, "sign:Sagittarius")
-            self.assertTrue(item.canonical_text)
+        self.assertEqual(len(queue.needs_review_backlog), 8)
 
     def test_queue_does_not_mutate_registries_or_totals(self):
         from app.services.mercury_human_copy_catalog import (
@@ -795,9 +806,9 @@ class SignReviewQueueS46Tests(unittest.TestCase):
         self.assertEqual(dict(HUMAN_COPY_OVERRIDES), before_overrides)
         self.assertEqual(set(APPROVED_RAW_FACT_IDS), before_raw)
         self.assertEqual(set(NEEDS_REVIEW_FACT_IDS), before_needs)
-        self.assertEqual(queue.review_complete_family_count, 4)
+        self.assertEqual(queue.review_complete_family_count, 6)
         self.assertEqual(queue.presentation_ready_complete_family_count, 3)
-        self.assertEqual(len(queue.incomplete_queue), 8)
+        self.assertEqual(len(queue.incomplete_queue), 6)
 
 
 class CapricornLeoFamilyS47BTests(unittest.TestCase):
@@ -1107,12 +1118,344 @@ class CapricornLeoFamilyS47BTests(unittest.TestCase):
                 "sag_bio_impartiality_disrupted",
                 "sag_bio_learnability_disrupted",
                 "sag_bio_major_exile",
+                "aquarius_bio_afflicted_source_adhd_effect_wording",
+                "aquarius_bio_source_genius_intellect_archetype",
+                "aquarius_l7_source_genius_intellect_wording",
+                "aquarius_l7_claircognizance",
+                "gemini_bio_major_domicile_sync",
             },
         )
         # Capricorn common-sense approval is ID-local; Taurus twin stays raw.
         self.assertIn("capricorn_l7_common_sense_reliance", APPROVED_RAW_FACT_IDS)
         self.assertIn("taurus_relies_on_common_sense", APPROVED_RAW_FACT_IDS)
         self.assertNotIn("capricorn_l7_common_sense_reliance", HUMAN_COPY_OVERRIDES)
+
+
+class AquariusGeminiFamilyS48BTests(unittest.TestCase):
+    S48B_AQUARIUS_APPROVED_RAW: tuple[str, ...] = (
+        "aquarius_bio_creative_thinking",
+        "aquarius_bio_curiosity",
+        "aquarius_bio_erudition",
+        "aquarius_bio_extemporaneous_many_topics",
+        "aquarius_bio_interest_science_fiction",
+        "aquarius_bio_interest_technology",
+        "aquarius_bio_knowledge_fragment_synthesis",
+        "aquarius_bio_learning_audio",
+        "aquarius_bio_learning_books",
+        "aquarius_bio_learning_group_communication",
+        "aquarius_bio_learning_lectures",
+        "aquarius_bio_learning_video",
+        "aquarius_l7_abstraction_ability",
+        "aquarius_l7_book_learning",
+        "aquarius_l7_cycles_many_options_quickly",
+        "aquarius_l7_democratic_communication",
+        "aquarius_l7_discussion_learning",
+        "aquarius_l7_env_broad_social_circle",
+        "aquarius_l7_env_friendly_siblings",
+        "aquarius_l7_env_futuristic_environment",
+        "aquarius_l7_env_unpredictable_siblings",
+        "aquarius_l7_env_unusual_environment",
+        "aquarius_l7_extemporaneous_many_topics",
+        "aquarius_l7_gadgets_can_help",
+        "aquarius_l7_global_thinking",
+        "aquarius_l7_good_memory",
+        "aquarius_l7_group_learning",
+        "aquarius_l7_idealistic_thinking",
+        "aquarius_l7_independent_learning",
+        "aquarius_l7_independent_thinking",
+        "aquarius_l7_lecture_learning",
+        "aquarius_l7_planning_can_help",
+        "aquarius_l7_processes_large_data_quickly",
+        "aquarius_l7_spans_knowledge_areas",
+        "aquarius_l7_speech_varies_with_mood",
+    )
+
+    S48B_AQUARIUS_OVERRIDES: dict[str, str] = {
+        "aquarius_bio_afflicted_anomalous_rhythms": (
+            "Mental activity may follow irregular or unusual rhythms."
+        ),
+        "aquarius_bio_afflicted_broad_fragmentary_general_knowledge": (
+            "Knowledge can become broad but fragmentary."
+        ),
+        "aquarius_bio_afflicted_idea_waves_then_irritation_slowdown": (
+            "Waves of many ideas may be followed by irritation or mental "
+            "slowdown."
+        ),
+        "aquarius_bio_afflicted_instability_of_learning": (
+            "Learning can become unstable."
+        ),
+        "aquarius_bio_afflicted_instability_of_thinking": (
+            "Thinking can become unstable."
+        ),
+        "aquarius_bio_afflicted_insufficient_depth_despite_breadth": (
+            "Breadth may come with insufficient depth."
+        ),
+        "aquarius_bio_afflicted_irregular_broken_speech_tempo": (
+            "Speech tempo may become irregular or broken."
+        ),
+        "aquarius_bio_afflicted_loss_of_focus": "May lose focus.",
+        "aquarius_bio_artistic_aptitude": "May show artistic aptitude.",
+        "aquarius_bio_continual_learning_courses": (
+            "Continual learning; may enjoy courses."
+        ),
+        "aquarius_bio_creativity": "Creative ability.",
+        "aquarius_bio_forecasting": "Forecasting ability.",
+        "aquarius_bio_insights": "May show insight.",
+        "aquarius_bio_interest_in_future": "Interest in the future.",
+        "aquarius_bio_inventor_aptitude": "May show aptitude for invention.",
+        "aquarius_bio_motivation_extraordinary_new_information": (
+            "Learning may be motivated by extraordinary or unusual new "
+            "information."
+        ),
+        "aquarius_bio_motivation_fresh_information": (
+            "Learning may be motivated by a constant need for fresh information."
+        ),
+        "aquarius_bio_motivation_natural_curiosity": (
+            "Learning may be motivated by natural curiosity."
+        ),
+        "aquarius_bio_planning": "Planning ability.",
+        "aquarius_bio_strong_firm_memory": "Strong or firm memory.",
+        "aquarius_bio_technical_scientific_aptitude": (
+            "May show technical or scientific aptitude."
+        ),
+        "aquarius_bio_uranian_freedom_equality_fraternity_coloring": (
+            "Thinking, communication, and learning may be colored by themes of "
+            "freedom, equality, and fraternity."
+        ),
+        "aquarius_l7_anomalous_mental_rhythm": (
+            "Anomalous or irregular rhythm of mental activity."
+        ),
+        "aquarius_l7_calculator_in_the_head": (
+            "May have a calculator-like way of handling mental calculations."
+        ),
+        "aquarius_l7_develop_concreteness_in_decisions": (
+            "Growth area: make decisions more concrete and specific."
+        ),
+        "aquarius_l7_develop_concreteness_in_wording": (
+            "Growth area: make wording more concrete and specific."
+        ),
+        "aquarius_l7_engage_through_genuine_interest": (
+            "Growth area: engage through genuine interest."
+        ),
+        "aquarius_l7_gets_bored_quickly": "May get bored quickly.",
+        "aquarius_l7_informal_communication": (
+            "Familiar or informal communication."
+        ),
+        "aquarius_l7_lack_of_patience": "May show a lack of patience.",
+        "aquarius_l7_lack_of_systematicity": (
+            "May have difficulty staying systematic."
+        ),
+        "aquarius_l7_quirky_speech_manner": (
+            "Quirky or unusual speech manner."
+        ),
+        "aquarius_l7_scattering_dispersion": (
+            "Attention or interests may become scattered."
+        ),
+    }
+
+    S48B_AQUARIUS_NEEDS_REVIEW: tuple[str, ...] = (
+        "aquarius_bio_afflicted_source_adhd_effect_wording",
+        "aquarius_bio_source_genius_intellect_archetype",
+        "aquarius_l7_source_genius_intellect_wording",
+        "aquarius_l7_claircognizance",
+    )
+
+    S48B_GEMINI_APPROVED_RAW: tuple[str, ...] = (
+        "gemini_bio_curiosity_motivated_learning",
+        "gemini_bio_demonstrative_teacher_potential",
+        "gemini_bio_intellectual_multitasking",
+        "gemini_bio_rationalism",
+        "gemini_bio_reliance_on_facts",
+        "gemini_bio_strong_memory",
+        "gemini_bio_strong_student_potential",
+        "gemini_l7_env_constantly_renews",
+        "gemini_l7_env_contact_quantity_over_quality",
+        "gemini_l7_env_sibling_easy",
+        "gemini_l7_env_sibling_superficial",
+        "gemini_l7_highly_contact_oriented_thinking",
+        "gemini_l7_learns_easily_in_dialogue",
+        "gemini_l7_logical_thinking",
+        "gemini_l7_may_fail_to_see_whole",
+        "gemini_l7_particular_to_general",
+        "gemini_l7_quantity_may_dominate_quality",
+        "gemini_l7_quick_understanding_may_cause_laziness",
+        "gemini_l7_quick_understanding_may_lose_interest",
+        "gemini_l7_risk_boredom_prolonged_one_subject",
+        "gemini_l7_simplifies_abstractions",
+        "gemini_l7_strong_commercial_ability",
+        "gemini_l7_strong_negotiation_ability",
+        "gemini_l7_support_books",
+        "gemini_l7_support_groups",
+        "gemini_l7_support_lectures",
+        "gemini_l7_support_multi_person_communication",
+        "gemini_l7_support_teachers",
+        "gemini_l7_understands_quickly",
+    )
+
+    S48B_GEMINI_OVERRIDES: dict[str, str] = {
+        "gemini_bio_afflicted_excessive_verbal_output": (
+            "Communication may become excessively verbal."
+        ),
+        "gemini_bio_afflicted_lying": "Communication may involve lying.",
+        "gemini_bio_afflicted_words_exceed_actions": (
+            "Words may greatly outnumber actions."
+        ),
+        "gemini_bio_communicator_ability": "Communicator ability.",
+        "gemini_bio_driving_ability": (
+            "May show driving ability or potential."
+        ),
+        "gemini_bio_extraordinary_speed": (
+            "Thinking, communication, and learning can be extraordinarily fast."
+        ),
+        "gemini_bio_foreign_language_polyglot": (
+            "May show potential for foreign languages or multilingualism."
+        ),
+        "gemini_bio_informational_omnivorousness": (
+            "May have a broad appetite for information."
+        ),
+        "gemini_bio_learns_from_many_sources": (
+            "Learns from many kinds of sources."
+        ),
+        "gemini_bio_oratory_talent": (
+            "May show oratory talent or potential."
+        ),
+        "gemini_bio_salesperson_ability": "Sales ability.",
+        "gemini_bio_slight_technical_orientation": (
+            "Slight technical orientation."
+        ),
+        "gemini_bio_writing_talent": (
+            "May show writing talent or potential."
+        ),
+        "gemini_l7_dev_avoid_scattering": (
+            "Growth area: avoid scattering across parallel tasks."
+        ),
+        "gemini_l7_dev_focus_one_subject": (
+            "Growth area: focus on one subject."
+        ),
+        "gemini_l7_dev_prioritize_information": (
+            "Growth area: prioritize information."
+        ),
+        "gemini_l7_dev_slow_down": "Growth area: slow down.",
+        "gemini_l7_env_indiscriminate_acquaintances": (
+            "May form acquaintances broadly and indiscriminately."
+        ),
+        "gemini_l7_group_listening": (
+            "Can track individual people while working with a large group."
+        ),
+        "gemini_l7_high_working_memory_speed": (
+            "Very high working-memory speed."
+        ),
+    }
+
+    def test_aquarius_family_fully_reviewed(self):
+        report = build_human_copy_catalog()
+        family = next(f for f in report.families if f.family_key == "sign:Aquarius")
+        self.assertEqual(family.total_facts, 72)
+        self.assertEqual(family.approved_override, 33)
+        self.assertEqual(family.approved_raw, 35)
+        self.assertEqual(family.needs_review, 4)
+        self.assertEqual(family.unreviewed, 0)
+        self.assertEqual(family.reviewed_count, 72)
+        self.assertEqual(family.presentation_ready_count, 68)
+        self.assertEqual(family.review_coverage, 1.0)
+        self.assertEqual(family.presentation_ready_coverage, round(68 / 72, 6))
+
+    def test_gemini_family_fully_reviewed(self):
+        report = build_human_copy_catalog()
+        family = next(f for f in report.families if f.family_key == "sign:Gemini")
+        self.assertEqual(family.total_facts, 50)
+        self.assertEqual(family.approved_override, 20)
+        self.assertEqual(family.approved_raw, 29)
+        self.assertEqual(family.needs_review, 1)
+        self.assertEqual(family.unreviewed, 0)
+        self.assertEqual(family.reviewed_count, 50)
+        self.assertEqual(family.presentation_ready_count, 49)
+        self.assertEqual(family.review_coverage, 1.0)
+        self.assertEqual(family.presentation_ready_coverage, 0.98)
+
+    def test_s48b_registries_and_wording_corrections(self):
+        by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
+        self.assertEqual(len(self.S48B_AQUARIUS_APPROVED_RAW), 35)
+        self.assertEqual(len(self.S48B_AQUARIUS_OVERRIDES), 33)
+        self.assertEqual(len(self.S48B_AQUARIUS_NEEDS_REVIEW), 4)
+        self.assertEqual(len(self.S48B_GEMINI_APPROVED_RAW), 29)
+        self.assertEqual(len(self.S48B_GEMINI_OVERRIDES), 20)
+        for fact_id in (
+            *self.S48B_AQUARIUS_APPROVED_RAW,
+            *self.S48B_GEMINI_APPROVED_RAW,
+        ):
+            with self.subTest(raw=fact_id):
+                self.assertIn(fact_id, APPROVED_RAW_FACT_IDS)
+                self.assertNotIn(fact_id, HUMAN_COPY_OVERRIDES)
+                self.assertNotIn(fact_id, NEEDS_REVIEW_FACT_IDS)
+                entry = build_catalog_entry(by_id[fact_id])
+                self.assertEqual(entry.review_status, STATUS_APPROVED_RAW)
+                self.assertEqual(entry.human_text, entry.canonical_text)
+        for fact_id, human in {
+            **self.S48B_AQUARIUS_OVERRIDES,
+            **self.S48B_GEMINI_OVERRIDES,
+        }.items():
+            with self.subTest(override=fact_id):
+                self.assertEqual(HUMAN_COPY_OVERRIDES[fact_id], human)
+                self.assertNotIn(fact_id, APPROVED_RAW_FACT_IDS)
+                self.assertNotIn(fact_id, NEEDS_REVIEW_FACT_IDS)
+                entry = build_catalog_entry(by_id[fact_id])
+                self.assertEqual(entry.review_status, STATUS_APPROVED_OVERRIDE)
+                self.assertEqual(entry.canonical_text, by_id[fact_id].text)
+                self.assertNotEqual(entry.canonical_text, human)
+        for fact_id in (
+            *self.S48B_AQUARIUS_NEEDS_REVIEW,
+            "gemini_bio_major_domicile_sync",
+        ):
+            with self.subTest(needs=fact_id):
+                self.assertIn(fact_id, NEEDS_REVIEW_FACT_IDS)
+                self.assertNotIn(fact_id, HUMAN_COPY_OVERRIDES)
+                self.assertNotIn(fact_id, APPROVED_RAW_FACT_IDS)
+                entry = build_catalog_entry(by_id[fact_id])
+                self.assertEqual(entry.review_status, STATUS_NEEDS_REVIEW)
+                self.assertEqual(entry.human_text, entry.canonical_text)
+        # Spot-check approved wording corrections vs unchanged canonical.
+        self.assertEqual(
+            HUMAN_COPY_OVERRIDES["aquarius_bio_afflicted_anomalous_rhythms"],
+            "Mental activity may follow irregular or unusual rhythms.",
+        )
+        self.assertIn(
+            "anomalous rhythms",
+            by_id["aquarius_bio_afflicted_anomalous_rhythms"].text,
+        )
+        self.assertEqual(
+            HUMAN_COPY_OVERRIDES["aquarius_bio_uranian_freedom_equality_fraternity_coloring"],
+            "Thinking, communication, and learning may be colored by themes of "
+            "freedom, equality, and fraternity.",
+        )
+        self.assertNotIn(
+            "Mercury functions",
+            HUMAN_COPY_OVERRIDES[
+                "aquarius_bio_uranian_freedom_equality_fraternity_coloring"
+            ],
+        )
+        self.assertEqual(
+            HUMAN_COPY_OVERRIDES["gemini_bio_afflicted_words_exceed_actions"],
+            "Words may greatly outnumber actions.",
+        )
+        self.assertEqual(
+            HUMAN_COPY_OVERRIDES["gemini_bio_salesperson_ability"],
+            "Sales ability.",
+        )
+        self.assertEqual(
+            HUMAN_COPY_OVERRIDES["gemini_l7_high_working_memory_speed"],
+            "Very high working-memory speed.",
+        )
+        self.assertTrue(
+            set(HUMAN_COPY_OVERRIDES).isdisjoint(APPROVED_RAW_FACT_IDS)
+        )
+        self.assertTrue(
+            set(HUMAN_COPY_OVERRIDES).isdisjoint(NEEDS_REVIEW_FACT_IDS)
+        )
+        self.assertTrue(
+            set(APPROVED_RAW_FACT_IDS).isdisjoint(NEEDS_REVIEW_FACT_IDS)
+        )
+        self.assertEqual(len(NEEDS_REVIEW_FACT_IDS), 8)
 
 
 class RuntimeRegressionTests(unittest.TestCase):
