@@ -25,6 +25,7 @@ House 5 has Lesson 7 + Bioastrology (dual-source parity).
 House 6 has Lesson 7 + Bioastrology (dual-source parity).
 House 7 has Lesson 7 + Bioastrology (dual-source parity).
 House 9 has Lesson 7 + Bioastrology (dual-source parity).
+House 10 has Lesson 7 + Bioastrology (dual-source parity).
 
 House Batch B1:
 - House 4
@@ -153,6 +154,7 @@ REF_JUPITER_HARM = "bioastrology_mercury_jupiter_harmonious"
 REF_SAGITTARIUS = "lesson7_mercury_sagittarius"
 REF_SAGITTARIUS_BIO = "bioastrology_mercury_sagittarius"
 REF_H10 = "lesson7_mercury_house_10"
+REF_H10_BIO = "bioastrology_mercury_house_10"
 REF_URANUS_CONJ = "bioastrology_mercury_uranus_conjunction"
 
 _AFFLICTED_PREFIX = (
@@ -1664,6 +1666,87 @@ HOUSE_10: tuple[SourceFactDef, ...] = (
 )
 
 # ---------------------------------------------------------------------------
+# Mercury in House 10 — Bioastrology (dual-source parity; HOUSE_10 L7 is frozen)
+# ---------------------------------------------------------------------------
+HOUSE_10_BIO: tuple[SourceFactDef, ...] = (
+    _f("h10_bio_communication_learning_strengthened_overall", "house", "10",
+       "source_specific",
+       "Communication and learning functions may be strengthened overall.",
+       "strength",
+       source_reference=REF_H10_BIO),
+    _f("h10_bio_communication_learning_demanded_in_career", "house", "10",
+       "work_application",
+       "Communication and learning may be especially demanded in career contexts.",
+       "neutral",
+       source_reference=REF_H10_BIO),
+    _f("h10_bio_communication_learning_demanded_in_business", "house", "10",
+       "work_application",
+       "Communication and learning may be especially demanded in business contexts.",
+       "neutral",
+       source_reference=REF_H10_BIO),
+    _f("h10_bio_intellectual_transport_profession", "house", "10", "work_application",
+       "Favorable association with intellectual and transport-related professions.",
+       "strength", "intellectual_work", "transport_profession",
+       source_reference=REF_H10_BIO),
+    _f("h10_bio_consultant_qualities", "house", "10", "work_application",
+       "May support qualities associated with consulting.",
+       "strength", "consulting",
+       source_reference=REF_H10_BIO),
+    _f("h10_bio_sales_qualities", "house", "10", "work_application",
+       "May support qualities associated with sales.",
+       "strength", "sales",
+       source_reference=REF_H10_BIO),
+    _f("h10_bio_scientist_role", "house", "10", "work_application",
+       "May support qualities associated with a scientist role.",
+       "strength",
+       source_reference=REF_H10_BIO),
+    _f("h10_bio_politician_role", "house", "10", "work_application",
+       "May support qualities associated with a politician role.",
+       "strength",
+       source_reference=REF_H10_BIO),
+    _f("h10_bio_intellect_becomes_grounded", "house", "10", "thinking",
+       "Over time, circumstances may make the intellect more grounded and down-to-earth.",
+       "neutral",
+       source_reference=REF_H10_BIO),
+    _f("h10_bio_intellect_becomes_conservative", "house", "10", "thinking",
+       "Over time, circumstances may make the intellect more conservative.",
+       "neutral",
+       source_reference=REF_H10_BIO),
+    _f("h10_bio_intellect_becomes_socially_conditioned", "house", "10", "thinking",
+       "Over time, circumstances may make the intellect more socially conditioned.",
+       "neutral",
+       source_reference=REF_H10_BIO),
+    _f("h10_bio_parallel_work_business_directions", "house", "10", "work_application",
+       "There may be several parallel directions in work or business.",
+       "neutral",
+       source_reference=REF_H10_BIO),
+    _f("h10_bio_work_with_siblings", "house", "10", "work_application",
+       "Work may involve siblings.",
+       "neutral",
+       source_reference=REF_H10_BIO),
+    _f("h10_bio_work_with_younger_people", "house", "10", "work_application",
+       "Work may involve younger people.",
+       "neutral",
+       source_reference=REF_H10_BIO),
+    _f("h10_bio_popularity_fame", "house", "10", "source_specific",
+       "Favorable association with popularity and public recognition.",
+       "strength",
+       source_reference=REF_H10_BIO),
+    _f("h10_bio_afflicted_seen_as_student", "house", "10", "source_specific",
+       "When Mercury is afflicted, the source describes a social perception of the "
+       "person only in a student role (afflicted-Mercury dependency; no house-affliction "
+       "resolver is applied; not hard_aspected).",
+       "conditional",
+       source_reference=REF_H10_BIO, unresolved=True),
+    _f("h10_bio_afflicted_seen_as_servant", "house", "10", "source_specific",
+       "When Mercury is afflicted, the source describes a social perception of the "
+       "person only in a servant role (afflicted-Mercury dependency; no house-affliction "
+       "resolver is applied; not hard_aspected).",
+       "conditional",
+       source_reference=REF_H10_BIO, unresolved=True),
+)
+
+# ---------------------------------------------------------------------------
 # Mercury conjunction Uranus (Dzmitry) — conjunction-specific pack
 # ---------------------------------------------------------------------------
 URANUS_CONJUNCTION: tuple[SourceFactDef, ...] = (
@@ -2027,6 +2110,7 @@ ALL_SOURCE_FACTS: tuple[SourceFactDef, ...] = (
     + SAGITTARIUS_BIOASTROLOGY
     + SAGITTARIUS_AFFLICTED
     + HOUSE_10
+    + HOUSE_10_BIO
     + URANUS_CONJUNCTION
     + A1_SIGN_PACKS
     + A2_SIGN_PACKS
