@@ -1221,6 +1221,46 @@ HUMAN_COPY_OVERRIDES: dict[str, str] = {
     "rx_works_more_inwardly": (
         "Thinking, communication, and learning may operate more inwardly."
     ),
+    # --- S4.15B house:1 family review (16 new; h1_support_intellectual_work frozen) ---
+    "h1_eventfulness_books": (
+        "There may be more events or activity connected with books."
+    ),
+    "h1_eventfulness_social_networks": (
+        "There may be more events or activity connected with social networks."
+    ),
+    "h1_eventfulness_trips": (
+        "There may be more events or activity connected with trips."
+    ),
+    "h1_talkative_or_writing_tendency": (
+        "May be more talkative and more inclined to write."
+    ),
+    "h1_emphasizes_mercury_aspects": (
+        "This placement may make Mercury's aspect patterns more prominent."
+    ),
+    "h1_emphasizes_mercury_sign": (
+        "This placement may make the Mercury sign pattern more prominent."
+    ),
+    "h1_increased_learnability": "Learning may come more easily.",
+    "h1_multitasking": "May tend to multitask.",
+    "h1_outward_friendliness": "May appear friendly or open.",
+    "h1_quickness": "May show quickness.",
+    "h1_special_relevance_car_driving": (
+        "Cars or driving may have particular relevance."
+    ),
+    "h1_special_relevance_siblings": (
+        "Siblings may have particular relevance."
+    ),
+    "h1_strengthens_mercury_functions": (
+        "May amplify Mercury-related patterns in thinking, communication, "
+        "and learning."
+    ),
+    "h1_support_consultant_qualities": (
+        "May support qualities associated with consulting."
+    ),
+    "h1_support_sales_qualities": (
+        "May support qualities associated with sales."
+    ),
+    "h1_youthful_quality": "May come across as youthful.",
 }
 
 

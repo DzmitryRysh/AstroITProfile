@@ -440,13 +440,13 @@ class SagittariusFamilyS44BTests(unittest.TestCase):
                 self.assertEqual(entry.review_status, STATUS_APPROVED_OVERRIDE)
                 self.assertEqual(entry.canonical_text, by_id[fact_id].text)
 
-    def test_global_totals_after_s414b(self):
+    def test_global_totals_after_s415b(self):
         report = build_human_copy_catalog()
         self.assertEqual(report.total_facts, 1590)
-        self.assertEqual(report.approved_override_count, 417)
+        self.assertEqual(report.approved_override_count, 433)
         self.assertEqual(report.approved_raw_count, 346)
         self.assertEqual(report.needs_review_count, 1)
-        self.assertEqual(report.unreviewed_count, 826)
+        self.assertEqual(report.unreviewed_count, 810)
         self.assertEqual(
             report.approved_override_count
             + report.approved_raw_count
@@ -454,8 +454,8 @@ class SagittariusFamilyS44BTests(unittest.TestCase):
             + report.unreviewed_count,
             1590,
         )
-        self.assertEqual(report.reviewed_count, 764)
-        self.assertEqual(report.presentation_ready_count, 763)
+        self.assertEqual(report.reviewed_count, 780)
+        self.assertEqual(report.presentation_ready_count, 779)
 
 
 class TaurusFamilyS45BTests(unittest.TestCase):
@@ -2571,7 +2571,7 @@ class CancerVirgoFamilyS411BTests(unittest.TestCase):
             self.assertNotIn(sticky_id, HUMAN_COPY_OVERRIDES)
         self.assertIn("Gemini", by_id["virgo_bio_less_accumulation_for_its_own_sake"].text)
         self.assertEqual(len(NEEDS_REVIEW_FACT_IDS), 1)
-        self.assertEqual(len(HUMAN_COPY_OVERRIDES), 417)
+        self.assertEqual(len(HUMAN_COPY_OVERRIDES), 433)
         self.assertEqual(len(APPROVED_RAW_FACT_IDS), 346)
         self.assertTrue(
             set(HUMAN_COPY_OVERRIDES).isdisjoint(APPROVED_RAW_FACT_IDS)
@@ -2763,12 +2763,12 @@ class CrossFamilyPolicyS412BTests(unittest.TestCase):
 
         report = build_human_copy_catalog()
         # Global totals include later S4.14B motion layer.
-        self.assertEqual(report.approved_override_count, 417)
+        self.assertEqual(report.approved_override_count, 433)
         self.assertEqual(report.approved_raw_count, 346)
         self.assertEqual(report.needs_review_count, 1)
-        self.assertEqual(report.unreviewed_count, 826)
-        self.assertEqual(report.reviewed_count, 764)
-        self.assertEqual(report.presentation_ready_count, 763)
+        self.assertEqual(report.unreviewed_count, 810)
+        self.assertEqual(report.reviewed_count, 780)
+        self.assertEqual(report.presentation_ready_count, 779)
         queue = build_sign_review_queue(report)
         self.assertEqual(queue.sign_reviewed_facts, 730)
         self.assertEqual(queue.sign_presentation_ready_facts, 729)
@@ -2894,23 +2894,147 @@ class MotionRetrogradeS414BTests(unittest.TestCase):
             by_id["rx_revisit_previously_learned"].text,
         )
         self.assertEqual(NEEDS_REVIEW_FACT_IDS, frozenset({"cancer_bio_depends_on_moon_sign"}))
-        self.assertEqual(len(HUMAN_COPY_OVERRIDES), 417)
+        self.assertEqual(len(HUMAN_COPY_OVERRIDES), 433)
         self.assertEqual(len(APPROVED_RAW_FACT_IDS), 346)
         report = build_human_copy_catalog()
-        self.assertEqual(report.approved_override_count, 417)
+        self.assertEqual(report.approved_override_count, 433)
         self.assertEqual(report.approved_raw_count, 346)
         self.assertEqual(report.needs_review_count, 1)
-        self.assertEqual(report.unreviewed_count, 826)
-        self.assertEqual(report.reviewed_count, 764)
-        self.assertEqual(report.presentation_ready_count, 763)
+        self.assertEqual(report.unreviewed_count, 810)
+        self.assertEqual(report.reviewed_count, 780)
+        self.assertEqual(report.presentation_ready_count, 779)
         by_type = {}
         for fam in report.families:
             by_type.setdefault(fam.factor_type, 0)
             by_type[fam.factor_type] += fam.unreviewed
         self.assertEqual(by_type["motion"], 0)
-        self.assertEqual(by_type["house"], 201)
+        self.assertEqual(by_type["house"], 185)
         self.assertEqual(by_type["aspect"], 625)
         self.assertEqual(by_type["sign"], 0)
+        self.assertTrue(
+            set(HUMAN_COPY_OVERRIDES).isdisjoint(APPROVED_RAW_FACT_IDS)
+        )
+        self.assertTrue(
+            set(HUMAN_COPY_OVERRIDES).isdisjoint(NEEDS_REVIEW_FACT_IDS)
+        )
+        self.assertTrue(
+            set(APPROVED_RAW_FACT_IDS).isdisjoint(NEEDS_REVIEW_FACT_IDS)
+        )
+
+
+class House1S415BTests(unittest.TestCase):
+    """S4.15B: complete house:1 human-copy layer (16 new overrides)."""
+
+    FROZEN_OVERRIDE = (
+        "h1_support_intellectual_work",
+        "May support intellectual work and transport-related professions.",
+    )
+    S415B_OVERRIDES: dict[str, str] = {
+        "h1_eventfulness_books": (
+            "There may be more events or activity connected with books."
+        ),
+        "h1_eventfulness_social_networks": (
+            "There may be more events or activity connected with social networks."
+        ),
+        "h1_eventfulness_trips": (
+            "There may be more events or activity connected with trips."
+        ),
+        "h1_talkative_or_writing_tendency": (
+            "May be more talkative and more inclined to write."
+        ),
+        "h1_emphasizes_mercury_aspects": (
+            "This placement may make Mercury's aspect patterns more prominent."
+        ),
+        "h1_emphasizes_mercury_sign": (
+            "This placement may make the Mercury sign pattern more prominent."
+        ),
+        "h1_increased_learnability": "Learning may come more easily.",
+        "h1_multitasking": "May tend to multitask.",
+        "h1_outward_friendliness": "May appear friendly or open.",
+        "h1_quickness": "May show quickness.",
+        "h1_special_relevance_car_driving": (
+            "Cars or driving may have particular relevance."
+        ),
+        "h1_special_relevance_siblings": (
+            "Siblings may have particular relevance."
+        ),
+        "h1_strengthens_mercury_functions": (
+            "May amplify Mercury-related patterns in thinking, communication, "
+            "and learning."
+        ),
+        "h1_support_consultant_qualities": (
+            "May support qualities associated with consulting."
+        ),
+        "h1_support_sales_qualities": (
+            "May support qualities associated with sales."
+        ),
+        "h1_youthful_quality": "May come across as youthful.",
+    }
+
+    def test_house_1_fully_reviewed(self):
+        report = build_human_copy_catalog()
+        family = next(f for f in report.families if f.family_key == "house:1")
+        self.assertEqual(family.total_facts, 17)
+        self.assertEqual(family.approved_override, 17)
+        self.assertEqual(family.approved_raw, 0)
+        self.assertEqual(family.needs_review, 0)
+        self.assertEqual(family.unreviewed, 0)
+        self.assertEqual(family.reviewed_count, 17)
+        self.assertEqual(family.presentation_ready_count, 17)
+        self.assertEqual(family.review_coverage, 1.0)
+        self.assertEqual(family.presentation_ready_coverage, 1.0)
+        house_tot = sum(f.total_facts for f in report.families if f.factor_type == "house")
+        house_rev = sum(f.reviewed_count for f in report.families if f.factor_type == "house")
+        house_ready = sum(
+            f.presentation_ready_count for f in report.families if f.factor_type == "house"
+        )
+        house_ur = sum(f.unreviewed for f in report.families if f.factor_type == "house")
+        self.assertEqual(house_tot, 202)
+        self.assertEqual(house_rev, 17)
+        self.assertEqual(house_ready, 17)
+        self.assertEqual(house_ur, 185)
+
+    def test_s415b_overrides_and_semantics(self):
+        by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
+        frozen_id, frozen_human = self.FROZEN_OVERRIDE
+        self.assertEqual(HUMAN_COPY_OVERRIDES[frozen_id], frozen_human)
+        self.assertEqual(len(self.S415B_OVERRIDES), 16)
+        for fact_id, human in self.S415B_OVERRIDES.items():
+            with self.subTest(override=fact_id):
+                self.assertEqual(HUMAN_COPY_OVERRIDES[fact_id], human)
+                self.assertNotIn(fact_id, APPROVED_RAW_FACT_IDS)
+                self.assertNotIn(fact_id, NEEDS_REVIEW_FACT_IDS)
+                entry = build_catalog_entry(by_id[fact_id])
+                self.assertEqual(entry.review_status, STATUS_APPROVED_OVERRIDE)
+                self.assertEqual(entry.canonical_text, by_id[fact_id].text)
+                self.assertNotEqual(entry.canonical_text, human)
+        amplify = HUMAN_COPY_OVERRIDES["h1_strengthens_mercury_functions"]
+        self.assertEqual(
+            amplify,
+            "May amplify Mercury-related patterns in thinking, communication, "
+            "and learning.",
+        )
+        self.assertIn("amplify", amplify.lower())
+        self.assertNotIn("improve", amplify.lower())
+        self.assertNotIn("strengthen thinking", amplify.lower())
+        self.assertNotIn(
+            "Mercury functions",
+            amplify,
+        )
+        self.assertIn(
+            "Mercury functions",
+            by_id["h1_strengthens_mercury_functions"].text,
+        )
+        self.assertEqual(NEEDS_REVIEW_FACT_IDS, frozenset({"cancer_bio_depends_on_moon_sign"}))
+        self.assertEqual(len(HUMAN_COPY_OVERRIDES), 433)
+        self.assertEqual(len(APPROVED_RAW_FACT_IDS), 346)
+        report = build_human_copy_catalog()
+        self.assertEqual(report.approved_override_count, 433)
+        self.assertEqual(report.approved_raw_count, 346)
+        self.assertEqual(report.needs_review_count, 1)
+        self.assertEqual(report.unreviewed_count, 810)
+        self.assertEqual(report.reviewed_count, 780)
+        self.assertEqual(report.presentation_ready_count, 779)
         self.assertTrue(
             set(HUMAN_COPY_OVERRIDES).isdisjoint(APPROVED_RAW_FACT_IDS)
         )
