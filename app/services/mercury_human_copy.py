@@ -1319,6 +1319,53 @@ HUMAN_COPY_OVERRIDES: dict[str, str] = {
     "h2_trade_income_association": (
         "The source associates income or activity with trade."
     ),
+    # --- S4.17B house:3 family review (21) ---
+    "h3_ability_to_ask_right_questions": (
+        "May be good at asking the right questions."
+    ),
+    "h3_ability_to_distribute_attention": (
+        "May be able to distribute attention across multiple things."
+    ),
+    "h3_ability_to_solve_tactical_tasks": (
+        "May be good at solving tactical tasks."
+    ),
+    "h3_ability_to_switch_between_activities": (
+        "May be able to switch between activities."
+    ),
+    "h3_arguments_readily_available": (
+        "Arguments may come readily when needed."
+    ),
+    "h3_attends_courses": "May attend courses.",
+    "h3_attends_lectures": "May attend lectures.",
+    "h3_constant_drive_toward_learning": (
+        "May have a strong ongoing drive to learn."
+    ),
+    "h3_events_often_begin_with_receiving_news": (
+        "Events may often begin with receiving news, such as a call or a letter."
+    ),
+    "h3_excellent_written_expression": (
+        "May express thoughts especially well in writing."
+    ),
+    "h3_extreme_curiosity": "May show very strong curiosity.",
+    "h3_group_learning_easier": "Group learning may come more easily.",
+    "h3_intellectual_success_depends_on_concentration": (
+        "Intellectual success may depend on the ability to maintain "
+        "concentration."
+    ),
+    "h3_knowledge_grasped_on_the_fly": (
+        "Knowledge may be grasped quickly, on the fly."
+    ),
+    "h3_learns_languages": "May learn languages.",
+    "h3_many_unnecessary_contacts": (
+        "May form many connections, with many of them proving unnecessary."
+    ),
+    "h3_need_for_dialogue": "May have a strong need for dialogue.",
+    "h3_need_for_feedback": "May have a strong need for feedback.",
+    "h3_skilled_storyteller": "May be a skilled storyteller.",
+    "h3_wide_circle_of_acquaintances": (
+        "May have a wide circle of acquaintances."
+    ),
+    "h3_writes_essays_well": "May write essays well.",
 }
 
 
