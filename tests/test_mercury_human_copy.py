@@ -269,6 +269,7 @@ class HumanCopyModuleTests(unittest.TestCase):
                 "persuasion",
                 "lifelong_learning",
                 "foreign_languages",
+                "teaching",
             ],
         )
         self.assertEqual(

@@ -24,6 +24,7 @@ House 4 has Lesson 7 + Bioastrology (dual-source parity).
 House 5 has Lesson 7 + Bioastrology (dual-source parity).
 House 6 has Lesson 7 + Bioastrology (dual-source parity).
 House 7 has Lesson 7 + Bioastrology (dual-source parity).
+House 9 has Lesson 7 + Bioastrology (dual-source parity).
 
 House Batch B1:
 - House 4
@@ -145,6 +146,7 @@ REF_MOON_HARM = "bioastrology_mercury_moon_harmonious"
 REF_TAURUS = "lesson7_mercury_taurus"
 REF_TAURUS_BIO = "bioastrology_mercury_taurus"
 REF_H9 = "lesson7_mercury_house_9"
+REF_H9_BIO = "bioastrology_mercury_house_9"
 REF_MOON_SQ = "lesson7_mercury_moon_square"
 REF_MARS_HARM = "bioastrology_mercury_mars_harmonious"
 REF_JUPITER_HARM = "bioastrology_mercury_jupiter_harmonious"
@@ -1165,6 +1167,67 @@ HOUSE_9: tuple[SourceFactDef, ...] = (
 )
 
 # ---------------------------------------------------------------------------
+# Mercury in House 9 — Bioastrology (dual-source parity; HOUSE_9 L7 is frozen)
+# ---------------------------------------------------------------------------
+HOUSE_9_BIO: tuple[SourceFactDef, ...] = (
+    _f("h9_bio_communication_learning_realized_through_travel", "house", "9",
+       "source_specific",
+       "Communication and learning may be realized through travel.",
+       "neutral",
+       source_reference=REF_H9_BIO),
+    _f("h9_bio_communication_learning_realized_through_philosophical_concepts",
+       "house", "9", "source_specific",
+       "Communication and learning may be realized through philosophical concepts.",
+       "neutral",
+       source_reference=REF_H9_BIO),
+    _f("h9_bio_communication_learning_realized_through_scientific_theories",
+       "house", "9", "source_specific",
+       "Communication and learning may be realized through scientific theories.",
+       "neutral",
+       source_reference=REF_H9_BIO),
+    _f("h9_bio_not_heard_in_ordinary_situations", "house", "9", "source_specific",
+       "In ordinary everyday situations, the person may seem not to be heard.",
+       "risk",
+       source_reference=REF_H9_BIO),
+    _f("h9_bio_strong_intellect", "house", "9", "thinking",
+       "May support strong intellect.",
+       "strength",
+       source_reference=REF_H9_BIO),
+    _f("h9_bio_increased_courses", "house", "9", "learning",
+       "There may be an increased presence of courses in the person's learning path.",
+       "neutral",
+       source_reference=REF_H9_BIO),
+    _f("h9_bio_increased_trainings", "house", "9", "learning",
+       "There may be an increased presence of trainings in the person's learning path.",
+       "neutral",
+       source_reference=REF_H9_BIO),
+    _f("h9_bio_increased_university_contexts", "house", "9", "learning",
+       "There may be an increased presence of university study contexts.",
+       "neutral",
+       source_reference=REF_H9_BIO),
+    _f("h9_bio_learning_through_direct_teacher_dialogue", "house", "9", "learning",
+       "Learning may occur through direct dialogue with a teacher.",
+       "strength",
+       source_reference=REF_H9_BIO),
+    _f("h9_bio_foreign_languages", "house", "9", "learning",
+       "Favorable association with foreign languages.",
+       "strength", "foreign_languages",
+       source_reference=REF_H9_BIO),
+    _f("h9_bio_teacher_talent", "house", "9", "learning",
+       "May support talent as a teacher.",
+       "strength", "teaching",
+       source_reference=REF_H9_BIO),
+    _f("h9_bio_trainer_talent", "house", "9", "learning",
+       "May support talent as a trainer.",
+       "strength",
+       source_reference=REF_H9_BIO),
+    _f("h9_bio_mentor_talent", "house", "9", "learning",
+       "May support talent as a mentor.",
+       "strength",
+       source_reference=REF_H9_BIO),
+)
+
+# ---------------------------------------------------------------------------
 # Mercury square Moon (Vlad)
 # ---------------------------------------------------------------------------
 MOON_SQUARE: tuple[SourceFactDef, ...] = (
@@ -1956,6 +2019,7 @@ ALL_SOURCE_FACTS: tuple[SourceFactDef, ...] = (
     + TAURUS_BIOASTROLOGY
     + TAURUS_AFFLICTED
     + HOUSE_9
+    + HOUSE_9_BIO
     + MOON_SQUARE
     + MARS_TRINE
     + JUPITER_SEXTILE

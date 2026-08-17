@@ -388,6 +388,7 @@ class SynthesisRepeatAndContrastTests(unittest.TestCase):
                     "persuasion",
                     "lifelong_learning",
                     "foreign_languages",
+                    "teaching",
                 ],
             ),
             "dzmitry": (_dzmitry, ["persuasion", "foreign_languages", "teaching"]),

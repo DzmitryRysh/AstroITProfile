@@ -292,6 +292,7 @@ class AspectBatchC14RegressionTests(unittest.TestCase):
                 "persuasion",
                 "lifelong_learning",
                 "foreign_languages",
+                "teaching",
             },
             "Dzmitry": {
                 "persuasion",
