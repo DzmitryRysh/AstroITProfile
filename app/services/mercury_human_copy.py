@@ -14,7 +14,7 @@ from collections.abc import Iterable
 from app.schemas.mercury_source_profile import SourceFact
 
 # Curated human-facing overrides. Keys are stable SourceFact.id values.
-# S4.0 pilot + S4.2 golden-exposure + S4.2.1 live-UI polish. Presentation only.
+# S4.0 + S4.2 + S4.2.1 + S4.2.2 Dzmitry polish. Presentation only.
 HUMAN_COPY_OVERRIDES: dict[str, str] = {
     # --- S4.0 pilot ---
     "pluto_sq_conflictual_communication": (
@@ -150,6 +150,80 @@ HUMAN_COPY_OVERRIDES: dict[str, str] = {
     "taurus_bio_slowness_dispute_disadvantage": (
         "A slower response pace can be a disadvantage in fast-moving "
         "arguments."
+    ),
+    # --- S4.2.2 Dzmitry live-UI polish ---
+    "sag_thinks_in_categories_globally": (
+        "Thinks in broad categories and on a large scale."
+    ),
+    "sag_asks_why_what_for": (
+        "Naturally asks why things matter and what they are for."
+    ),
+    "sag_sees_elevated_misses_simple": (
+        "May focus on larger meaning while overlooking simpler details."
+    ),
+    "sag_nonstandard_in_intellectual_matters": (
+        "Approaches intellectual questions in unconventional ways."
+    ),
+    "sag_bio_imagination": (
+        "Shows a tendency toward imaginative thinking."
+    ),
+    "sag_bio_large_scale_thinking": (
+        "Thinking tends to operate on a large scale."
+    ),
+    "sag_bio_global_thinking": (
+        "Thinking tends to take a global perspective."
+    ),
+    "sag_bio_categorical_thinking": (
+        "Thinking can become categorical."
+    ),
+    "sag_bio_thinking_connected_with_opinions_more_than_facts": (
+        "Thinking may lean more on opinions than on facts."
+    ),
+    "sag_bio_thinking_connected_with_image_of_facts": (
+        "Thinking may focus more on how facts are framed or represented "
+        "than on raw factual material."
+    ),
+    "uranus_cj_function_overridden_by_rebellious_superconsciousness": (
+        "Communication and learning can be strongly reshaped by "
+        "unconventional, technically oriented thinking."
+    ),
+    "uranus_cj_rebellious_free_thinking": (
+        "Thinking can be rebellious and free-spirited."
+    ),
+    "sag_speaks_like_preacher_agitator_philosopher": (
+        "Communication can take on the tone of a preacher, agitator, or "
+        "philosopher."
+    ),
+    "sag_speech_maintains_authority": (
+        "Speech may be used to maintain authority."
+    ),
+    "sag_tends_to_teach_lecture": (
+        "May slip into teaching or lecturing others."
+    ),
+    "sag_broadcasts_from_above": (
+        "May communicate from a position of authority rather than as an "
+        "equal dialogue partner."
+    ),
+    "sag_love_of_pompous_wording": (
+        "May favor pompous or high-flown language."
+    ),
+    "sag_intolerance_of_others_opinions": (
+        "May become intolerant of other people's opinions and ideas."
+    ),
+    "sag_tells_others_about_achievements": (
+        "May enjoy talking about personal achievements and exploits."
+    ),
+    "sag_bio_prolific_writing_tendency": (
+        "May have a strong tendency toward prolific writing."
+    ),
+    "mars_tr_easier_to_argue_debate": (
+        "Finds it easier to argue or debate."
+    ),
+    "mars_tr_speech_clearer_more_forceful": (
+        "Speech can become louder, clearer, and more forceful."
+    ),
+    "jupiter_sx_native_and_foreign_languages": (
+        "Communication may have a strong connection with foreign languages."
     ),
 }
 

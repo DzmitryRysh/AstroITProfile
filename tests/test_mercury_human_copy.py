@@ -100,8 +100,8 @@ class HumanCopyModuleTests(unittest.TestCase):
         self.assertNotIn("unmapped_x", result)
 
     def test_pilot_override_count(self):
-        # S4.0 (11) + S4.2 (25) + S4.2.1 live-UI polish (5).
-        self.assertEqual(len(HUMAN_COPY_OVERRIDES), 41)
+        # S4.0 (11) + S4.2 (25) + S4.2.1 (5) + S4.2.2 Dzmitry (23).
+        self.assertEqual(len(HUMAN_COPY_OVERRIDES), 64)
 
     def test_s42_override_ids_exist_and_raw_text_unchanged(self):
         by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
@@ -308,6 +308,222 @@ class HumanCopyModuleTests(unittest.TestCase):
             )
             match = next(f for f in all_facts if f.id == fact_id)
             self.assertEqual(match.text, next(f for f in ALL_SOURCE_FACTS if f.id == fact_id).text)
+
+    def test_s422_dzmitry_live_ui_polish_overrides(self):
+        by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
+        expected = {
+            "sag_thinks_in_categories_globally": (
+                "Thinks in categories, globally, on a large scale.",
+                "Thinks in broad categories and on a large scale.",
+            ),
+            "sag_asks_why_what_for": (
+                'Asks "why?" / "what for?".',
+                "Naturally asks why things matter and what they are for.",
+            ),
+            "sag_sees_elevated_misses_simple": (
+                "Sees elevated / large meaning while missing the simple.",
+                "May focus on larger meaning while overlooking simpler details.",
+            ),
+            "sag_nonstandard_in_intellectual_matters": (
+                "Nonstandard in intellectual matters.",
+                "Approaches intellectual questions in unconventional ways.",
+            ),
+            "sag_bio_imagination": (
+                "Imagination (source-described tendency).",
+                "Shows a tendency toward imaginative thinking.",
+            ),
+            "sag_bio_large_scale_thinking": (
+                "Thoughts are large-scale.",
+                "Thinking tends to operate on a large scale.",
+            ),
+            "sag_bio_global_thinking": (
+                "Thoughts are global.",
+                "Thinking tends to take a global perspective.",
+            ),
+            "sag_bio_categorical_thinking": (
+                "Thoughts are categorical.",
+                "Thinking can become categorical.",
+            ),
+            "sag_bio_thinking_connected_with_opinions_more_than_facts": (
+                "Thinking is connected more with opinions than facts.",
+                "Thinking may lean more on opinions than on facts.",
+            ),
+            "sag_bio_thinking_connected_with_image_of_facts": (
+                "Thinking is connected with the image/representation of facts "
+                "rather than raw factual material.",
+                "Thinking may focus more on how facts are framed or represented "
+                "than on raw factual material.",
+            ),
+            "uranus_cj_function_overridden_by_rebellious_superconsciousness": (
+                'Communication and learning function is strongly overridden / '
+                'transformed by rebellious technical "super-consciousness".',
+                "Communication and learning can be strongly reshaped by "
+                "unconventional, technically oriented thinking.",
+            ),
+            "uranus_cj_rebellious_free_thinking": (
+                "Rebellious / free thinking.",
+                "Thinking can be rebellious and free-spirited.",
+            ),
+            "sag_speaks_like_preacher_agitator_philosopher": (
+                "Speaks like a preacher / agitator / philosopher.",
+                "Communication can take on the tone of a preacher, agitator, or "
+                "philosopher.",
+            ),
+            "sag_speech_maintains_authority": (
+                "Speech is used to maintain authority.",
+                "Speech may be used to maintain authority.",
+            ),
+            "sag_tends_to_teach_lecture": (
+                "Tends to teach / lecture others.",
+                "May slip into teaching or lecturing others.",
+            ),
+            "sag_broadcasts_from_above": (
+                "Broadcasts ideas from above rather than entering equal dialogue.",
+                "May communicate from a position of authority rather than as an "
+                "equal dialogue partner.",
+            ),
+            "sag_love_of_pompous_wording": (
+                "Love of pompous / high-flown wording.",
+                "May favor pompous or high-flown language.",
+            ),
+            "sag_intolerance_of_others_opinions": (
+                "Intolerance of other people's opinions and ideas.",
+                "May become intolerant of other people's opinions and ideas.",
+            ),
+            "sag_tells_others_about_achievements": (
+                "Likes telling others about own achievements / exploits.",
+                "May enjoy talking about personal achievements and exploits.",
+            ),
+            "sag_bio_prolific_writing_tendency": (
+                "Prolific writing tendency (source-described tendency).",
+                "May have a strong tendency toward prolific writing.",
+            ),
+            "mars_tr_easier_to_argue_debate": (
+                "Easier to argue / debate.",
+                "Finds it easier to argue or debate.",
+            ),
+            "mars_tr_speech_clearer_more_forceful": (
+                "Speech becomes louder / clearer and more forceful.",
+                "Speech can become louder, clearer, and more forceful.",
+            ),
+            "jupiter_sx_native_and_foreign_languages": (
+                "Native language / communication connects with foreign languages.",
+                "Communication may have a strong connection with foreign languages.",
+            ),
+        }
+        self.assertEqual(len(expected), 23)
+        for fact_id, (raw, human) in expected.items():
+            with self.subTest(fact_id=fact_id):
+                self.assertIn(fact_id, by_id)
+                self.assertEqual(by_id[fact_id].text, raw)
+                self.assertEqual(HUMAN_COPY_OVERRIDES[fact_id], human)
+                fact = _fact(fact_id, raw)
+                self.assertEqual(get_human_fact_text(fact), human)
+                self.assertEqual(fact.text, raw)
+
+    def test_s422_dzmitry_representative_presentation_rules(self):
+        by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
+
+        slash_thinking = get_human_fact_text(
+            _fact(
+                "sag_thinks_in_categories_globally",
+                by_id["sag_thinks_in_categories_globally"].text,
+            )
+        )
+        self.assertNotIn(" / ", slash_thinking)
+
+        imagination = get_human_fact_text(
+            _fact("sag_bio_imagination", by_id["sag_bio_imagination"].text)
+        )
+        prolific = get_human_fact_text(
+            _fact(
+                "sag_bio_prolific_writing_tendency",
+                by_id["sag_bio_prolific_writing_tendency"].text,
+            )
+        )
+        self.assertNotIn("source-described", imagination.lower())
+        self.assertNotIn("source-described", prolific.lower())
+
+        uranus = get_human_fact_text(
+            _fact(
+                "uranus_cj_function_overridden_by_rebellious_superconsciousness",
+                by_id[
+                    "uranus_cj_function_overridden_by_rebellious_superconsciousness"
+                ].text,
+            )
+        )
+        self.assertNotIn("super-consciousness", uranus)
+        self.assertNotIn("overridden", uranus.lower())
+
+        preacher = get_human_fact_text(
+            _fact(
+                "sag_speaks_like_preacher_agitator_philosopher",
+                by_id["sag_speaks_like_preacher_agitator_philosopher"].text,
+            )
+        )
+        self.assertEqual(
+            preacher,
+            "Communication can take on the tone of a preacher, agitator, or "
+            "philosopher.",
+        )
+        self.assertNotIn(" / ", preacher)
+
+        for fact_id in (
+            "sag_intolerance_of_others_opinions",
+            "sag_speech_maintains_authority",
+            "sag_broadcasts_from_above",
+        ):
+            human = get_human_fact_text(_fact(fact_id, by_id[fact_id].text)).lower()
+            self.assertTrue("may" in human or "can" in human, human)
+            self.assertNotIn("this person", human)
+
+        for fact_id in (
+            "mars_tr_easier_to_argue_debate",
+            "mars_tr_speech_clearer_more_forceful",
+        ):
+            human = get_human_fact_text(_fact(fact_id, by_id[fact_id].text))
+            self.assertNotIn(" / ", human)
+
+    def test_s422_dzmitry_structure_unchanged(self):
+        from datetime import date, time
+
+        from app.schemas.mercury_source_profile import MercurySourceProfileRequest
+        from app.services.mercury_profile_synthesis import build_mercury_profile_synthesis
+        from app.services.mercury_source_profile import build_mercury_source_profile
+
+        profile = build_mercury_source_profile(
+            MercurySourceProfileRequest(
+                birth_date=date(1985, 11, 12),
+                birth_time=time(14, 15),
+                birth_place="Zhodino, Belarus",
+            )
+        )
+        synthesis = build_mercury_profile_synthesis(profile)
+        self.assertEqual(
+            [s.signal for s in profile.repeated_signals],
+            ["persuasion", "foreign_languages", "teaching"],
+        )
+        self.assertEqual(
+            [(c.tag_a, c.tag_b) for c in profile.contrasting_signals],
+            [("global_thinking", "precision_risk")],
+        )
+        self.assertEqual(synthesis.traceability.total_fact_count, len(synthesis.facts_by_id))
+        self.assertEqual(len(synthesis.sections), 6)
+
+        sample_ids = (
+            "sag_thinks_in_categories_globally",
+            "uranus_cj_function_overridden_by_rebellious_superconsciousness",
+            "sag_speaks_like_preacher_agitator_philosopher",
+            "mars_tr_easier_to_argue_debate",
+        )
+        for fact_id in sample_ids:
+            raw = next(f for f in ALL_SOURCE_FACTS if f.id == fact_id).text
+            self.assertEqual(synthesis.facts_by_id[fact_id].text, raw)
+            self.assertEqual(
+                synthesis.presentation_text_by_fact_id[fact_id],
+                HUMAN_COPY_OVERRIDES[fact_id],
+            )
+            self.assertNotEqual(synthesis.facts_by_id[fact_id].text, HUMAN_COPY_OVERRIDES[fact_id])
 
 
 if __name__ == "__main__":
