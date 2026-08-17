@@ -16,10 +16,12 @@ from app.services.mercury_source_knowledge_b1_houses import (
     HOUSE_3,
     HOUSE_3_BIO,
     HOUSE_4,
+    HOUSE_4_BIO,
     REF_H2_BIO,
     REF_H2_L7,
     REF_H3_BIO,
     REF_H3_L7,
+    REF_H4_BIO,
     REF_H4_L7,
 )
 from app.services.mercury_source_profile import (
@@ -55,12 +57,14 @@ class HouseBatchB1CoverageTests(unittest.TestCase):
         self.assertEqual(len(HOUSE_3), 22)
         self.assertEqual(len(HOUSE_3_BIO), 10)
         self.assertEqual(len(HOUSE_4), 10)
-        self.assertEqual(len(B1_HOUSE_PACKS), 70)
+        self.assertEqual(len(HOUSE_4_BIO), 11)
+        self.assertEqual(len(B1_HOUSE_PACKS), 81)
         self.assertTrue(all(item.source_reference == REF_H2_L7 for item in HOUSE_2))
         self.assertTrue(all(item.source_reference == REF_H2_BIO for item in HOUSE_2_BIO))
         self.assertTrue(all(item.source_reference == REF_H3_L7 for item in HOUSE_3))
         self.assertTrue(all(item.source_reference == REF_H3_BIO for item in HOUSE_3_BIO))
         self.assertTrue(all(item.source_reference == REF_H4_L7 for item in HOUSE_4))
+        self.assertTrue(all(item.source_reference == REF_H4_BIO for item in HOUSE_4_BIO))
         self.assertTrue(all(item.factor_type == "house" for item in B1_HOUSE_PACKS))
 
     def test_ids_globally_unique(self):
@@ -72,7 +76,7 @@ class HouseBatchB1CoverageTests(unittest.TestCase):
         for house, expected_refs, sample_id in (
             ("2", {REF_H2_L7, REF_H2_BIO}, "h2_profit_through_public_speaking"),
             ("3", {REF_H3_L7, REF_H3_BIO}, "h3_extreme_curiosity"),
-            ("4", {REF_H4_L7}, "h4_home_based_study"),
+            ("4", {REF_H4_L7, REF_H4_BIO}, "h4_home_based_study"),
         ):
             with self.subTest(house=house):
                 profile = build_source_profile_from_factors(

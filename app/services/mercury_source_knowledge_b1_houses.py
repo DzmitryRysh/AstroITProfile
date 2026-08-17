@@ -2,7 +2,7 @@
 
 House 2 has Lesson 7 + Bioastrology (dual-source parity).
 House 3 has Lesson 7 + Bioastrology (dual-source parity).
-House 4 remains Lesson 7 only until its Bioastrology pass.
+House 4 has Lesson 7 + Bioastrology (dual-source parity).
 
 SOURCE FIRST → SYNTHESIS SECOND.
 
@@ -59,6 +59,7 @@ REF_H2_BIO = "bioastrology_mercury_house_2"
 REF_H3_L7 = "lesson7_mercury_house_3"
 REF_H3_BIO = "bioastrology_mercury_house_3"
 REF_H4_L7 = "lesson7_mercury_house_4"
+REF_H4_BIO = "bioastrology_mercury_house_4"
 
 # ---------------------------------------------------------------------------
 # Mercury in House 2 — Lesson 7
@@ -377,7 +378,59 @@ HOUSE_4: tuple[SourceFactDef, ...] = (
        source_reference=REF_H4_L7),
 )
 
+# ---------------------------------------------------------------------------
+# Mercury in House 4 — Bioastrology (dual-source parity; HOUSE_4 L7 is frozen)
+# ---------------------------------------------------------------------------
+HOUSE_4_BIO: tuple[SourceFactDef, ...] = (
+    _f("h4_bio_mercury_qualities_inherited_through_family", "house", "4",
+       "source_specific",
+       "Mercury-related qualities may be inherited through the family line; their "
+       "specific manifestation depends on Mercury's qualities.",
+       "conditional",
+       source_reference=REF_H4_BIO, unresolved=True),
+    _f("h4_bio_relocation", "house", "4", "mobility",
+       "There may be an association with relocation or moving.",
+       "neutral",
+       source_reference=REF_H4_BIO),
+    _f("h4_bio_second_home", "house", "4", "environment",
+       "There may be a 'second home' association.",
+       "neutral",
+       source_reference=REF_H4_BIO),
+    _f("h4_bio_family_intellectual_interest", "house", "4", "thinking",
+       "Family may become a domain of intellectual interest.",
+       "neutral",
+       source_reference=REF_H4_BIO),
+    _f("h4_bio_home_intellectual_interest", "house", "4", "thinking",
+       "Home may become a domain of intellectual interest.",
+       "neutral",
+       source_reference=REF_H4_BIO),
+    _f("h4_bio_psychology_intellectual_interest", "house", "4", "thinking",
+       "Psychology may become a domain of intellectual interest.",
+       "neutral",
+       source_reference=REF_H4_BIO),
+    _f("h4_bio_politics_intellectual_interest", "house", "4", "thinking",
+       "Politics may become a domain of intellectual interest.",
+       "neutral",
+       source_reference=REF_H4_BIO),
+    _f("h4_bio_interest_in_medicine", "house", "4", "thinking",
+       "May show strong interest in medicine.",
+       "strength",
+       source_reference=REF_H4_BIO),
+    _f("h4_bio_special_relevance_sibling", "house", "4", "environment",
+       "A sibling may have special relevance.",
+       "neutral", "siblings",
+       source_reference=REF_H4_BIO),
+    _f("h4_bio_home_requires_writing_study_reading", "house", "4", "learning",
+       "At home, circumstances may require writing, studying, or reading.",
+       "neutral",
+       source_reference=REF_H4_BIO),
+    _f("h4_bio_home_requires_serving_working", "house", "4", "work_application",
+       "At home, circumstances may require serving or working.",
+       "neutral",
+       source_reference=REF_H4_BIO),
+)
+
 B1_HOUSE_PACKS: tuple[SourceFactDef, ...] = (
-    HOUSE_2 + HOUSE_2_BIO + HOUSE_3 + HOUSE_3_BIO + HOUSE_4
+    HOUSE_2 + HOUSE_2_BIO + HOUSE_3 + HOUSE_3_BIO + HOUSE_4 + HOUSE_4_BIO
 )
 B1_SUPPORTED_HOUSE_KEYS = frozenset({"2", "3", "4"})

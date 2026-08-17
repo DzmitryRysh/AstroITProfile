@@ -20,8 +20,9 @@ Taurus / Sagittarius have Lesson 7 + Bioastrology (dual-source parity complete).
 House 1 has Lesson 7 + Bioastrology (dual-source parity).
 House 2 has Lesson 7 + Bioastrology (dual-source parity).
 House 3 has Lesson 7 + Bioastrology (dual-source parity).
+House 4 has Lesson 7 + Bioastrology (dual-source parity).
 
-House Batch B1 (House 4 remains Lesson 7 only):
+House Batch B1:
 - House 4
 
 House Batch B2 (Lesson 7 only):
