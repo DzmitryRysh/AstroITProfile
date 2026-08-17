@@ -406,12 +406,15 @@ APPROVED_RAW_FACT_IDS: frozenset[str] = frozenset(
 )
 
 # Explicit needs_review decisions. S4.12B resolved 18 of 19 sign policy
-# facts via HUMAN_COPY_OVERRIDES. Remaining conditional dependency:
+# facts via HUMAN_COPY_OVERRIDES. Remaining conditional dependencies:
 # cancer_bio_depends_on_moon_sign — Moon-sign context not resolved in
 # this prototype; reconsider only when a Moon-sign resolver exists.
+# h4_weak_mercury_others_speak_instead — Mercury-strength context not
+# resolved in this prototype; not equated with hard_aspected.
 NEEDS_REVIEW_FACT_IDS: frozenset[str] = frozenset(
     {
         "cancer_bio_depends_on_moon_sign",
+        "h4_weak_mercury_others_speak_instead",
     }
 )
 

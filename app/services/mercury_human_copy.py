@@ -1366,6 +1366,30 @@ HUMAN_COPY_OVERRIDES: dict[str, str] = {
         "May have a wide circle of acquaintances."
     ),
     "h3_writes_essays_well": "May write essays well.",
+    # --- S4.18B house:4 family review (9) ---
+    "h4_intellectual_family_from_childhood": (
+        "May have grown up in an intellectually oriented family."
+    ),
+    "h4_family_contains_a_lot_of_communication": (
+        "The family environment may include a lot of communication."
+    ),
+    "h4_home_communication_students_neighbors_household": (
+        "Communication at home may involve students, neighbors, and "
+        "household or family members."
+    ),
+    "h4_home_based_study": "Study may take place at home.",
+    "h4_home_library": "There may be a home library.",
+    "h4_guests_at_home": "There may be guests at home.",
+    "h4_home_pass_through_yard_traffic": (
+        "Many people may pass through the home."
+    ),
+    "h4_interest_in_family_ancestral_history": (
+        "May have an interest in family or ancestral history."
+    ),
+    "h4_home_phone_withdrawal_from_live_communication": (
+        "May come home and stay on the phone, withdrawing from in-person "
+        "communication."
+    ),
 }
 
 
