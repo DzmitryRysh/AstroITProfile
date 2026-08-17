@@ -2,7 +2,7 @@
 
 House 5 has Lesson 7 + Bioastrology (dual-source parity).
 House 6 has Lesson 7 + Bioastrology (dual-source parity).
-House 7 remains Lesson 7 only until its Bioastrology pass.
+House 7 has Lesson 7 + Bioastrology (dual-source parity).
 
 SOURCE FIRST → SYNTHESIS SECOND.
 
@@ -59,6 +59,7 @@ REF_H5_BIO = "bioastrology_mercury_house_5"
 REF_H6_L7 = "lesson7_mercury_house_6"
 REF_H6_BIO = "bioastrology_mercury_house_6"
 REF_H7_L7 = "lesson7_mercury_house_7"
+REF_H7_BIO = "bioastrology_mercury_house_7"
 
 # ---------------------------------------------------------------------------
 # Mercury in House 5 — Lesson 7
@@ -397,7 +398,67 @@ HOUSE_7: tuple[SourceFactDef, ...] = (
        source_reference=REF_H7_L7, unresolved=True),
 )
 
+# ---------------------------------------------------------------------------
+# Mercury in House 7 — Bioastrology (dual-source parity; HOUSE_7 L7 is frozen)
+# ---------------------------------------------------------------------------
+HOUSE_7_BIO: tuple[SourceFactDef, ...] = (
+    _f("h7_bio_communication_learning_through_partners_public", "house", "7",
+       "communication",
+       "Communication and learning may be realized through connections with "
+       "partners and the public.",
+       "neutral",
+       source_reference=REF_H7_BIO),
+    _f("h7_bio_intellectual_marriage", "house", "7", "source_specific",
+       "There may be an intellectual-marriage association.",
+       "neutral",
+       source_reference=REF_H7_BIO),
+    _f("h7_bio_partner_younger", "house", "7", "source_specific",
+       "Partner may be younger in age.",
+       "neutral",
+       source_reference=REF_H7_BIO),
+    _f("h7_bio_mercury_type_partner_character", "house", "7", "source_specific",
+       "Partner may have a source-described Mercury-type character.",
+       "neutral",
+       source_reference=REF_H7_BIO),
+    _f("h7_bio_favorable_skillful_sales", "house", "7", "work_application",
+       "Favorable association with skillful sales.",
+       "strength",
+       source_reference=REF_H7_BIO),
+    _f("h7_bio_favorable_negotiations", "house", "7", "work_application",
+       "Favorable association with negotiations.",
+       "strength",
+       source_reference=REF_H7_BIO),
+    _f("h7_bio_consultant_qualities", "house", "7", "work_application",
+       "May support qualities associated with consulting.",
+       "strength", "consulting",
+       source_reference=REF_H7_BIO),
+    _f("h7_bio_politician_qualities", "house", "7", "work_application",
+       "May support qualities associated with a politician role.",
+       "strength",
+       source_reference=REF_H7_BIO),
+    _f("h7_bio_lawyer_qualities", "house", "7", "work_application",
+       "May support qualities associated with a lawyer role.",
+       "strength",
+       source_reference=REF_H7_BIO),
+    _f("h7_bio_popularity_fame", "house", "7", "source_specific",
+       "Favorable association with popularity and public recognition.",
+       "strength",
+       source_reference=REF_H7_BIO),
+    _f("h7_bio_afflicted_lying_in_relationships", "house", "7", "source_specific",
+       "When Mercury is afflicted, the source associates this placement with "
+       "lying in relationships (afflicted-Mercury dependency; no house-affliction "
+       "resolver is applied; not hard_aspected).",
+       "conditional",
+       source_reference=REF_H7_BIO, unresolved=True),
+    _f("h7_bio_afflicted_relationship_duality", "house", "7", "source_specific",
+       "When Mercury is afflicted, the source associates this placement with "
+       "duality or splitting in relationships (afflicted-Mercury dependency; "
+       "no house-affliction resolver is applied; not hard_aspected).",
+       "conditional",
+       source_reference=REF_H7_BIO, unresolved=True),
+)
+
 B2_HOUSE_PACKS: tuple[SourceFactDef, ...] = (
-    HOUSE_5 + HOUSE_5_BIO + HOUSE_6 + HOUSE_6_BIO + HOUSE_7
+    HOUSE_5 + HOUSE_5_BIO + HOUSE_6 + HOUSE_6_BIO + HOUSE_7 + HOUSE_7_BIO
 )
 B2_SUPPORTED_HOUSE_KEYS = frozenset({"5", "6", "7"})

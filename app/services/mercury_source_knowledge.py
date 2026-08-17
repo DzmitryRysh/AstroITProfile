@@ -23,6 +23,7 @@ House 3 has Lesson 7 + Bioastrology (dual-source parity).
 House 4 has Lesson 7 + Bioastrology (dual-source parity).
 House 5 has Lesson 7 + Bioastrology (dual-source parity).
 House 6 has Lesson 7 + Bioastrology (dual-source parity).
+House 7 has Lesson 7 + Bioastrology (dual-source parity).
 
 House Batch B1:
 - House 4

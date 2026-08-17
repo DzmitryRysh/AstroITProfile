@@ -16,10 +16,12 @@ from app.services.mercury_source_knowledge_b2_houses import (
     HOUSE_6,
     HOUSE_6_BIO,
     HOUSE_7,
+    HOUSE_7_BIO,
     REF_H5_BIO,
     REF_H5_L7,
     REF_H6_BIO,
     REF_H6_L7,
+    REF_H7_BIO,
     REF_H7_L7,
 )
 from app.services.mercury_source_profile import (
@@ -55,12 +57,14 @@ class HouseBatchB2CoverageTests(unittest.TestCase):
         self.assertEqual(len(HOUSE_6), 14)
         self.assertEqual(len(HOUSE_6_BIO), 15)
         self.assertEqual(len(HOUSE_7), 16)
-        self.assertEqual(len(B2_HOUSE_PACKS), 72)
+        self.assertEqual(len(HOUSE_7_BIO), 12)
+        self.assertEqual(len(B2_HOUSE_PACKS), 84)
         self.assertTrue(all(item.source_reference == REF_H5_L7 for item in HOUSE_5))
         self.assertTrue(all(item.source_reference == REF_H5_BIO for item in HOUSE_5_BIO))
         self.assertTrue(all(item.source_reference == REF_H6_L7 for item in HOUSE_6))
         self.assertTrue(all(item.source_reference == REF_H6_BIO for item in HOUSE_6_BIO))
         self.assertTrue(all(item.source_reference == REF_H7_L7 for item in HOUSE_7))
+        self.assertTrue(all(item.source_reference == REF_H7_BIO for item in HOUSE_7_BIO))
         self.assertTrue(all(item.factor_type == "house" for item in B2_HOUSE_PACKS))
 
     def test_ids_globally_unique(self):
@@ -72,7 +76,7 @@ class HouseBatchB2CoverageTests(unittest.TestCase):
         for house, expected_refs, sample_id in (
             ("5", {REF_H5_L7, REF_H5_BIO}, "h5_creativity_connected_with_intellectual_work"),
             ("6", {REF_H6_L7, REF_H6_BIO}, "h6_duties_performed_diligently"),
-            ("7", {REF_H7_L7}, "h7_master_of_dialogue"),
+            ("7", {REF_H7_L7, REF_H7_BIO}, "h7_master_of_dialogue"),
         ):
             with self.subTest(house=house):
                 profile = build_source_profile_from_factors(
@@ -133,6 +137,8 @@ class House7PartnerAndUnresolvedSafetyTests(unittest.TestCase):
         unresolved_ids = {
             "h7_partner_intellectual_expectation_mutable_dependency",
             "h7_partner_argumentativeness_fire_element_dependency",
+            "h7_bio_afflicted_lying_in_relationships",
+            "h7_bio_afflicted_relationship_duality",
         }
         for fact_id in unresolved_ids:
             fact = next(item for item in profile.house_facts if item.id == fact_id)
