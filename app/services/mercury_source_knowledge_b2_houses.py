@@ -1,7 +1,8 @@
 """Mercury Source Profile v2 — House Batch B2.
 
 House 5 has Lesson 7 + Bioastrology (dual-source parity).
-Houses 6 and 7 remain Lesson 7 only until their Bioastrology passes.
+House 6 has Lesson 7 + Bioastrology (dual-source parity).
+House 7 remains Lesson 7 only until its Bioastrology pass.
 
 SOURCE FIRST → SYNTHESIS SECOND.
 
@@ -56,6 +57,7 @@ def _f(
 REF_H5_L7 = "lesson7_mercury_house_5"
 REF_H5_BIO = "bioastrology_mercury_house_5"
 REF_H6_L7 = "lesson7_mercury_house_6"
+REF_H6_BIO = "bioastrology_mercury_house_6"
 REF_H7_L7 = "lesson7_mercury_house_7"
 
 # ---------------------------------------------------------------------------
@@ -250,6 +252,72 @@ HOUSE_6: tuple[SourceFactDef, ...] = (
 )
 
 # ---------------------------------------------------------------------------
+# Mercury in House 6 — Bioastrology (dual-source parity; HOUSE_6 L7 is frozen)
+# ---------------------------------------------------------------------------
+HOUSE_6_BIO: tuple[SourceFactDef, ...] = (
+    _f("h6_bio_communication_demanded_at_work", "house", "6", "work_application",
+       "Communication is especially demanded by work circumstances.",
+       "neutral",
+       source_reference=REF_H6_BIO),
+    _f("h6_bio_intellect_demanded_at_work", "house", "6", "work_application",
+       "Intellectual function is especially demanded by work circumstances.",
+       "neutral",
+       source_reference=REF_H6_BIO),
+    _f("h6_bio_increased_concerns_hassles", "house", "6", "source_specific",
+       "There may be an increased amount of concerns and hassles.",
+       "neutral",
+       source_reference=REF_H6_BIO),
+    _f("h6_bio_others_assign_work", "house", "6", "work_application",
+       "Other people may repeatedly try to assign work or tasks to the person.",
+       "neutral",
+       source_reference=REF_H6_BIO),
+    _f("h6_bio_two_parallel_jobs_or_projects", "house", "6", "work_application",
+       "There may be two parallel jobs or different projects at work.",
+       "neutral",
+       source_reference=REF_H6_BIO),
+    _f("h6_bio_ongoing_professional_education", "house", "6", "learning",
+       "There may be ongoing professional education.",
+       "neutral",
+       source_reference=REF_H6_BIO),
+    _f("h6_bio_professional_retraining", "house", "6", "learning",
+       "There may be professional retraining.",
+       "neutral",
+       source_reference=REF_H6_BIO),
+    _f("h6_bio_interest_in_medicine", "house", "6", "thinking",
+       "May show strong interest in medicine.",
+       "strength",
+       source_reference=REF_H6_BIO),
+    _f("h6_bio_several_pets", "house", "6", "environment",
+       "There may be several domestic animals or pets.",
+       "neutral",
+       source_reference=REF_H6_BIO),
+    _f("h6_bio_source_vascular_disease_association", "house", "6", "source_specific",
+       "Source-described association with diseases involving blood vessels.",
+       "risk",
+       source_reference=REF_H6_BIO),
+    _f("h6_bio_source_respiratory_disease_association", "house", "6", "source_specific",
+       "Source-described association with diseases involving respiratory organs.",
+       "risk",
+       source_reference=REF_H6_BIO),
+    _f("h6_bio_source_limb_fracture_association", "house", "6", "source_specific",
+       "Source-described association with limb fractures.",
+       "risk",
+       source_reference=REF_H6_BIO),
+    _f("h6_bio_intellectual_transport_profession", "house", "6", "work_application",
+       "Favorable association with intellectual and transport-related professions.",
+       "strength", "intellectual_work", "transport_profession",
+       source_reference=REF_H6_BIO),
+    _f("h6_bio_consultant_qualities", "house", "6", "work_application",
+       "May support qualities associated with consulting.",
+       "strength", "consulting",
+       source_reference=REF_H6_BIO),
+    _f("h6_bio_sales_qualities", "house", "6", "work_application",
+       "May support qualities associated with sales.",
+       "strength", "sales",
+       source_reference=REF_H6_BIO),
+)
+
+# ---------------------------------------------------------------------------
 # Mercury in House 7 — Lesson 7
 # ---------------------------------------------------------------------------
 HOUSE_7: tuple[SourceFactDef, ...] = (
@@ -330,6 +398,6 @@ HOUSE_7: tuple[SourceFactDef, ...] = (
 )
 
 B2_HOUSE_PACKS: tuple[SourceFactDef, ...] = (
-    HOUSE_5 + HOUSE_5_BIO + HOUSE_6 + HOUSE_7
+    HOUSE_5 + HOUSE_5_BIO + HOUSE_6 + HOUSE_6_BIO + HOUSE_7
 )
 B2_SUPPORTED_HOUSE_KEYS = frozenset({"5", "6", "7"})
