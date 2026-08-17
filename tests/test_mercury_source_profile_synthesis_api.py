@@ -241,6 +241,29 @@ class MercuryHumanPresentationApiTests(unittest.TestCase):
         self.assertEqual(unresolved, conditional)
 
 
+class MercuryHumanCopyS42ApiTests(unittest.TestCase):
+    def test_s42_scaffolding_absent_in_presentation_map(self):
+        response = create_mercury_source_profile(_avdey_request())
+        synthesis = response.synthesis
+        fact_id = "leo_afflicted_lying_distortion"
+        raw = synthesis.facts_by_id[fact_id].text
+        human = synthesis.presentation_text_by_fact_id[fact_id]
+        self.assertIn("hard_aspected proxy", raw)
+        self.assertIn("при поражении", raw)
+        self.assertEqual(
+            human,
+            "Communication may involve lying, distortion, or misrepresentation.",
+        )
+        self.assertNotIn("hard_aspected", human)
+        self.assertNotIn("при поражении", human)
+        # Full raw evidence path still has canonical text.
+        self.assertEqual(
+            raw,
+            "Source affliction tendency (activated via project hard_aspected "
+            "proxy for 'при поражении'): lying / distortion / misrepresentation.",
+        )
+
+
 class MercurySynthesisProductAuditTests(unittest.TestCase):
     """UI-oriented stats for the five golden profiles (report helpers)."""
 

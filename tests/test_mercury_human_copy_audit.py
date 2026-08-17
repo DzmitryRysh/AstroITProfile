@@ -246,7 +246,8 @@ class FullAuditSmokeTests(unittest.TestCase):
     def test_full_audit_counts_coherent(self):
         report = run_human_copy_audit()
         self.assertEqual(report.total_source_facts, len(ALL_SOURCE_FACTS))
-        self.assertEqual(report.human_override_count, 11)
+        self.assertEqual(report.human_override_count, len(HUMAN_COPY_OVERRIDES))
+        self.assertEqual(report.human_override_count, 36)
         self.assertEqual(
             len(report.candidates),
             len(report.candidates_already_overridden)
@@ -263,6 +264,38 @@ class FullAuditSmokeTests(unittest.TestCase):
             reasons = detect_audit_reasons(fact.text)
             if reasons:
                 self.assertIn(fact_id, overridden_ids)
+
+
+class GoldenExposureHumanCopyAuditRegressionTests(unittest.TestCase):
+    def test_s42_reduces_golden_exposed_raw_candidates(self):
+        report = run_human_copy_audit()
+        by_profile = {name: 0 for name in ("Avdey", "Vlad", "Dzmitry", "Andrey", "Milka")}
+        for candidate in report.candidates_still_raw:
+            for name in candidate.golden_profiles:
+                by_profile[name] += 1
+        # Pre-S4.2 baselines were Avdey 13 / Vlad 3 / Dzmitry 4 / Andrey 18 / Milka 4.
+        self.assertLess(by_profile["Avdey"], 13)
+        self.assertLess(by_profile["Vlad"], 3)
+        self.assertLess(by_profile["Dzmitry"], 4)
+        self.assertLess(by_profile["Andrey"], 18)
+        self.assertLess(by_profile["Milka"], 4)
+        # Development-focus Avdey growth overrides are no longer still-raw.
+        still_raw_ids = {c.fact_id for c in report.candidates_still_raw}
+        for fact_id in (
+            "leo_l7_dev_creative_vision",
+            "leo_l7_dev_creativity",
+            "leo_l7_dev_hear_others_opinions",
+            "leo_afflicted_lying_distortion",
+            "pluto_sq_core_conflict",
+        ):
+            self.assertNotIn(fact_id, still_raw_ids)
+        # Candidate detection itself still flags the underlying mechanical reasons.
+        from app.services.mercury_source_knowledge import ALL_SOURCE_FACTS
+
+        by_id = {f.id: f for f in ALL_SOURCE_FACTS}
+        reasons = detect_audit_reasons(by_id["leo_afflicted_lying_distortion"].text)
+        self.assertIn(REASON_TECHNICAL_SCAFFOLDING, reasons)
+        self.assertIn(REASON_CYRILLIC_SOURCE_NOTE, reasons)
 
 
 if __name__ == "__main__":

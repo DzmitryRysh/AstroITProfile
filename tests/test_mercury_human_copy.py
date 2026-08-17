@@ -100,7 +100,94 @@ class HumanCopyModuleTests(unittest.TestCase):
         self.assertNotIn("unmapped_x", result)
 
     def test_pilot_override_count(self):
-        self.assertEqual(len(HUMAN_COPY_OVERRIDES), 11)
+        # S4.0 (11) + S4.2 golden-exposure batch (25).
+        self.assertEqual(len(HUMAN_COPY_OVERRIDES), 36)
+
+    def test_s42_override_ids_exist_and_raw_text_unchanged(self):
+        by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
+        s42_ids = [
+            "pluto_sq_core_conflict",
+            "leo_afflicted_lying_distortion",
+            "leo_afflicted_appearance_of_competence",
+            "leo_afflicted_ego_interferes_with_facts",
+            "leo_afflicted_extreme_stubbornness",
+            "leo_afflicted_putting_on_a_show",
+            "taurus_bio_afflicted_cognitive_sluggishness",
+            "taurus_bio_afflicted_reduced_muted_intuition",
+            "taurus_bio_afflicted_weak_abstract_thinking",
+            "cancer_bio_afflicted_disregard_for_facts",
+            "cancer_bio_afflicted_everyday_momentary_thinking",
+            "cancer_bio_afflicted_habit_bound_momentary_reasoning",
+            "cancer_bio_afflicted_losing_central_meaning",
+            "cancer_bio_afflicted_losing_the_thread",
+            "cancer_bio_afflicted_scatter_distractibility",
+            "cancer_bio_afflicted_thinking_trapped_by_habits",
+            "cancer_bio_afflicted_thinking_trapped_by_outdated_beliefs",
+            "cancer_bio_afflicted_loss_of_focus",
+            "leo_l7_throwing_dust_in_eyes",
+            "leo_l7_lying_source_claim",
+            "leo_l7_dev_creative_vision",
+            "leo_l7_dev_creativity",
+            "leo_l7_dev_hear_others_opinions",
+            "uranus_cj_adhd_like_attention_scatter",
+            "pisces_l7_dev_distinguish_own_vs_suggested",
+        ]
+        self.assertEqual(len(s42_ids), 25)
+        for fact_id in s42_ids:
+            with self.subTest(fact_id=fact_id):
+                self.assertIn(fact_id, by_id)
+                self.assertIn(fact_id, HUMAN_COPY_OVERRIDES)
+                human = HUMAN_COPY_OVERRIDES[fact_id]
+                self.assertTrue(human.strip())
+                raw = by_id[fact_id].text
+                self.assertNotEqual(raw, human)
+                fact = _fact(fact_id, raw)
+                self.assertEqual(get_human_fact_text(fact), human)
+                self.assertEqual(fact.text, raw)
+
+    def test_technical_proxy_and_cyrillic_absent_from_human_display(self):
+        scaffolding_ids = [
+            "leo_afflicted_lying_distortion",
+            "leo_afflicted_putting_on_a_show",
+            "taurus_bio_afflicted_cognitive_sluggishness",
+            "cancer_bio_afflicted_loss_of_focus",
+        ]
+        by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
+        for fact_id in scaffolding_ids:
+            raw = by_id[fact_id].text
+            human = get_human_fact_text(_fact(fact_id, raw))
+            self.assertIn("hard_aspected proxy", raw)
+            self.assertIn("при поражении", raw)
+            self.assertNotIn("hard_aspected", human)
+            self.assertNotIn("при поражении", human)
+            self.assertNotIn("Source affliction tendency", human)
+            self.assertNotIn("activated via project", human)
+
+    def test_sensitive_lying_claims_are_tendencies_not_accusations(self):
+        by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
+        for fact_id in ("leo_l7_lying_source_claim", "leo_afflicted_lying_distortion"):
+            human = get_human_fact_text(_fact(fact_id, by_id[fact_id].text)).lower()
+            self.assertNotIn("this person lies", human)
+            self.assertNotIn("they deceive", human)
+            self.assertNotIn("they are dishonest", human)
+            self.assertTrue(
+                "may" in human or "can" in human or "tendency" in human,
+                human,
+            )
+
+    def test_development_focus_growth_area_copy(self):
+        self.assertEqual(
+            HUMAN_COPY_OVERRIDES["leo_l7_dev_hear_others_opinions"],
+            "Growth area: listen more carefully to other people's perspectives.",
+        )
+        self.assertEqual(
+            HUMAN_COPY_OVERRIDES["leo_l7_dev_creative_vision"],
+            "Growth area: develop a broader creative vision.",
+        )
+        self.assertEqual(
+            HUMAN_COPY_OVERRIDES["leo_l7_dev_creativity"],
+            "Growth area: strengthen creative expression.",
+        )
 
 
 if __name__ == "__main__":
