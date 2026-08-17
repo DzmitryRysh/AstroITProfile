@@ -14,7 +14,7 @@ from collections.abc import Iterable
 from app.schemas.mercury_source_profile import SourceFact
 
 # Curated human-facing overrides. Keys are stable SourceFact.id values.
-# S4.0–S4.4B + S4.5B Taurus family review. Presentation only.
+# S4.0–S4.5B + S4.7B Capricorn/Leo family review. Presentation only.
 HUMAN_COPY_OVERRIDES: dict[str, str] = {
     # --- S4.0 pilot ---
     "pluto_sq_conflictual_communication": (
@@ -329,6 +329,123 @@ HUMAN_COPY_OVERRIDES: dict[str, str] = {
     ),
     "taurus_bio_vocal_artistic_aptitude": (
         "May show vocal or artistic aptitude."
+    ),
+    # --- S4.7B Capricorn family review (34) ---
+    "capricorn_bio_afflicted_closedness": (
+        "Communication or manner may become closed."
+    ),
+    "capricorn_bio_afflicted_difficulty_tuning_into_others_thoughts": (
+        "May have difficulty tuning into other people's thoughts."
+    ),
+    "capricorn_bio_afflicted_difficulty_understanding_others_thinking": (
+        "May have difficulty understanding other people's thinking."
+    ),
+    "capricorn_bio_afflicted_duty_rule_bound_thinking": (
+        'Thinking can become duty- or rule-bound ("must," "should," '
+        '"proper," "obliged").'
+    ),
+    "capricorn_bio_afflicted_old_dogma_fixation": (
+        "Thinking can fixate on old dogma."
+    ),
+    "capricorn_bio_afflicted_professional_vs_everyday_orientation": (
+        "Professional-domain knowledge can coexist with poor orientation "
+        "in everyday domains."
+    ),
+    "capricorn_bio_afflicted_rigid_thinking": (
+        "Thinking can become rigid."
+    ),
+    "capricorn_bio_afflicted_severe_lack_of_imagination": (
+        "Imagination may be severely limited."
+    ),
+    "capricorn_bio_afflicted_unsociability": (
+        "May become unsociable."
+    ),
+    "capricorn_bio_clear_thinking_communication_learning": (
+        "Thinking, communication, and learning are described as clear."
+    ),
+    "capricorn_bio_commanding_tone": (
+        "May use a commanding tone."
+    ),
+    "capricorn_bio_difficult_casual_chat": (
+        'Difficult to chat casually or "about life."'
+    ),
+    "capricorn_bio_forecasting": "Forecasting ability.",
+    "capricorn_bio_logic": "Logical ability.",
+    "capricorn_bio_memory": "Memory capacity.",
+    "capricorn_bio_motivation_build_structure": (
+        "Learning may be motivated by building structure."
+    ),
+    "capricorn_bio_motivation_logical_interconnections": (
+        "Learning may be motivated by building logical interconnections."
+    ),
+    "capricorn_bio_occupation_associations": (
+        "Occupational themes associated with this placement include "
+        "leadership, science, and entrepreneurship; these are not career "
+        "assignments."
+    ),
+    "capricorn_bio_planning": "Planning ability.",
+    "capricorn_bio_sober_cold_style": (
+        "Sober or cool communication style."
+    ),
+    "capricorn_bio_structured": (
+        "Structured thinking, communication, and learning."
+    ),
+    "capricorn_bio_table_template_oriented": (
+        "Oriented toward tables and templates."
+    ),
+    "capricorn_bio_technical_aptitude": "Technical aptitude.",
+    "capricorn_l7_beautiful_voice": "May have a beautiful voice.",
+    "capricorn_l7_chopped_concise_phrases": (
+        "Phrases can be clipped and concise."
+    ),
+    "capricorn_l7_develop_fundamentality": (
+        "Growth area: develop a more fundamental and well-grounded approach."
+    ),
+    "capricorn_l7_env_concrete_without_water": (
+        "Sibling and environmental communication tends to be concrete and "
+        "free of filler."
+    ),
+    "capricorn_l7_limited_contact": (
+        "Limited contact or restrained sociability."
+    ),
+    "capricorn_l7_metrics_help": (
+        "Clear indicators or metrics help learning."
+    ),
+    "capricorn_l7_rely_on_proven_experience": (
+        "Growth area: rely on proven experience."
+    ),
+    "capricorn_l7_sarcasm_when_imagination_lacking": (
+        "When imagination is lacking, humor may take a sarcastic form."
+    ),
+    "capricorn_l7_slow_deliberate_perception": (
+        "Information perception is slow and deliberate."
+    ),
+    "capricorn_l7_strong_critic": "May be a strong critic.",
+    "capricorn_l7_systematize": "Growth area: systematize.",
+    # --- S4.7B Leo family review (9) ---
+    "leo_dialogue_difficulty": (
+        "Real two-way dialogue can be difficult."
+    ),
+    "leo_expressive_visible_thinking": (
+        "Thinking, communication, and learning are highly expressive and "
+        "visible."
+    ),
+    "leo_l7_creativity": "Creative ability.",
+    "leo_l7_difficulty_opinion_receptivity": (
+        "May have difficulty being receptive to other people's opinions."
+    ),
+    "leo_l7_dignified_lordly_speech": (
+        "Dignified or lordly speech style."
+    ),
+    "leo_l7_env_lordly_sibling_position": (
+        'May take an "above" or lordly position with siblings.'
+    ),
+    "leo_l7_nonstandardness": "Nonstandard quality.",
+    "leo_l7_self_praise_learning_motivation": (
+        "Self-praise or self-encouragement can motivate learning."
+    ),
+    "leo_l7_verbal_escape_skill": (
+        "May be able to wriggle out of situations verbally."
     ),
 }
 
