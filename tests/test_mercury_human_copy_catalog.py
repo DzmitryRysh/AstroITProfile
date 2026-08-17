@@ -143,8 +143,8 @@ class CatalogIntegrityTests(unittest.TestCase):
         report = build_human_copy_catalog()
         catalog_ids = [entry.fact_id for entry in report.entries]
         source_ids = [fact.id for fact in ALL_SOURCE_FACTS]
-        self.assertEqual(len(catalog_ids), 1625)
-        self.assertEqual(report.total_facts, 1625)
+        self.assertEqual(len(catalog_ids), 1635)
+        self.assertEqual(report.total_facts, 1635)
         self.assertEqual(len(catalog_ids), len(set(catalog_ids)))
         self.assertEqual(set(catalog_ids), set(source_ids))
 
@@ -314,7 +314,7 @@ class CoverageAndFamilyTests(unittest.TestCase):
     def test_no_alias_double_count(self):
         report = build_human_copy_catalog()
         self.assertEqual(report.total_facts, len(ALL_SOURCE_FACTS))
-        self.assertEqual(len({entry.fact_id for entry in report.entries}), 1625)
+        self.assertEqual(len({entry.fact_id for entry in report.entries}), 1635)
 
     def test_deterministic_order(self):
         first = build_human_copy_catalog()
@@ -442,17 +442,17 @@ class SagittariusFamilyS44BTests(unittest.TestCase):
 
     def test_global_totals_after_s418b(self):
         report = build_human_copy_catalog()
-        self.assertEqual(report.total_facts, 1625)
+        self.assertEqual(report.total_facts, 1635)
         self.assertEqual(report.approved_override_count, 482)
         self.assertEqual(report.approved_raw_count, 348)
         self.assertEqual(report.needs_review_count, 2)
-        self.assertEqual(report.unreviewed_count, 793)
+        self.assertEqual(report.unreviewed_count, 803)
         self.assertEqual(
             report.approved_override_count
             + report.approved_raw_count
             + report.needs_review_count
             + report.unreviewed_count,
-            1625,
+            1635,
         )
         self.assertEqual(report.reviewed_count, 832)
         self.assertEqual(report.presentation_ready_count, 830)
@@ -748,7 +748,7 @@ class SignReviewQueueS46Tests(unittest.TestCase):
         before_needs = set(NEEDS_REVIEW_FACT_IDS)
         catalog = build_human_copy_catalog()
         queue = build_sign_review_queue(catalog)
-        self.assertEqual(catalog.total_facts, 1625)
+        self.assertEqual(catalog.total_facts, 1635)
         self.assertEqual(dict(HUMAN_COPY_OVERRIDES), before_overrides)
         self.assertEqual(set(APPROVED_RAW_FACT_IDS), before_raw)
         self.assertEqual(set(NEEDS_REVIEW_FACT_IDS), before_needs)
@@ -2766,7 +2766,7 @@ class CrossFamilyPolicyS412BTests(unittest.TestCase):
         self.assertEqual(report.approved_override_count, 482)
         self.assertEqual(report.approved_raw_count, 348)
         self.assertEqual(report.needs_review_count, 2)
-        self.assertEqual(report.unreviewed_count, 793)
+        self.assertEqual(report.unreviewed_count, 803)
         self.assertEqual(report.reviewed_count, 832)
         self.assertEqual(report.presentation_ready_count, 830)
         queue = build_sign_review_queue(report)
@@ -2900,7 +2900,7 @@ class MotionRetrogradeS414BTests(unittest.TestCase):
         self.assertEqual(report.approved_override_count, 482)
         self.assertEqual(report.approved_raw_count, 348)
         self.assertEqual(report.needs_review_count, 2)
-        self.assertEqual(report.unreviewed_count, 793)
+        self.assertEqual(report.unreviewed_count, 803)
         self.assertEqual(report.reviewed_count, 832)
         self.assertEqual(report.presentation_ready_count, 830)
         by_type = {}
@@ -2908,7 +2908,7 @@ class MotionRetrogradeS414BTests(unittest.TestCase):
             by_type.setdefault(fam.factor_type, 0)
             by_type[fam.factor_type] += fam.unreviewed
         self.assertEqual(by_type["motion"], 0)
-        self.assertEqual(by_type["house"], 168)
+        self.assertEqual(by_type["house"], 178)
         self.assertEqual(by_type["aspect"], 625)
         self.assertEqual(by_type["sign"], 0)
         self.assertTrue(
@@ -2989,10 +2989,10 @@ class House1S415BTests(unittest.TestCase):
             f.presentation_ready_count for f in report.families if f.factor_type == "house"
         )
         house_ur = sum(f.unreviewed for f in report.families if f.factor_type == "house")
-        self.assertEqual(house_tot, 237)
+        self.assertEqual(house_tot, 247)
         self.assertEqual(house_rev, 69)
         self.assertEqual(house_ready, 68)
-        self.assertEqual(house_ur, 168)
+        self.assertEqual(house_ur, 178)
 
     def test_s415b_overrides_and_semantics(self):
         by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
@@ -3032,7 +3032,7 @@ class House1S415BTests(unittest.TestCase):
         self.assertEqual(report.approved_override_count, 482)
         self.assertEqual(report.approved_raw_count, 348)
         self.assertEqual(report.needs_review_count, 2)
-        self.assertEqual(report.unreviewed_count, 793)
+        self.assertEqual(report.unreviewed_count, 803)
         self.assertEqual(report.reviewed_count, 832)
         self.assertEqual(report.presentation_ready_count, 830)
         self.assertTrue(
@@ -3128,10 +3128,10 @@ class House2S416BTests(unittest.TestCase):
             f.presentation_ready_count for f in report.families if f.factor_type == "house"
         )
         house_ur = sum(f.unreviewed for f in report.families if f.factor_type == "house")
-        self.assertEqual(house_tot, 237)
+        self.assertEqual(house_tot, 247)
         self.assertEqual(house_rev, 69)
         self.assertEqual(house_ready, 68)
-        self.assertEqual(house_ur, 168)
+        self.assertEqual(house_ur, 178)
 
     def test_s416b_registries_and_semantics(self):
         by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
@@ -3178,7 +3178,7 @@ class House2S416BTests(unittest.TestCase):
         self.assertEqual(report.approved_override_count, 482)
         self.assertEqual(report.approved_raw_count, 348)
         self.assertEqual(report.needs_review_count, 2)
-        self.assertEqual(report.unreviewed_count, 793)
+        self.assertEqual(report.unreviewed_count, 803)
         self.assertEqual(report.reviewed_count, 832)
         self.assertEqual(report.presentation_ready_count, 830)
         self.assertTrue(
@@ -3250,18 +3250,18 @@ class House3S417BTests(unittest.TestCase):
         "h3_writes_essays_well": "May write essays well.",
     }
 
-    def test_house_3_fully_reviewed(self):
+    def test_house_3_l7_copy_frozen_and_bio_unreviewed(self):
         report = build_human_copy_catalog()
         family = next(f for f in report.families if f.family_key == "house:3")
-        self.assertEqual(family.total_facts, 22)
+        self.assertEqual(family.total_facts, 32)
         self.assertEqual(family.approved_override, 21)
         self.assertEqual(family.approved_raw, 1)
         self.assertEqual(family.needs_review, 0)
-        self.assertEqual(family.unreviewed, 0)
+        self.assertEqual(family.unreviewed, 10)
         self.assertEqual(family.reviewed_count, 22)
         self.assertEqual(family.presentation_ready_count, 22)
-        self.assertEqual(family.review_coverage, 1.0)
-        self.assertEqual(family.presentation_ready_coverage, 1.0)
+        self.assertEqual(family.review_coverage, round(22 / 32, 6))
+        self.assertEqual(family.presentation_ready_coverage, round(22 / 32, 6))
         house_tot = sum(
             f.total_facts for f in report.families if f.factor_type == "house"
         )
@@ -3279,11 +3279,11 @@ class House3S417BTests(unittest.TestCase):
         house_nr = sum(
             f.needs_review for f in report.families if f.factor_type == "house"
         )
-        self.assertEqual(house_tot, 237)
+        self.assertEqual(house_tot, 247)
         self.assertEqual(house_rev, 69)
         self.assertEqual(house_ready, 68)
         self.assertEqual(house_nr, 1)
-        self.assertEqual(house_ur, 168)
+        self.assertEqual(house_ur, 178)
         house1 = next(f for f in report.families if f.family_key == "house:1")
         house2 = next(f for f in report.families if f.family_key == "house:2")
         self.assertEqual(house1.reviewed_count, 17)
@@ -3368,7 +3368,7 @@ class House3S417BTests(unittest.TestCase):
         self.assertEqual(report.approved_override_count, 482)
         self.assertEqual(report.approved_raw_count, 348)
         self.assertEqual(report.needs_review_count, 2)
-        self.assertEqual(report.unreviewed_count, 793)
+        self.assertEqual(report.unreviewed_count, 803)
         self.assertEqual(report.reviewed_count, 832)
         self.assertEqual(report.presentation_ready_count, 830)
         by_type = {}
@@ -3377,7 +3377,7 @@ class House3S417BTests(unittest.TestCase):
             by_type[fam.factor_type] += fam.unreviewed
         self.assertEqual(by_type["sign"], 0)
         self.assertEqual(by_type["motion"], 0)
-        self.assertEqual(by_type["house"], 168)
+        self.assertEqual(by_type["house"], 178)
         self.assertEqual(by_type["aspect"], 625)
         self.assertTrue(
             set(HUMAN_COPY_OVERRIDES).isdisjoint(APPROVED_RAW_FACT_IDS)
@@ -3474,11 +3474,11 @@ class House4S418BTests(unittest.TestCase):
         house_nr = sum(
             f.needs_review for f in report.families if f.factor_type == "house"
         )
-        self.assertEqual(house_tot, 237)
+        self.assertEqual(house_tot, 247)
         self.assertEqual(house_rev, 69)
         self.assertEqual(house_ready, 68)
         self.assertEqual(house_nr, 1)
-        self.assertEqual(house_ur, 168)
+        self.assertEqual(house_ur, 178)
         house1 = next(f for f in report.families if f.family_key == "house:1")
         house2 = next(f for f in report.families if f.family_key == "house:2")
         house3 = next(f for f in report.families if f.family_key == "house:3")
@@ -3487,7 +3487,7 @@ class House4S418BTests(unittest.TestCase):
         self.assertEqual(house2.reviewed_count, 20)
         self.assertEqual(house2.unreviewed, 8)
         self.assertEqual(house3.reviewed_count, 22)
-        self.assertEqual(house3.unreviewed, 0)
+        self.assertEqual(house3.unreviewed, 10)
         self.assertEqual(house3.needs_review, 0)
         for house_n in range(5, 13):
             with self.subTest(untouched=house_n):
@@ -3572,7 +3572,7 @@ class House4S418BTests(unittest.TestCase):
         self.assertEqual(report.approved_override_count, 482)
         self.assertEqual(report.approved_raw_count, 348)
         self.assertEqual(report.needs_review_count, 2)
-        self.assertEqual(report.unreviewed_count, 793)
+        self.assertEqual(report.unreviewed_count, 803)
         self.assertEqual(report.reviewed_count, 832)
         self.assertEqual(report.presentation_ready_count, 830)
         by_type = {}
@@ -3581,7 +3581,7 @@ class House4S418BTests(unittest.TestCase):
             by_type[fam.factor_type] += fam.unreviewed
         self.assertEqual(by_type["sign"], 0)
         self.assertEqual(by_type["motion"], 0)
-        self.assertEqual(by_type["house"], 168)
+        self.assertEqual(by_type["house"], 178)
         self.assertEqual(by_type["aspect"], 625)
         self.assertTrue(
             set(HUMAN_COPY_OVERRIDES).isdisjoint(APPROVED_RAW_FACT_IDS)

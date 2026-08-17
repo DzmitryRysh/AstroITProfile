@@ -1,7 +1,8 @@
 """Mercury Source Profile v2 — House Batch B1.
 
 House 2 has Lesson 7 + Bioastrology (dual-source parity).
-Houses 3, 4 remain Lesson 7 only until their Bioastrology passes.
+House 3 has Lesson 7 + Bioastrology (dual-source parity).
+House 4 remains Lesson 7 only until its Bioastrology pass.
 
 SOURCE FIRST → SYNTHESIS SECOND.
 
@@ -56,6 +57,7 @@ def _f(
 REF_H2_L7 = "lesson7_mercury_house_2"
 REF_H2_BIO = "bioastrology_mercury_house_2"
 REF_H3_L7 = "lesson7_mercury_house_3"
+REF_H3_BIO = "bioastrology_mercury_house_3"
 REF_H4_L7 = "lesson7_mercury_house_4"
 
 # ---------------------------------------------------------------------------
@@ -280,6 +282,54 @@ HOUSE_3: tuple[SourceFactDef, ...] = (
 )
 
 # ---------------------------------------------------------------------------
+# Mercury in House 3 — Bioastrology (dual-source parity; HOUSE_3 L7 is frozen)
+# ---------------------------------------------------------------------------
+HOUSE_3_BIO: tuple[SourceFactDef, ...] = (
+    _f("h3_bio_strengthens_mercury_functions", "house", "3", "thinking",
+       "Strengthens Mercury functions overall.",
+       "strength", "amplifier",
+       source_reference=REF_H3_BIO),
+    _f("h3_bio_emphasizes_mercury_aspects", "house", "3", "thinking",
+       "Emphasizes Mercury aspects.",
+       "neutral", "amplifier", "aspect_emphasis",
+       source_reference=REF_H3_BIO),
+    _f("h3_bio_emphasizes_mercury_sign", "house", "3", "thinking",
+       "Emphasizes the Mercury sign.",
+       "neutral", "amplifier", "sign_emphasis",
+       source_reference=REF_H3_BIO),
+    _f("h3_bio_eventfulness_books", "house", "3", "environment",
+       "Increased eventfulness connected with books.",
+       "neutral", "books",
+       source_reference=REF_H3_BIO),
+    _f("h3_bio_eventfulness_trips", "house", "3", "mobility",
+       "Increased eventfulness connected with trips.",
+       "neutral", "trips", "mobility",
+       source_reference=REF_H3_BIO),
+    _f("h3_bio_eventfulness_social_networks", "house", "3", "environment",
+       "Increased eventfulness connected with social networks.",
+       "neutral", "social_networks",
+       source_reference=REF_H3_BIO),
+    _f("h3_bio_circumstances_force_lifelong_communication_learning", "house", "3",
+       "learning",
+       "Circumstances may push the person to communicate and learn throughout "
+       "life, even if naturally quiet.",
+       "neutral",
+       source_reference=REF_H3_BIO),
+    _f("h3_bio_multiple_educations", "house", "3", "learning",
+       "There may be multiple educations.",
+       "neutral",
+       source_reference=REF_H3_BIO),
+    _f("h3_bio_learning_for_learning_lifestyle", "house", "3", "learning",
+       "Learning may become a lifestyle pursued for its own sake.",
+       "neutral",
+       source_reference=REF_H3_BIO),
+    _f("h3_bio_interest_trainings_seminars", "house", "3", "learning",
+       "May show strong interest in trainings and seminars.",
+       "strength",
+       source_reference=REF_H3_BIO),
+)
+
+# ---------------------------------------------------------------------------
 # Mercury in House 4 — Lesson 7
 # ---------------------------------------------------------------------------
 HOUSE_4: tuple[SourceFactDef, ...] = (
@@ -327,5 +377,7 @@ HOUSE_4: tuple[SourceFactDef, ...] = (
        source_reference=REF_H4_L7),
 )
 
-B1_HOUSE_PACKS: tuple[SourceFactDef, ...] = HOUSE_2 + HOUSE_2_BIO + HOUSE_3 + HOUSE_4
+B1_HOUSE_PACKS: tuple[SourceFactDef, ...] = (
+    HOUSE_2 + HOUSE_2_BIO + HOUSE_3 + HOUSE_3_BIO + HOUSE_4
+)
 B1_SUPPORTED_HOUSE_KEYS = frozenset({"2", "3", "4"})
