@@ -100,8 +100,8 @@ class HumanCopyModuleTests(unittest.TestCase):
         self.assertNotIn("unmapped_x", result)
 
     def test_pilot_override_count(self):
-        # S4.0–S4.2.2 (64) + S4.4B Sagittarius family (24).
-        self.assertEqual(len(HUMAN_COPY_OVERRIDES), 88)
+        # S4.0–S4.4B (88) + S4.5B Taurus family (8).
+        self.assertEqual(len(HUMAN_COPY_OVERRIDES), 96)
 
     def test_s42_override_ids_exist_and_raw_text_unchanged(self):
         by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
@@ -554,6 +554,36 @@ class HumanCopyModuleTests(unittest.TestCase):
         )
         self.assertNotIn("sag_tendency_to_attach_labels", HUMAN_COPY_OVERRIDES)
         self.assertNotIn("sag_bio_major_exile", HUMAN_COPY_OVERRIDES)
+
+    def test_s45b_taurus_overrides_and_raw_invariant(self):
+        by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
+        self.assertEqual(
+            HUMAN_COPY_OVERRIDES["taurus_slower_switching_topics"],
+            "May switch more slowly between topics or tasks.",
+        )
+        raw = by_id["taurus_slower_switching_topics"].text
+        human = get_human_fact_text(_fact("taurus_slower_switching_topics", raw))
+        self.assertIn(" / ", raw)
+        self.assertNotIn(" / ", human)
+        self.assertEqual(raw, by_id["taurus_slower_switching_topics"].text)
+
+        aptitude_raw = by_id["taurus_bio_vocal_artistic_aptitude"].text
+        aptitude_human = get_human_fact_text(
+            _fact("taurus_bio_vocal_artistic_aptitude", aptitude_raw)
+        )
+        self.assertIn("source-described", aptitude_raw)
+        self.assertNotIn("source-described", aptitude_human.lower())
+
+        self.assertNotIn("taurus_harmonious_thinking", HUMAN_COPY_OVERRIDES)
+        self.assertEqual(
+            get_human_fact_text(
+                _fact(
+                    "taurus_harmonious_thinking",
+                    by_id["taurus_harmonious_thinking"].text,
+                )
+            ),
+            "Harmonious thinking.",
+        )
 
 
 if __name__ == "__main__":

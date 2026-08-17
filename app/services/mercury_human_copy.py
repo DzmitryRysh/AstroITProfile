@@ -14,7 +14,7 @@ from collections.abc import Iterable
 from app.schemas.mercury_source_profile import SourceFact
 
 # Curated human-facing overrides. Keys are stable SourceFact.id values.
-# S4.0–S4.2.2 + S4.4B Sagittarius family review. Presentation only.
+# S4.0–S4.4B + S4.5B Taurus family review. Presentation only.
 HUMAN_COPY_OVERRIDES: dict[str, str] = {
     # --- S4.0 pilot ---
     "pluto_sq_conflictual_communication": (
@@ -303,6 +303,32 @@ HUMAN_COPY_OVERRIDES: dict[str, str] = {
         "Occupational themes associated with this placement can include "
         "science, expertise, writing, politics, and propaganda-oriented "
         "journalism — not career assignments."
+    ),
+    # --- S4.5B Taurus family review (8) ---
+    "taurus_abstraction_harder_than_concrete": (
+        "Abstraction can be harder than concrete or practical material."
+    ),
+    "taurus_bio_strong_attention": (
+        "May show increased or strong attention."
+    ),
+    "taurus_bio_visual_scheme_learning": (
+        "Learns best through visual schemes or diagrams."
+    ),
+    "taurus_slower_switching_topics": (
+        "May switch more slowly between topics or tasks."
+    ),
+    "taurus_tangible_benefit_motivates_learning": (
+        "Tangible benefit or practical motivation supports learning."
+    ),
+    "taurus_bio_aesthetic_learning_motivation": (
+        "Learning may be motivated by material that feels beautiful or "
+        "aesthetically attractive."
+    ),
+    "taurus_bio_money_learning_motivation": (
+        "Learning may be motivated by money."
+    ),
+    "taurus_bio_vocal_artistic_aptitude": (
+        "May show vocal or artistic aptitude."
     ),
 }
 

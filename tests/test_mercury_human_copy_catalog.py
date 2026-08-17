@@ -345,7 +345,7 @@ class SeedApprovedRawTests(unittest.TestCase):
         by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
         self.assertTrue(set(SEED_APPROVED_RAW_EXPECTED).issubset(APPROVED_RAW_FACT_IDS))
         self.assertEqual(len(SEED_APPROVED_RAW_EXPECTED), 15)
-        self.assertEqual(len(APPROVED_RAW_FACT_IDS), 28)
+        self.assertEqual(len(APPROVED_RAW_FACT_IDS), 46)
         for fact_id, expected_text in SEED_APPROVED_RAW_EXPECTED.items():
             with self.subTest(fact_id=fact_id):
                 self.assertEqual(by_id[fact_id].text, expected_text)
@@ -358,10 +358,16 @@ class SeedApprovedRawTests(unittest.TestCase):
         by_text = {}
         for fact in ALL_SOURCE_FACTS:
             by_text.setdefault(fact.text, []).append(fact.id)
-        for text in SKIPPED_AMBIGUOUS_SEED_TEXTS:
+        # Fully skipped ambiguous texts: no ID approved.
+        for text in ("Technical talent.", "Strong sense of humor."):
             self.assertGreaterEqual(len(by_text[text]), 2, text)
             for fact_id in by_text[text]:
                 self.assertNotIn(fact_id, APPROVED_RAW_FACT_IDS)
+        # Common sense: Taurus ID may be approved; Capricorn duplicate must not.
+        common_sense_ids = by_text["Relies on common sense."]
+        self.assertGreaterEqual(len(common_sense_ids), 2)
+        self.assertIn("taurus_relies_on_common_sense", APPROVED_RAW_FACT_IDS)
+        self.assertNotIn("capricorn_l7_common_sense_reliance", APPROVED_RAW_FACT_IDS)
 
 
 class SagittariusFamilyS44BTests(unittest.TestCase):
@@ -438,10 +444,10 @@ class SagittariusFamilyS44BTests(unittest.TestCase):
     def test_global_totals_after_s44b(self):
         report = build_human_copy_catalog()
         self.assertEqual(report.total_facts, 1590)
-        self.assertEqual(report.approved_override_count, 88)
-        self.assertEqual(report.approved_raw_count, 28)
+        self.assertEqual(report.approved_override_count, 96)
+        self.assertEqual(report.approved_raw_count, 46)
         self.assertEqual(report.needs_review_count, 3)
-        self.assertEqual(report.unreviewed_count, 1471)
+        self.assertEqual(report.unreviewed_count, 1445)
         self.assertEqual(
             report.approved_override_count
             + report.approved_raw_count
@@ -449,8 +455,115 @@ class SagittariusFamilyS44BTests(unittest.TestCase):
             + report.unreviewed_count,
             1590,
         )
-        self.assertEqual(report.reviewed_count, 119)
-        self.assertEqual(report.presentation_ready_count, 116)
+        self.assertEqual(report.reviewed_count, 145)
+        self.assertEqual(report.presentation_ready_count, 142)
+
+
+class TaurusFamilyS45BTests(unittest.TestCase):
+    S45B_TAURUS_APPROVED_RAW: tuple[str, ...] = (
+        "taurus_harmonious_thinking",
+        "taurus_unhurried_thinking",
+        "taurus_bio_unhurried_thinking_communication_learning",
+        "taurus_bio_productive_thinking_communication_learning",
+        "taurus_relies_on_common_sense",
+        "taurus_values_factual_reliability",
+        "taurus_bio_beautiful_handwriting",
+        "taurus_bio_beautiful_voice",
+        "taurus_bio_beautiful_speech",
+        "taurus_bio_practice_based_learning",
+        "taurus_applying_knowledge_in_practice",
+        "taurus_comfortable_learning_environment",
+        "taurus_learning_needs_time_without_pressure",
+        "taurus_learning_repetition_persistence",
+        "taurus_may_recheck_information",
+        "taurus_slow_processing_long_retention",
+        "taurus_difficulty_rapidly_changing_mental_direction",
+        "taurus_risk_inertia",
+    )
+
+    S45B_TAURUS_OVERRIDES: dict[str, str] = {
+        "taurus_abstraction_harder_than_concrete": (
+            "Abstraction can be harder than concrete or practical material."
+        ),
+        "taurus_bio_strong_attention": "May show increased or strong attention.",
+        "taurus_bio_visual_scheme_learning": (
+            "Learns best through visual schemes or diagrams."
+        ),
+        "taurus_slower_switching_topics": (
+            "May switch more slowly between topics or tasks."
+        ),
+        "taurus_tangible_benefit_motivates_learning": (
+            "Tangible benefit or practical motivation supports learning."
+        ),
+        "taurus_bio_aesthetic_learning_motivation": (
+            "Learning may be motivated by material that feels beautiful or "
+            "aesthetically attractive."
+        ),
+        "taurus_bio_money_learning_motivation": (
+            "Learning may be motivated by money."
+        ),
+        "taurus_bio_vocal_artistic_aptitude": (
+            "May show vocal or artistic aptitude."
+        ),
+    }
+
+    def test_taurus_family_fully_reviewed(self):
+        report = build_human_copy_catalog()
+        family = next(f for f in report.families if f.family_key == "sign:Taurus")
+        self.assertEqual(family.total_facts, 38)
+        self.assertEqual(family.approved_override, 15)
+        self.assertEqual(family.approved_raw, 23)
+        self.assertEqual(family.needs_review, 0)
+        self.assertEqual(family.unreviewed, 0)
+        self.assertEqual(family.reviewed_count, 38)
+        self.assertEqual(family.presentation_ready_count, 38)
+        self.assertEqual(family.review_coverage, 1.0)
+        self.assertEqual(family.presentation_ready_coverage, 1.0)
+
+    def test_taurus_approved_raw_ids(self):
+        by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
+        self.assertEqual(len(self.S45B_TAURUS_APPROVED_RAW), 18)
+        for fact_id in self.S45B_TAURUS_APPROVED_RAW:
+            with self.subTest(fact_id=fact_id):
+                self.assertIn(fact_id, APPROVED_RAW_FACT_IDS)
+                self.assertNotIn(fact_id, HUMAN_COPY_OVERRIDES)
+                self.assertNotIn(fact_id, NEEDS_REVIEW_FACT_IDS)
+                entry = build_catalog_entry(by_id[fact_id])
+                self.assertEqual(entry.review_status, STATUS_APPROVED_RAW)
+                self.assertFalse(entry.uses_override)
+                self.assertEqual(entry.human_text, entry.canonical_text)
+                self.assertEqual(entry.canonical_text, by_id[fact_id].text)
+        # Capricorn duplicate common-sense text is not auto-approved.
+        self.assertNotIn("capricorn_l7_common_sense_reliance", APPROVED_RAW_FACT_IDS)
+
+    def test_taurus_new_overrides(self):
+        by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
+        self.assertEqual(len(self.S45B_TAURUS_OVERRIDES), 8)
+        for fact_id, human in self.S45B_TAURUS_OVERRIDES.items():
+            with self.subTest(fact_id=fact_id):
+                self.assertIn(fact_id, by_id)
+                self.assertEqual(HUMAN_COPY_OVERRIDES[fact_id], human)
+                entry = build_catalog_entry(by_id[fact_id])
+                self.assertEqual(entry.review_status, STATUS_APPROVED_OVERRIDE)
+                self.assertTrue(entry.uses_override)
+                self.assertEqual(entry.human_text, human)
+                self.assertEqual(entry.canonical_text, by_id[fact_id].text)
+                self.assertNotEqual(entry.canonical_text, human)
+                self.assertNotIn(" / ", human)
+
+        aptitude = build_catalog_entry(by_id["taurus_bio_vocal_artistic_aptitude"])
+        self.assertNotIn("source-described", aptitude.human_text.lower())
+        motive = build_catalog_entry(by_id["taurus_bio_money_learning_motivation"])
+        self.assertEqual(motive.human_text, "Learning may be motivated by money.")
+
+    def test_taurus_no_needs_review(self):
+        report = build_human_copy_catalog()
+        family = next(f for f in report.families if f.family_key == "sign:Taurus")
+        self.assertEqual(family.needs_review, 0)
+        taurus_ids = {
+            e.fact_id for e in get_family_entries(report, "sign:Taurus")
+        }
+        self.assertTrue(taurus_ids.isdisjoint(NEEDS_REVIEW_FACT_IDS))
 
 
 class RuntimeRegressionTests(unittest.TestCase):

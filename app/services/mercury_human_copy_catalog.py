@@ -34,7 +34,7 @@ ALL_REVIEW_STATUSES: tuple[str, ...] = (
 )
 
 # Explicit presentation decisions only (not overrides — those live in
-# HUMAN_COPY_OVERRIDES). S4.3 seed + S4.4B Sagittarius family review.
+# HUMAN_COPY_OVERRIDES). S4.3 seed + S4.4B Sagittarius + S4.5B Taurus.
 APPROVED_RAW_FACT_IDS: frozenset[str] = frozenset(
     {
         # S4.3 seed
@@ -67,6 +67,25 @@ APPROVED_RAW_FACT_IDS: frozenset[str] = frozenset(
         "sag_learning_university_textbooks",
         "sag_teacher_like_with_siblings",
         "sag_tendency_to_attach_labels",
+        # S4.5B Taurus approved_raw
+        "taurus_harmonious_thinking",
+        "taurus_unhurried_thinking",
+        "taurus_bio_unhurried_thinking_communication_learning",
+        "taurus_bio_productive_thinking_communication_learning",
+        "taurus_relies_on_common_sense",
+        "taurus_values_factual_reliability",
+        "taurus_bio_beautiful_handwriting",
+        "taurus_bio_beautiful_voice",
+        "taurus_bio_beautiful_speech",
+        "taurus_bio_practice_based_learning",
+        "taurus_applying_knowledge_in_practice",
+        "taurus_comfortable_learning_environment",
+        "taurus_learning_needs_time_without_pressure",
+        "taurus_learning_repetition_persistence",
+        "taurus_may_recheck_information",
+        "taurus_slow_processing_long_retention",
+        "taurus_difficulty_rapidly_changing_mental_direction",
+        "taurus_risk_inertia",
     }
 )
 
