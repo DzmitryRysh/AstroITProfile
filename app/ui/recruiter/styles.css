@@ -884,6 +884,25 @@ details.more-details > summary::-webkit-details-marker {
   margin-top: 0;
 }
 
+.result-list-group {
+  margin: 0;
+  padding: 0.45rem 0.65rem 0.35rem 0.75rem;
+  border-left: 2px solid var(--border-strong);
+  background: var(--bg-soft);
+  border-radius: 0 8px 8px 0;
+}
+
+.result-list-group .signal-row:first-child,
+.result-list-group .contrast-row:first-child {
+  padding-top: 0.25rem;
+}
+
+.result-list-group .signal-row:last-child,
+.result-list-group .contrast-row:last-child {
+  border-bottom: 0;
+  padding-bottom: 0.2rem;
+}
+
 .signal-row {
   display: grid;
   grid-template-columns: 1fr;

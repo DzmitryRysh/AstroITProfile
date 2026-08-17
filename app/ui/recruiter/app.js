@@ -203,15 +203,21 @@
     return provenanceLabel(sourceKey);
   }
 
-  function recurringPatternsExplanation(audience, displayName) {
+  function recurringPatternsExplanation(audience, displayName, count) {
+    const n = Number(count) || 0;
+    const themeWord = n === 1 ? "recurring theme" : "recurring themes";
+    let subjectTail;
     if (audience === "person") {
       const name = String(displayName || "").trim();
       if (name) {
-        return `These themes appear independently in multiple parts of ${possessiveLabel(name)} profile.`;
+        subjectTail = `${possessiveLabel(name)} profile`;
+      } else {
+        subjectTail = "this profile";
       }
-      return "These themes appear independently in multiple parts of this profile.";
+    } else {
+      subjectTail = "your profile";
     }
-    return "These themes appear independently in multiple parts of your profile.";
+    return `We found ${n} ${themeWord} supported independently by at least two parts of ${subjectTail}:`;
   }
 
   function recurringPatternsEmptyCopy(audience) {
@@ -223,6 +229,12 @@
 
   function tensionsHeading(audience) {
     return audience === "person" ? "Tensions in this profile" : "Tensions in your profile";
+  }
+
+  function tensionsExplanation(count) {
+    const n = Number(count) || 0;
+    const tensionWord = n === 1 ? "tension" : "tensions";
+    return `Different parts of this profile can pull in different directions. AstroIT keeps both signals instead of choosing a winner. We found ${n} ${tensionWord}:`;
   }
 
   function showWorkspaceShell() {
@@ -553,14 +565,13 @@
 
   function renderStrongestPatterns(synthesis, audience, displayName) {
     const patterns = (synthesis && synthesis.strongest_patterns) || [];
-    const intro = `<p class="section-helper">${escapeHtml(recurringPatternsExplanation(audience, displayName))}</p>`;
     if (!patterns.length) {
       return `<section class="panel synthesis-patterns level-1">
         <div class="panel-head"><h2>Key recurring patterns</h2></div>
-        ${intro}
         <p class="section-helper patterns-empty">${escapeHtml(recurringPatternsEmptyCopy(audience))}</p>
       </section>`;
     }
+    const intro = `<p class="section-helper">${escapeHtml(recurringPatternsExplanation(audience, displayName, patterns.length))}</p>`;
     const rows = patterns.map((signal) => {
       const count = Number(signal.source_count) || (signal.sources || []).length || 0;
       const supportLabel = count === 1
@@ -586,7 +597,7 @@
     return `<section class="panel synthesis-patterns level-1">
       <div class="panel-head"><h2>Key recurring patterns</h2></div>
       ${intro}
-      <div class="signal-list">${rows}</div>
+      <div class="result-list-group">${rows}</div>
     </section>`;
   }
 
@@ -688,8 +699,8 @@
     const facts = synthesisFactMap(synthesis);
     return `<section class="panel synthesis-tensions level-2">
       <div class="panel-head"><h2>${escapeHtml(tensionsHeading(audience))}</h2></div>
-      <p class="section-helper">Different Mercury factors can pull in different directions. AstroIT keeps both signals instead of choosing a winner.</p>
-      ${renderTensionRows(tensions, facts)}
+      <p class="section-helper">${escapeHtml(tensionsExplanation(tensions.length))}</p>
+      <div class="result-list-group result-list-group-tensions">${renderTensionRows(tensions, facts)}</div>
     </section>`;
   }
 

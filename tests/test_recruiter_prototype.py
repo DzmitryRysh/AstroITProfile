@@ -251,6 +251,61 @@ class RecruiterUxPolishTests(unittest.TestCase):
         self.assertNotIn("hiring risk", lowered)
         self.assertNotIn("candidate risk", lowered)
 
+    def test_result_list_groups(self):
+        patterns_fn = self.js.split("function renderStrongestPatterns", 1)[1].split(
+            "function renderSectionBody", 1
+        )[0]
+        tensions_fn = self.js.split("function renderResolvedTensions", 1)[1].split(
+            "function renderConditionalTensions", 1
+        )[0]
+        helpers = self.js.split("function recurringPatternsExplanation", 1)[1].split(
+            "function showWorkspaceShell", 1
+        )[0]
+        # Text labels removed.
+        self.assertNotIn("Recurring themes", self.js)
+        self.assertNotIn("Tensions found", self.js)
+        self.assertNotIn("result-list-label", self.js)
+        self.assertNotIn(".result-list-label", self.css)
+        # Dynamic count helper copy.
+        self.assertIn("We found ${n} ${themeWord} supported independently by at least two parts of", helpers)
+        self.assertIn('themeWord = n === 1 ? "recurring theme"', helpers)
+        self.assertIn('subjectTail = "your profile"', helpers)
+        self.assertIn('subjectTail = "this profile"', helpers)
+        self.assertIn("${possessiveLabel(name)} profile", helpers)
+        self.assertIn("parts of ${subjectTail}:", helpers)
+        self.assertIn("We found ${n} ${tensionWord}:", helpers)
+        self.assertIn('tensionWord = n === 1 ? "tension"', helpers)
+        # Structural groups wrap actual results only on result paths.
+        self.assertIn('class="result-list-group"', patterns_fn)
+        self.assertIn('class="result-list-group result-list-group-tensions"', tensions_fn)
+        self.assertIn(".result-list-group", self.css)
+        helper_pos = patterns_fn.find("section-helper")
+        group_pos = patterns_fn.find("result-list-group")
+        self.assertGreater(group_pos, helper_pos)
+        t_helper = tensions_fn.find("section-helper")
+        t_group = tensions_fn.find("result-list-group")
+        self.assertGreater(t_group, t_helper)
+        # Empty recurring: no result group, no "We found 0".
+        empty_branch = patterns_fn.split("if (!patterns.length)", 1)[1].split(
+            "const intro =", 1
+        )[0]
+        self.assertNotIn("result-list-group", empty_branch)
+        self.assertNotIn("We found 0", empty_branch)
+        self.assertIn("patterns-empty", empty_branch)
+        self.assertIn('if (!tensions.length) return ""', tensions_fn)
+        # Primary observation sections do not use result groups.
+        section_body = self.js.split("function renderSectionBody", 1)[1].split(
+            "function renderSynthesisSections", 1
+        )[0]
+        synthesis_sections = self.js.split("function renderSynthesisSections", 1)[1].split(
+            "function renderContextWatchOuts", 1
+        )[0]
+        self.assertNotIn("result-list-group", section_body)
+        self.assertNotIn("result-list-group", synthesis_sections)
+        self.assertNotIn("Strongest traits", self.js)
+        self.assertNotIn("Top traits", self.js)
+        self.assertNotIn("Main skills", self.js)
+
     def test_profile_audience_mode_copy(self):
         # Person mode: named subject, neutral section titles, no second-person framing.
         self.assertIn('audience === "person"', self.js)
@@ -269,9 +324,10 @@ class RecruiterUxPolishTests(unittest.TestCase):
         self.assertIn("Mercury Profile", self.js)
         self.assertIn("${possessiveLabel(name)} Mercury Profile", self.js)
         self.assertIn(': "Mercury Profile"', self.js)
-        self.assertIn("multiple parts of ${possessiveLabel(name)} profile", self.js)
-        self.assertIn("multiple parts of your profile", self.js)
-        self.assertIn("multiple parts of this profile", self.js)
+        self.assertIn("${possessiveLabel(name)} profile", self.js)
+        self.assertIn('subjectTail = "your profile"', self.js)
+        self.assertIn('subjectTail = "this profile"', self.js)
+        self.assertIn("parts of ${subjectTail}:", self.js)
         self.assertIn("humanFactorLabelFromSource", self.js)
         self.assertIn("factorCardTitle", self.js)
         # Recurring block: meaning first; provenance only in disclosure.
