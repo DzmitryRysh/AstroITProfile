@@ -10,6 +10,7 @@ from app.services.mercury_human_copy import HUMAN_COPY_OVERRIDES
 from app.services.mercury_human_copy_catalog import (
     APPROVED_RAW_FACT_IDS,
     NEEDS_REVIEW_FACT_IDS,
+    STATUS_NEEDS_REVIEW,
     STATUS_UNREVIEWED,
     build_catalog_entry,
     build_human_copy_catalog,
@@ -709,11 +710,13 @@ class House8HumanCopyInventoryConsequenceTests(unittest.TestCase):
         by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
         for fact_id in EXPECTED_BIO_IDS:
             with self.subTest(fact_id=fact_id):
-                self.assertNotIn(fact_id, HUMAN_COPY_OVERRIDES)
-                self.assertNotIn(fact_id, APPROVED_RAW_FACT_IDS)
                 self.assertNotIn(fact_id, NEEDS_REVIEW_FACT_IDS)
                 entry = build_catalog_entry(by_id[fact_id])
-                self.assertEqual(entry.review_status, STATUS_UNREVIEWED)
+                self.assertNotEqual(entry.review_status, STATUS_UNREVIEWED)
+                self.assertTrue(
+                    (fact_id in HUMAN_COPY_OVERRIDES)
+                    ^ (fact_id in APPROVED_RAW_FACT_IDS)
+                )
 
     def test_unresolved_bio_facts_remain_human_copy_unreviewed(self):
         by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
@@ -722,18 +725,19 @@ class House8HumanCopyInventoryConsequenceTests(unittest.TestCase):
                 self.assertTrue(by_id[fact_id].unresolved)
                 self.assertNotIn(fact_id, NEEDS_REVIEW_FACT_IDS)
                 entry = build_catalog_entry(by_id[fact_id])
-                self.assertEqual(entry.review_status, STATUS_UNREVIEWED)
+                self.assertNotEqual(entry.review_status, STATUS_UNREVIEWED)
+                self.assertNotEqual(entry.review_status, STATUS_NEEDS_REVIEW)
 
     def test_house_8_family_counts_after_source_parity(self):
         report = build_human_copy_catalog()
         family = next(f for f in report.families if f.family_key == "house:8")
         self.assertEqual(family.total_facts, 38)
-        self.assertEqual(family.approved_override, 0)
-        self.assertEqual(family.approved_raw, 0)
+        self.assertEqual(family.approved_override, 27)
+        self.assertEqual(family.approved_raw, 11)
         self.assertEqual(family.needs_review, 0)
-        self.assertEqual(family.unreviewed, 38)
-        self.assertEqual(family.reviewed_count, 0)
-        self.assertEqual(family.presentation_ready_count, 0)
+        self.assertEqual(family.unreviewed, 0)
+        self.assertEqual(family.reviewed_count, 38)
+        self.assertEqual(family.presentation_ready_count, 38)
 
 
 class House8SemanticLedgerTests(unittest.TestCase):

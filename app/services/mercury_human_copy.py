@@ -1437,6 +1437,503 @@ HUMAN_COPY_OVERRIDES: dict[str, str] = {
         "May come home and stay on the phone, withdrawing from in-person "
         "communication."
     ),
+    # --- S4.33 remaining House delta (H2–H12 unreviewed) ---
+    "h2_bio_favorable_earning_through_information": (
+        "There may be favorable earning potential through information."
+    ),
+    "h2_bio_intellectual_transport_profession": (
+        "There may be a favorable association with intellectual and "
+        "transport-related work."
+    ),
+    "h3_bio_emphasizes_mercury_aspects": (
+        "This placement may make Mercury's aspect patterns more prominent."
+    ),
+    "h3_bio_emphasizes_mercury_sign": (
+        "This placement may make the Mercury sign pattern more prominent."
+    ),
+    "h3_bio_eventfulness_books": (
+        "There may be more events or activity connected with books."
+    ),
+    "h3_bio_eventfulness_social_networks": (
+        "There may be more events or activity connected with social networks."
+    ),
+    "h3_bio_eventfulness_trips": (
+        "There may be more events or activity connected with trips."
+    ),
+    "h3_bio_strengthens_mercury_functions": (
+        "May amplify Mercury-related patterns in thinking, communication, "
+        "and learning."
+    ),
+    "h4_bio_mercury_qualities_inherited_through_family": (
+        "Mercury-related qualities may be inherited through the family, "
+        "with the specific form depending on how those qualities show up."
+    ),
+    "h4_bio_second_home": "There may be an association with a second home.",
+    "h4_bio_special_relevance_sibling": (
+        "A sibling may have particular relevance."
+    ),
+    "h5_acquaintance_context_associations": (
+        "Acquaintances may be associated with celebrations, theaters, "
+        "cinema, shopping, and events."
+    ),
+    "h5_bio_favorable_acquaintances": (
+        "There may be a favorable association with acquaintances."
+    ),
+    "h5_circumstances_public_speaking": (
+        "Circumstances may lead to speaking about something in public."
+    ),
+    "h5_cold_analysis_of_feelings": (
+        "Feelings may be subjected to cold analysis."
+    ),
+    "h5_creativity_connected_with_intellectual_work": (
+        "Creativity may connect with intellectual or mental work."
+    ),
+    "h5_creativity_connected_with_speech": (
+        "Creativity may connect with speech."
+    ),
+    "h5_creativity_connected_with_writing": (
+        "Creativity may connect with writing."
+    ),
+    "h5_entertainment_under_control_of_mind": (
+        "Entertainment may remain under the control of the mind."
+    ),
+    "h5_occupation_associations": (
+        "There may be associations with work such as art criticism, "
+        "teaching, advertising, creative professions, and marketing."
+    ),
+    "h5_pleasure_from_books": "There may be pleasure from books.",
+    "h5_pleasure_from_studying": (
+        "There may be pleasure from studying or learning."
+    ),
+    "h5_rational_element_in_celebration": (
+        "A rational element may be present in celebration or fun."
+    ),
+    "h5_rationalism_in_love": "There may be rationalism in love.",
+    "h5_romantic_beautiful_speech": (
+        "Beautiful speech may be needed to attract someone romantically."
+    ),
+    "h6_active_use_of_professional_contacts": (
+        "Professional activity may involve active use of connections or "
+        "contacts."
+    ),
+    "h6_bio_communication_demanded_at_work": (
+        "Work circumstances may place a special demand on communication."
+    ),
+    "h6_bio_intellect_demanded_at_work": (
+        "Work circumstances may place a special demand on intellectual "
+        "function."
+    ),
+    "h6_bio_intellectual_transport_profession": (
+        "There may be a favorable association with intellectual and "
+        "transport-related work."
+    ),
+    "h6_bio_source_limb_fracture_association": (
+        "There may be an association with limb fractures."
+    ),
+    "h6_bio_source_respiratory_disease_association": (
+        "There may be an association with conditions involving the "
+        "respiratory organs."
+    ),
+    "h6_bio_source_vascular_disease_association": (
+        "There may be an association with conditions involving blood "
+        "vessels."
+    ),
+    "h6_dev_ignore_minor_problems": (
+        "Growth area: learn to ignore small problems."
+    ),
+    "h6_dev_resolve_problem_decisively": (
+        "Growth area: solve the problem quickly and permanently."
+    ),
+    "h6_duties_performed_diligently": (
+        "Duties may be performed diligently."
+    ),
+    "h6_duties_performed_intelligently": (
+        "Duties may be performed intelligently."
+    ),
+    "h6_duties_performed_methodically": (
+        "Duties may be performed methodically."
+    ),
+    "h6_duties_performed_rationally": (
+        "Duties may be performed rationally."
+    ),
+    "h6_may_invent_small_problems": (
+        "If small problems are not present, they may be invented or created."
+    ),
+    "h6_occupation_associations": (
+        "There may be associations with work such as consulting, dietetics, "
+        "healing, medicine, communications, selling, journalism, commentary, "
+        "and laboratory research."
+    ),
+    "h6_preoccupation_with_small_matters": (
+        "There may be a preoccupation with small matters."
+    ),
+    "h6_several_side_jobs": (
+        "There may be several side jobs or additional jobs."
+    ),
+    "h6_tendency_to_grab_several_tasks_at_once": (
+        "There may be a tendency to take on several tasks at once, with a "
+        "risk of scattering."
+    ),
+    "h6_work_involves_travel_or_moving": (
+        "Work may involve a lot of travel or moving around."
+    ),
+    "h7_bio_afflicted_lying_in_relationships": (
+        "If Mercury is under strain, this may show up as lying in "
+        "relationships."
+    ),
+    "h7_bio_afflicted_relationship_duality": (
+        "If Mercury is under strain, this may show up as duality or "
+        "splitting in relationships."
+    ),
+    "h7_bio_favorable_negotiations": (
+        "There may be a favorable association with negotiations."
+    ),
+    "h7_bio_favorable_skillful_sales": (
+        "There may be a favorable association with skillful sales."
+    ),
+    "h7_bio_intellectual_marriage": (
+        "There may be an association with an intellectually oriented marriage."
+    ),
+    "h7_bio_mercury_type_partner_character": (
+        "A partner may have a Mercury-type character."
+    ),
+    "h7_bio_popularity_fame": (
+        "There may be a favorable association with popularity and public "
+        "recognition."
+    ),
+    "h7_calculation_can_dominate_feelings_in_marriage": (
+        "Calculation or rationality can dominate feelings in marriage."
+    ),
+    "h7_many_contacts": "There may be many contacts.",
+    "h7_master_of_compromise": (
+        "Circumstances may make the person a master of compromise."
+    ),
+    "h7_master_of_dialogue": (
+        "Circumstances may make the person a master of dialogue."
+    ),
+    "h7_partner_argumentativeness_fire_element_dependency": (
+        "A partner may be argumentative, especially when fire-element themes "
+        "are strong."
+    ),
+    "h7_partner_from_intellectual_profession": (
+        "A partner may be associated with an intellectual profession."
+    ),
+    "h7_partner_intellectual_expectation_mutable_dependency": (
+        "If a partner does not meet intellectual expectations, the marriage "
+        "may be unstable; this is noted especially for a mutable Mercury."
+    ),
+    "h7_partner_may_be_communicative": "A partner may be communicative.",
+    "h7_partner_may_be_lying": "A partner may lie.",
+    "h7_partner_may_be_two_faced": "A partner may be two-faced.",
+    "h7_partner_often_younger": "A partner may often be younger.",
+    "h7_possible_fictitious_formal_paper_marriage": (
+        "There may be a fictitious, formal, or paper marriage."
+    ),
+    "h8_ability_to_impose_ones_opinion": (
+        "There may be a tendency to impose one's opinion."
+    ),
+    "h8_ability_to_influence_people_through_words": (
+        "There may be an ability to influence people through words."
+    ),
+    "h8_bio_afflicted_gossip": (
+        "If Mercury is under strain, this may show up as gossip."
+    ),
+    "h8_bio_afflicted_hate": (
+        "If Mercury is under strain, this may show up as hate."
+    ),
+    "h8_bio_afflicted_joint_disease_association": (
+        "If Mercury is under strain, there may be an association with "
+        "conditions involving the joints."
+    ),
+    "h8_bio_afflicted_limb_disease_association": (
+        "If Mercury is under strain, there may be an association with "
+        "conditions involving the limbs."
+    ),
+    "h8_bio_afflicted_lung_disease_association": (
+        "If Mercury is under strain, there may be an association with "
+        "conditions involving the lungs."
+    ),
+    "h8_bio_afflicted_traffic_accident_association": (
+        "If Mercury is under strain, there may be an association with "
+        "traffic accidents."
+    ),
+    "h8_bio_afflicted_vascular_disease_association": (
+        "If Mercury is under strain, there may be an association with "
+        "conditions involving blood vessels."
+    ),
+    "h8_bio_commercial_resourcefulness": (
+        "There may be commercial resourcefulness."
+    ),
+    "h8_bio_tongue_enemy_crisis_effect": (
+        'This can show up as a "my tongue is my enemy" crisis effect.'
+    ),
+    "h8_decipher_information_from_hidden_sources": (
+        "There may be an ability to decipher information from hidden sources."
+    ),
+    "h8_deep_thinking": "Thinking may be deep.",
+    "h8_financial_resourcefulness": (
+        "There may be dexterity or resourcefulness in financial matters."
+    ),
+    "h8_intense_intellectual_concentration": (
+        "There may be an ability to concentrate intensely on intellectual work."
+    ),
+    "h8_interest_associations_secrets_detective_occult": (
+        "There may be interest in secrets, detective stories, crime "
+        "chronicles, mysticism, and occult topics."
+    ),
+    "h8_intrigue_tendency": (
+        "There may be a tendency toward intrigue or scheming."
+    ),
+    "h8_malicious_speech": (
+        "Speech may become malicious or slanderous."
+    ),
+    "h8_maneuver_around_discounts": (
+        "There may be an ability to maneuver around discounts."
+    ),
+    "h8_maneuver_around_loans": (
+        "There may be an ability to maneuver around loans."
+    ),
+    "h8_perceptiveness": "Perception may be penetrating or perceptive.",
+    "h8_research_talent": "There may be research talent.",
+    "h8_source_finger_injury_risk": (
+        "There may be an association with injuries to the fingers."
+    ),
+    "h8_source_hand_injury_risk": (
+        "There may be an association with injuries to the hands."
+    ),
+    "h8_source_vascular_problem_risk": (
+        "There may be an association with vascular problems."
+    ),
+    "h8_thoughts_formulated_in_very_sharp_form": (
+        "Thoughts may be formulated in a very sharp form."
+    ),
+    "h8_word_caused_crisis_risk": (
+        'A crisis can arise because of a written or spoken word — a '
+        '"my tongue is my enemy" pattern.'
+    ),
+    "h9_analytical_with_abstract": (
+        "Analytical thinking may work together with abstract thinking."
+    ),
+    "h9_attraction_to_sciences": "There may be an attraction to sciences.",
+    "h9_bio_foreign_languages": (
+        "There may be a favorable association with foreign languages."
+    ),
+    "h9_elevates_intellectual_social_level": (
+        "This house can raise intellectual or social level over time."
+    ),
+    "h9_eternal_student": (
+        'Circumstances may require continued learning — an "eternal student" '
+        "pattern."
+    ),
+    "h9_filters_significant_information": (
+        "Significant information may be filtered from a larger stream."
+    ),
+    "h9_interest_foreign_languages": (
+        "There may be interest in foreign languages."
+    ),
+    "h9_interest_geography_travel": (
+        "There may be interest in geography and travel."
+    ),
+    "h9_interest_other_cultures": (
+        "There may be understanding of or interest in other cultures."
+    ),
+    "h9_multiple_educations": (
+        "There may be multiple educations or repeated formal learning."
+    ),
+    "h9_needs_argumentation_evidence": (
+        "An idea may not be readily accepted without argumentation or evidence."
+    ),
+    "h9_selective_communication": (
+        "Communication may be selective, with a preference for chosen circles."
+    ),
+    "h9_status_environment_mismatch": (
+        "There may be a feeling of being intellectually or socially out of "
+        "place in a higher-status environment."
+    ),
+    "h10_bio_afflicted_seen_as_servant": (
+        "If Mercury is under strain, others may see the person only in a "
+        "servant role."
+    ),
+    "h10_bio_afflicted_seen_as_student": (
+        "If Mercury is under strain, others may see the person only in a "
+        "student role."
+    ),
+    "h10_bio_intellectual_transport_profession": (
+        "There may be a favorable association with intellectual and "
+        "transport-related work."
+    ),
+    "h10_bio_popularity_fame": (
+        "There may be a favorable association with popularity and public "
+        "recognition."
+    ),
+    "h10_democratic_relationship_with_leadership": (
+        "There may be a democratic relationship with leadership based on "
+        "shared intellectual interests."
+    ),
+    "h10_interest_in_distinctions_status_markers": (
+        "There may be interest in distinctions or status markers."
+    ),
+    "h10_interest_in_ranks": "There may be interest in ranks.",
+    "h10_interest_in_titles": "There may be interest in titles.",
+    "h10_knowledge_for_prestige_not_curiosity": (
+        "Knowledge may be pursued for benefit, prestige, or honor rather "
+        "than curiosity."
+    ),
+    "h10_many_connections_reduced_independence": (
+        "There may be many connections but reduced independence."
+    ),
+    "h10_mission_informing_people": (
+        "There may be a mission or role of informing people."
+    ),
+    "h10_reputation_exceptional_intellect": (
+        "There may be a reputation for exceptional intellect."
+    ),
+    "h11_acquaintances_for_exchanging_advice_and_ideas": (
+        "Acquaintances may serve the purpose of exchanging advice and ideas."
+    ),
+    "h11_bio_broad_social_popularity": (
+        "There may be a favorable association with broad social popularity."
+    ),
+    "h11_bio_universal_intellect": (
+        "There may be a broadly universal intellect, with an ability to "
+        "learn across many subjects."
+    ),
+    "h11_constant_social_interaction": (
+        "There may be constant social interaction."
+    ),
+    "h11_deception_from_friends": "There may be deception from friends.",
+    "h11_democratic_contact_regardless_of_status": (
+        "Contact may be democratic regardless of social status."
+    ),
+    "h11_empty_pointless_acquaintances": (
+        "There may be empty or pointless acquaintances."
+    ),
+    "h11_fierce_bitter_arguments": (
+        "There may be fierce or bitter arguments."
+    ),
+    "h11_fierce_bitter_discussions": (
+        "There may be fierce or bitter discussions."
+    ),
+    "h11_gossip_from_friends": "There may be gossip from friends.",
+    "h11_learn_yourself": "There may be an emphasis on learning for oneself.",
+    "h11_lying_from_friends": "There may be lying from friends.",
+    "h11_many_quick_acquaintances": (
+        "There may be many quick acquaintances."
+    ),
+    "h11_meaningless_plans": "There may be meaningless plans.",
+    "h11_meaningless_projects": "There may be meaningless projects.",
+    "h11_pioneer_inventor_reformer_associations": (
+        "There may be associations with pioneers, inventors, and reformers."
+    ),
+    "h11_plans_projects_detached_from_reality": (
+        "Plans or projects may become detached from reality."
+    ),
+    "h11_scientific_type_of_thinking_context": (
+        "Circumstances may create a scientific style of thinking."
+    ),
+    "h11_social_impulse_to_study": (
+        "Friends or groups may create an impulse to study."
+    ),
+    "h11_teach_others": (
+        "There may be an impulse to teach others in social or group settings."
+    ),
+    "h11_universal_mind": "There may be a universal mind.",
+    "h11_unpromising_acquaintances": (
+        "There may be unpromising acquaintances."
+    ),
+    "h12_ability_to_decipher_hidden_meanings": (
+        "There may be an ability to decipher hidden meanings."
+    ),
+    "h12_ability_to_learn_alone": "There may be an ability to learn alone.",
+    "h12_ability_to_think_alone": "There may be an ability to think alone.",
+    "h12_bio_afflicted_gossip": (
+        "If Mercury is under strain, this may show up as gossip."
+    ),
+    "h12_bio_afflicted_hate": (
+        "If Mercury is under strain, this may show up as hate."
+    ),
+    "h12_bio_afflicted_joint_disease_association": (
+        "If Mercury is under strain, there may be an association with "
+        "conditions involving the joints."
+    ),
+    "h12_bio_afflicted_limb_disease_association": (
+        "If Mercury is under strain, there may be an association with "
+        "conditions involving the limbs."
+    ),
+    "h12_bio_afflicted_lung_disease_association": (
+        "If Mercury is under strain, there may be an association with "
+        "conditions involving the lungs."
+    ),
+    "h12_bio_afflicted_traffic_accident_association": (
+        "If Mercury is under strain, there may be an association with "
+        "traffic accidents."
+    ),
+    "h12_bio_afflicted_vascular_disease_association": (
+        "If Mercury is under strain, there may be an association with "
+        "conditions involving blood vessels."
+    ),
+    "h12_bio_core_strong_tense_investor_qualities": (
+        "When the underlying pattern is both strong and tense, there may be "
+        "an association with investor qualities."
+    ),
+    "h12_bio_core_strong_tense_major_manager_researcher_qualities": (
+        "When the underlying pattern is both strong and tense, there may be "
+        "an association with a major manager-researcher role."
+    ),
+    "h12_bio_foreign_languages": (
+        "There may be a favorable association with foreign languages."
+    ),
+    "h12_bio_inspiration_through_dialogues_with_god": (
+        "Inspiration may come through 'dialogues with God.'"
+    ),
+    "h12_bio_paradoxical_philosophical_intellect": (
+        "There may be a paradoxical philosophical intellect."
+    ),
+    "h12_circumstances_require_keeping_secrets": (
+        "Circumstances may require keeping secrets."
+    ),
+    "h12_decisions_more_often_not_logical": (
+        "Decisions may more often be not logical."
+    ),
+    "h12_difficult_to_express_oneself_in_front_of_people": (
+        "It may be difficult to express oneself in front of people."
+    ),
+    "h12_does_not_show_fruits_of_intellectual_creativity": (
+        "The fruits of intellectual creativity may not be shown."
+    ),
+    "h12_learning_more_interesting_as_external_student": (
+        "Learning may be more interesting as an external student or in "
+        "externship."
+    ),
+    "h12_learning_more_interesting_remotely": (
+        "Learning may be more interesting remotely."
+    ),
+    "h12_many_secrets": "There may be many secrets.",
+    "h12_mind_brightest_in_occult": (
+        "The mind may show itself most brightly in the occult."
+    ),
+    "h12_mind_brightest_in_unknown_unexplored": (
+        "The mind may show itself most brightly in the unknown or unexplored."
+    ),
+    "h12_operates_with_gossip": "May operate with gossip.",
+    "h12_operates_with_guesses": "May operate with guesses.",
+    "h12_solitude_through_internet_psychology_medicine": (
+        "The internet, psychology, or medicine may become a way of isolating "
+        "or being alone."
+    ),
+    "h12_subconscious_strongly_influences_thinking": (
+        "The subconscious may strongly influence thinking."
+    ),
+    "h12_talent_for_putting_inexplicable_into_words": (
+        "There may be a talent for putting the inexplicable into words."
+    ),
+    "h12_talks_internally_more_than_externally": (
+        "Internal talk may happen more often than external talk."
+    ),
+    "h12_uncomfortable_to_express_oneself_in_front_of_people": (
+        "It may be uncomfortable to express oneself in front of people."
+    ),
+    "h12_writes_for_the_drawer": 'Writing may be done "for the drawer."',
 }
 
 

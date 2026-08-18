@@ -508,19 +508,23 @@ class House10HumanCopyInventoryConsequenceTests(unittest.TestCase):
         by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
         for fact_id in EXPECTED_BIO_IDS:
             with self.subTest(fact_id=fact_id):
-                self.assertNotIn(fact_id, HUMAN_COPY_OVERRIDES)
-                self.assertNotIn(fact_id, APPROVED_RAW_FACT_IDS)
                 self.assertNotIn(fact_id, NEEDS_REVIEW_FACT_IDS)
                 entry = build_catalog_entry(by_id[fact_id])
-                self.assertEqual(entry.review_status, STATUS_UNREVIEWED)
+                self.assertNotEqual(entry.review_status, STATUS_UNREVIEWED)
+                self.assertTrue(
+                    (fact_id in HUMAN_COPY_OVERRIDES)
+                    ^ (fact_id in APPROVED_RAW_FACT_IDS)
+                )
 
     def test_house_10_family_counts_after_source_parity(self):
         report = build_human_copy_catalog()
         family = next(f for f in report.families if f.family_key == "house:10")
         self.assertEqual(family.total_facts, 30)
-        self.assertEqual(family.unreviewed, 30)
-        self.assertEqual(family.reviewed_count, 0)
-        self.assertEqual(family.presentation_ready_count, 0)
+        self.assertEqual(family.approved_override, 12)
+        self.assertEqual(family.approved_raw, 18)
+        self.assertEqual(family.unreviewed, 0)
+        self.assertEqual(family.reviewed_count, 30)
+        self.assertEqual(family.presentation_ready_count, 30)
         self.assertEqual(family.needs_review, 0)
 
 

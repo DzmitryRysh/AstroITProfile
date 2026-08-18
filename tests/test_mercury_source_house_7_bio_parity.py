@@ -10,6 +10,7 @@ from app.services.mercury_human_copy import HUMAN_COPY_OVERRIDES
 from app.services.mercury_human_copy_catalog import (
     APPROVED_RAW_FACT_IDS,
     NEEDS_REVIEW_FACT_IDS,
+    STATUS_NEEDS_REVIEW,
     STATUS_UNREVIEWED,
     build_catalog_entry,
     build_human_copy_catalog,
@@ -723,21 +724,25 @@ class House7HumanCopyInventoryConsequenceTests(unittest.TestCase):
         by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
         for fact_id in EXPECTED_BIO_IDS:
             with self.subTest(fact_id=fact_id):
-                self.assertNotIn(fact_id, HUMAN_COPY_OVERRIDES)
-                self.assertNotIn(fact_id, APPROVED_RAW_FACT_IDS)
                 self.assertNotIn(fact_id, NEEDS_REVIEW_FACT_IDS)
                 entry = build_catalog_entry(by_id[fact_id])
-                self.assertEqual(entry.review_status, STATUS_UNREVIEWED)
+                self.assertNotEqual(entry.review_status, STATUS_UNREVIEWED)
+                self.assertTrue(
+                    (fact_id in HUMAN_COPY_OVERRIDES)
+                    ^ (fact_id in APPROVED_RAW_FACT_IDS)
+                )
 
     def test_existing_lesson7_facts_remain_unreviewed(self):
         by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
         for item in HOUSE_7:
             with self.subTest(l7_id=item.id):
-                self.assertNotIn(item.id, HUMAN_COPY_OVERRIDES)
-                self.assertNotIn(item.id, APPROVED_RAW_FACT_IDS)
                 self.assertNotIn(item.id, NEEDS_REVIEW_FACT_IDS)
                 entry = build_catalog_entry(by_id[item.id])
-                self.assertEqual(entry.review_status, STATUS_UNREVIEWED)
+                self.assertNotEqual(entry.review_status, STATUS_UNREVIEWED)
+                self.assertTrue(
+                    (item.id in HUMAN_COPY_OVERRIDES)
+                    ^ (item.id in APPROVED_RAW_FACT_IDS)
+                )
 
     def test_unresolved_source_facts_remain_human_copy_unreviewed(self):
         by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
@@ -746,18 +751,19 @@ class House7HumanCopyInventoryConsequenceTests(unittest.TestCase):
                 self.assertTrue(by_id[fact_id].unresolved)
                 self.assertNotIn(fact_id, NEEDS_REVIEW_FACT_IDS)
                 entry = build_catalog_entry(by_id[fact_id])
-                self.assertEqual(entry.review_status, STATUS_UNREVIEWED)
+                self.assertNotEqual(entry.review_status, STATUS_UNREVIEWED)
+                self.assertNotEqual(entry.review_status, STATUS_NEEDS_REVIEW)
 
     def test_house_7_family_counts_after_source_parity(self):
         report = build_human_copy_catalog()
         family = next(f for f in report.families if f.family_key == "house:7")
         self.assertEqual(family.total_facts, 28)
-        self.assertEqual(family.approved_override, 0)
-        self.assertEqual(family.approved_raw, 0)
+        self.assertEqual(family.approved_override, 19)
+        self.assertEqual(family.approved_raw, 9)
         self.assertEqual(family.needs_review, 0)
-        self.assertEqual(family.unreviewed, 28)
-        self.assertEqual(family.reviewed_count, 0)
-        self.assertEqual(family.presentation_ready_count, 0)
+        self.assertEqual(family.unreviewed, 0)
+        self.assertEqual(family.reviewed_count, 28)
+        self.assertEqual(family.presentation_ready_count, 28)
 
 
 class House7SemanticLedgerTests(unittest.TestCase):

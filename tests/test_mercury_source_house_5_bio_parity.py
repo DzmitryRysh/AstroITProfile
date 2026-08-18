@@ -507,32 +507,36 @@ class House5HumanCopyInventoryConsequenceTests(unittest.TestCase):
         by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
         for fact_id in EXPECTED_BIO_IDS:
             with self.subTest(fact_id=fact_id):
-                self.assertNotIn(fact_id, HUMAN_COPY_OVERRIDES)
-                self.assertNotIn(fact_id, APPROVED_RAW_FACT_IDS)
                 self.assertNotIn(fact_id, NEEDS_REVIEW_FACT_IDS)
                 entry = build_catalog_entry(by_id[fact_id])
-                self.assertEqual(entry.review_status, STATUS_UNREVIEWED)
+                self.assertNotEqual(entry.review_status, STATUS_UNREVIEWED)
+                self.assertTrue(
+                    (fact_id in HUMAN_COPY_OVERRIDES)
+                    ^ (fact_id in APPROVED_RAW_FACT_IDS)
+                )
 
     def test_existing_lesson7_facts_remain_unreviewed(self):
         by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
         for item in HOUSE_5:
             with self.subTest(l7_id=item.id):
-                self.assertNotIn(item.id, HUMAN_COPY_OVERRIDES)
-                self.assertNotIn(item.id, APPROVED_RAW_FACT_IDS)
                 self.assertNotIn(item.id, NEEDS_REVIEW_FACT_IDS)
                 entry = build_catalog_entry(by_id[item.id])
-                self.assertEqual(entry.review_status, STATUS_UNREVIEWED)
+                self.assertNotEqual(entry.review_status, STATUS_UNREVIEWED)
+                self.assertTrue(
+                    (item.id in HUMAN_COPY_OVERRIDES)
+                    ^ (item.id in APPROVED_RAW_FACT_IDS)
+                )
 
     def test_house_5_family_counts_after_source_parity(self):
         report = build_human_copy_catalog()
         family = next(f for f in report.families if f.family_key == "house:5")
         self.assertEqual(family.total_facts, 27)
-        self.assertEqual(family.approved_override, 0)
-        self.assertEqual(family.approved_raw, 0)
+        self.assertEqual(family.approved_override, 14)
+        self.assertEqual(family.approved_raw, 13)
         self.assertEqual(family.needs_review, 0)
-        self.assertEqual(family.unreviewed, 27)
-        self.assertEqual(family.reviewed_count, 0)
-        self.assertEqual(family.presentation_ready_count, 0)
+        self.assertEqual(family.unreviewed, 0)
+        self.assertEqual(family.reviewed_count, 27)
+        self.assertEqual(family.presentation_ready_count, 27)
 
 
 class House5SemanticLedgerTests(unittest.TestCase):
