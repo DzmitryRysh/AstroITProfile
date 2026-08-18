@@ -1,7 +1,8 @@
 """Mercury Source Profile v2 — House Batch B3.
 
 House 8 has Lesson 7 + Bioastrology (dual-source parity).
-Houses 11 and 12 remain Lesson 7 only until their Bioastrology passes.
+House 11 has Lesson 7 + Bioastrology (dual-source parity).
+House 12 remains Lesson 7 only until its Bioastrology pass.
 
 SOURCE FIRST → SYNTHESIS SECOND.
 
@@ -56,6 +57,7 @@ def _f(
 REF_H8_L7 = "lesson7_mercury_house_8"
 REF_H8_BIO = "bioastrology_mercury_house_8"
 REF_H11_L7 = "lesson7_mercury_house_11"
+REF_H11_BIO = "bioastrology_mercury_house_11"
 REF_H12_L7 = "lesson7_mercury_house_12"
 
 # ---------------------------------------------------------------------------
@@ -346,6 +348,78 @@ HOUSE_11: tuple[SourceFactDef, ...] = (
 )
 
 # ---------------------------------------------------------------------------
+# Mercury in House 11 — Bioastrology (dual-source parity; HOUSE_11 L7 is frozen)
+# ---------------------------------------------------------------------------
+HOUSE_11_BIO: tuple[SourceFactDef, ...] = (
+    _f("h11_bio_communication_learning_realized_through_internet", "house", "11",
+       "source_specific",
+       "Communication and learning may be realized through the Internet.",
+       "neutral",
+       source_reference=REF_H11_BIO),
+    _f("h11_bio_communication_learning_realized_through_collectives", "house", "11",
+       "source_specific",
+       "Communication and learning may be realized through collectives or groups.",
+       "neutral",
+       source_reference=REF_H11_BIO),
+    _f("h11_bio_communication_learning_realized_through_clubs", "house", "11",
+       "source_specific",
+       "Communication and learning may be realized through clubs.",
+       "neutral",
+       source_reference=REF_H11_BIO),
+    _f("h11_bio_communication_learning_realized_through_gatherings", "house", "11",
+       "source_specific",
+       "Communication and learning may be realized through gatherings or meetings.",
+       "neutral",
+       source_reference=REF_H11_BIO),
+    _f("h11_bio_communication_learning_realized_through_forums", "house", "11",
+       "source_specific",
+       "Communication and learning may be realized through forums.",
+       "neutral",
+       source_reference=REF_H11_BIO),
+    _f("h11_bio_intellect_becomes_scientific", "house", "11", "thinking",
+       "Over time, the intellect may become more scientific in orientation.",
+       "neutral",
+       source_reference=REF_H11_BIO),
+    _f("h11_bio_intellect_becomes_technological", "house", "11", "thinking",
+       "Over time, the intellect may become more technological in orientation.",
+       "neutral",
+       source_reference=REF_H11_BIO),
+    _f("h11_bio_universal_intellect", "house", "11", "thinking",
+       "Source describes a broadly universal intellect with an ability to learn "
+       "across many subjects.",
+       "strength",
+       source_reference=REF_H11_BIO),
+    _f("h11_bio_learning_oriented_toward_high_technologies", "house", "11", "learning",
+       "Learning may be especially oriented toward high technologies.",
+       "strength",
+       source_reference=REF_H11_BIO),
+    _f("h11_bio_learning_with_equals_or_peers", "house", "11", "learning",
+       "Learning may occur with or through equals or peers.",
+       "strength",
+       source_reference=REF_H11_BIO),
+    _f("h11_bio_learning_with_friends", "house", "11", "learning",
+       "Learning may occur with or through friends.",
+       "strength",
+       source_reference=REF_H11_BIO),
+    _f("h11_bio_learning_in_group_or_collective", "house", "11", "learning",
+       "Learning may occur in a group or collective setting.",
+       "strength",
+       source_reference=REF_H11_BIO),
+    _f("h11_bio_broad_social_popularity", "house", "11", "source_specific",
+       "Favorable association with broad social popularity.",
+       "strength",
+       source_reference=REF_H11_BIO),
+    _f("h11_bio_many_discussed_plans", "house", "11", "source_specific",
+       "There may be a large number of discussed plans.",
+       "neutral",
+       source_reference=REF_H11_BIO),
+    _f("h11_bio_many_discussed_projects", "house", "11", "source_specific",
+       "There may be a large number of discussed projects.",
+       "neutral",
+       source_reference=REF_H11_BIO),
+)
+
+# ---------------------------------------------------------------------------
 # Mercury in House 12 — Lesson 7
 # ---------------------------------------------------------------------------
 HOUSE_12: tuple[SourceFactDef, ...] = (
@@ -436,6 +510,6 @@ HOUSE_12: tuple[SourceFactDef, ...] = (
 )
 
 B3_HOUSE_PACKS: tuple[SourceFactDef, ...] = (
-    HOUSE_8 + HOUSE_8_BIO + HOUSE_11 + HOUSE_12
+    HOUSE_8 + HOUSE_8_BIO + HOUSE_11 + HOUSE_11_BIO + HOUSE_12
 )
 B3_SUPPORTED_HOUSE_KEYS = frozenset({"8", "11", "12"})

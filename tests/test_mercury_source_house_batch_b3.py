@@ -14,9 +14,11 @@ from app.services.mercury_source_knowledge_b3_houses import (
     HOUSE_8,
     HOUSE_8_BIO,
     HOUSE_11,
+    HOUSE_11_BIO,
     HOUSE_12,
     REF_H8_BIO,
     REF_H8_L7,
+    REF_H11_BIO,
     REF_H11_L7,
     REF_H12_L7,
 )
@@ -61,11 +63,13 @@ class HouseBatchB3CoverageTests(unittest.TestCase):
         self.assertEqual(len(HOUSE_8), 18)
         self.assertEqual(len(HOUSE_8_BIO), 20)
         self.assertEqual(len(HOUSE_11), 22)
+        self.assertEqual(len(HOUSE_11_BIO), 15)
         self.assertEqual(len(HOUSE_12), 20)
-        self.assertEqual(len(B3_HOUSE_PACKS), 80)
+        self.assertEqual(len(B3_HOUSE_PACKS), 95)
         self.assertTrue(all(item.source_reference == REF_H8_L7 for item in HOUSE_8))
         self.assertTrue(all(item.source_reference == REF_H8_BIO for item in HOUSE_8_BIO))
         self.assertTrue(all(item.source_reference == REF_H11_L7 for item in HOUSE_11))
+        self.assertTrue(all(item.source_reference == REF_H11_BIO for item in HOUSE_11_BIO))
         self.assertTrue(all(item.source_reference == REF_H12_L7 for item in HOUSE_12))
         self.assertTrue(all(item.factor_type == "house" for item in B3_HOUSE_PACKS))
 
@@ -77,7 +81,7 @@ class HouseBatchB3CoverageTests(unittest.TestCase):
     def test_house_8_11_12_activate(self):
         for house, expected_refs, sample_id in (
             ("8", {REF_H8_L7, REF_H8_BIO}, "h8_ability_to_influence_people_through_words"),
-            ("11", {REF_H11_L7}, "h11_constant_social_interaction"),
+            ("11", {REF_H11_L7, REF_H11_BIO}, "h11_constant_social_interaction"),
             ("12", {REF_H12_L7}, "h12_ability_to_think_alone"),
         ):
             with self.subTest(house=house):
