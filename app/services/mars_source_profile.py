@@ -1,8 +1,8 @@
-"""Mars source profile v1 — Lesson 9 SIGN + HOUSE activation.
+"""Mars source profile v1 — Lesson 9 SIGN + HOUSE + RETROGRADE MOTION activation.
 
-Motion and aspect knowledge are not implemented yet.
-Those calculated layers are reported as unimplemented source coverage,
-not as missing calculation.
+Direct Mars is a calculated state with no Lesson 9 interpretation pack.
+Aspect knowledge is not implemented yet and is reported as unimplemented
+source coverage, not as missing calculation.
 Unknown birth time makes the house source layer unavailable.
 """
 
@@ -20,6 +20,7 @@ from app.services.mars_facts import (
 from app.services.mars_source_knowledge import (
     ALL_MARS_SOURCE_FACTS,
     SUPPORTED_HOUSE_KEYS,
+    SUPPORTED_MOTION_KEYS,
     SUPPORTED_SIGN_KEYS,
     WORK_PROFILE_SCOPES,
     MarsSourceFactDef,
@@ -101,6 +102,12 @@ def _match_definitions(
     return work_facts, unresolved_facts
 
 
+DIRECT_MOTION_NO_PACK_LIMITATION = (
+    "Direct Mars motion is a calculated state with no Lesson 9 "
+    "source-specific interpretation pack."
+)
+
+
 def _coverage_and_limitations(
     factors: MarsSourceFactors,
 ) -> tuple[MarsSourceCoverage, list[str]]:
@@ -133,9 +140,17 @@ def _coverage_and_limitations(
                 f"Mars house source knowledge for house {factors.mars_house} is not implemented yet."
             )
 
-    if factors.mars_motion == "retrograde":
-        unimplemented.append("motion:retrograde")
-        limitations.append("Mars motion source knowledge is not implemented yet.")
+    if factors.mars_motion == "direct":
+        limitations.append(DIRECT_MOTION_NO_PACK_LIMITATION)
+    elif factors.mars_motion:
+        motion_key = f"motion:{factors.mars_motion}"
+        if factors.mars_motion in SUPPORTED_MOTION_KEYS:
+            covered.append(motion_key)
+        else:
+            unimplemented.append(motion_key)
+            limitations.append(
+                f"Mars motion source knowledge for {factors.mars_motion} is not implemented yet."
+            )
 
     if factors.mars_aspects:
         for aspect in factors.mars_aspects:
@@ -158,6 +173,7 @@ def build_mars_source_profile_from_factors(
 ) -> MarsSourceProfile:
     sign_facts: list[MarsSourceFact] = []
     house_facts: list[MarsSourceFact] = []
+    motion_facts: list[MarsSourceFact] = []
     unresolved: list[MarsSourceFact] = []
 
     if factors.mars_sign in SUPPORTED_SIGN_KEYS:
@@ -176,12 +192,19 @@ def build_mars_source_profile_from_factors(
             )
             unresolved.extend(house_unresolved)
 
+    if factors.mars_motion in SUPPORTED_MOTION_KEYS:
+        motion_facts, motion_unresolved = _match_definitions(
+            factor_type="motion",
+            factor_key=factors.mars_motion or "",
+        )
+        unresolved.extend(motion_unresolved)
+
     coverage, limitations = _coverage_and_limitations(factors)
     return MarsSourceProfile(
         calculated=factors,
         sign_facts=tuple(sign_facts),
         house_facts=tuple(house_facts),
-        motion_facts=(),
+        motion_facts=tuple(motion_facts),
         aspect_facts=(),
         conditional_unresolved=tuple(unresolved),
         coverage=coverage,

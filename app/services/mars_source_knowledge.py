@@ -1,7 +1,7 @@
-"""Mars Lesson 9 sign and house source knowledge.
+"""Mars Lesson 9 sign, house, and retrograde-motion source knowledge.
 
-Canonical facts only. No Bio parity, motion packs, aspects,
-repeated-signal specs, strength score, or human copy.
+Canonical facts only. No Bio parity, aspects, repeated-signal specs,
+strength score, or human copy. Direct Mars has no invented interpretation pack.
 """
 
 from __future__ import annotations
@@ -868,10 +868,17 @@ from app.services.mars_source_knowledge_houses import (  # noqa: E402
     HOUSE_PACKS,
     SUPPORTED_HOUSE_KEYS,
 )
+from app.services.mars_source_knowledge_motion import (  # noqa: E402
+    EXPECTED_MOTION_SOURCE_REFERENCES,
+    MOTION_PACKS,
+    SUPPORTED_MOTION_KEYS,
+)
 
-ALL_MARS_SOURCE_FACTS: tuple[MarsSourceFactDef, ...] = tuple(
-    fact for pack in SIGN_PACKS.values() for fact in pack
-) + tuple(fact for pack in HOUSE_PACKS.values() for fact in pack)
+ALL_MARS_SOURCE_FACTS: tuple[MarsSourceFactDef, ...] = (
+    tuple(fact for pack in SIGN_PACKS.values() for fact in pack)
+    + tuple(fact for pack in HOUSE_PACKS.values() for fact in pack)
+    + tuple(fact for pack in MOTION_PACKS.values() for fact in pack)
+)
 
 
 def validate_mars_source_facts(
@@ -893,6 +900,12 @@ def validate_mars_source_facts(
             if not fact.id.startswith(f"mars_h{fact.factor_key}_"):
                 raise ValueError(f"House fact id must start with mars_h{fact.factor_key}_: {fact.id}")
             expected_ref = EXPECTED_HOUSE_SOURCE_REFERENCES[fact.factor_key]
+        elif fact.factor_type == "motion":
+            if fact.factor_key not in SUPPORTED_MOTION_KEYS:
+                raise ValueError(f"Unknown Mars motion key: {fact.factor_key}")
+            if fact.factor_key == "retrograde" and not fact.id.startswith("mars_rx_"):
+                raise ValueError(f"Retrograde fact id must start with mars_rx_: {fact.id}")
+            expected_ref = EXPECTED_MOTION_SOURCE_REFERENCES[fact.factor_key]
         else:
             raise ValueError(f"Unsupported Mars factor_type on {fact.id}: {fact.factor_type}")
         if fact.category not in MARS_CATEGORIES:

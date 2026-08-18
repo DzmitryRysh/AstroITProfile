@@ -65,7 +65,7 @@ class MarsSignCatalogTests(unittest.TestCase):
 
     def test_factor_type_key_category_scope_and_references(self):
         for fact in ALL_MARS_SOURCE_FACTS:
-            self.assertIn(fact.factor_type, {"sign", "house"})
+            self.assertIn(fact.factor_type, {"sign", "house", "motion"})
             self.assertIn(fact.category, MARS_CATEGORIES)
             self.assertIn(fact.scope, MARS_SCOPES)
             self.assertTrue(fact.text.strip())
@@ -90,9 +90,11 @@ class MarsSignCatalogTests(unittest.TestCase):
         self.assertNotIn("strength_score", knowledge_src)
         self.assertNotIn("hard_aspected", profile_src)
 
-    def test_no_motion_or_aspect_knowledge_facts(self):
+    def test_no_aspect_knowledge_facts(self):
         types = {fact.factor_type for fact in ALL_MARS_SOURCE_FACTS}
-        self.assertEqual(types, {"sign", "house"})
+        self.assertEqual(types, {"sign", "house", "motion"})
+        self.assertNotIn("aspect", types)
+        self.assertNotIn("direct", {fact.factor_key for fact in ALL_MARS_SOURCE_FACTS})
 
     def test_weak_neptune_facts_are_unresolved(self):
         by_id = {fact.id: fact for fact in ALL_MARS_SOURCE_FACTS}
@@ -135,6 +137,9 @@ class MarsSignActivationTests(unittest.TestCase):
                 self.assertEqual(profile.house_facts, ())
                 self.assertEqual(profile.motion_facts, ())
                 self.assertEqual(profile.aspect_facts, ())
+                self.assertNotIn(
+                    "motion:retrograde", profile.coverage.unimplemented_source_factors
+                )
 
     def test_pisces_weak_neptune_facts_are_not_ordinary_activation(self):
         profile = build_mars_source_profile_from_factors(
@@ -166,10 +171,15 @@ class MarsSignActivationTests(unittest.TestCase):
                 mars_motion="retrograde",
             )
         )
-        self.assertEqual(profile.coverage.covered_factors, ("sign:Aries", "house:1"))
+        self.assertEqual(
+            profile.coverage.covered_factors,
+            ("sign:Aries", "house:1", "motion:retrograde"),
+        )
         self.assertNotIn("house:1", profile.coverage.unimplemented_source_factors)
-        self.assertIn("motion:retrograde", profile.coverage.unimplemented_source_factors)
-        self.assertEqual(profile.coverage.status, "partial")
+        self.assertNotIn("motion:retrograde", profile.coverage.unimplemented_source_factors)
+        self.assertEqual(profile.coverage.status, "complete")
+        self.assertEqual(profile.coverage.unimplemented_source_factors, ())
+        self.assertTrue(profile.motion_facts)
         self.assertFalse(
             any("house source knowledge is not implemented yet" in item
                 for item in profile.limitations)
@@ -191,11 +201,15 @@ class MarsSignGoldenActivationTests(unittest.TestCase):
         self.assertIn("mars_capricorn_plans_then_executes", {
             item.id for item in profile.sign_facts
         })
-        self.assertEqual(profile.motion_facts, ())
+        self.assertTrue(profile.motion_facts)
+        self.assertTrue(all(item.factor_key == "retrograde" for item in profile.motion_facts))
         self.assertEqual(profile.aspect_facts, ())
-        self.assertEqual(profile.coverage.covered_factors, ("sign:Capricorn", "house:6"))
+        self.assertEqual(
+            profile.coverage.covered_factors,
+            ("sign:Capricorn", "house:6", "motion:retrograde"),
+        )
         self.assertNotIn("house:6", profile.coverage.unimplemented_source_factors)
-        self.assertIn("motion:retrograde", profile.coverage.unimplemented_source_factors)
+        self.assertNotIn("motion:retrograde", profile.coverage.unimplemented_source_factors)
         self.assertIn(
             "aspect:opposition_Sun", profile.coverage.unimplemented_source_factors
         )
