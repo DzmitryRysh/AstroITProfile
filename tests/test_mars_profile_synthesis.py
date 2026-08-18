@@ -69,6 +69,21 @@ class MarsSynthesisStructureTests(unittest.TestCase):
         )
         self.assertEqual(first.repeated_signals, second.repeated_signals)
 
+    def test_presentation_overrides_do_not_mutate_canonical_facts(self):
+        profile = build_mars_source_profile(**AVDEY)
+        synthesis = build_mars_profile_synthesis(profile)
+        self.assertIsInstance(synthesis.presentation_text_by_fact_id, dict)
+        by_id = {item.id: item for item in mars_knowledge_module.ALL_MARS_SOURCE_FACTS}
+        for fact_id, human in synthesis.presentation_text_by_fact_id.items():
+            self.assertIn(fact_id, synthesis.facts_by_id)
+            self.assertNotEqual(human, "")
+            self.assertEqual(synthesis.facts_by_id[fact_id].text, by_id[fact_id].text)
+        self.assertNotIn("mars_rx_auto_aggression", synthesis.presentation_text_by_fact_id)
+        self.assertNotIn(
+            "mars_rx_sexual_temperament_suppression",
+            synthesis.presentation_text_by_fact_id,
+        )
+
     def test_excludes_source_only_personal_unresolved_and_has_no_score(self):
         profile = build_mars_source_profile(**AVDEY)
         synthesis = build_mars_profile_synthesis(profile)

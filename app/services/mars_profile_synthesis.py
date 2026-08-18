@@ -2,13 +2,15 @@
 
 Assembles activated Mars source facts into stable sections.
 Does not rewrite facts, score traits, resolve contradictions, or call an LLM.
-No human-copy layer.
+Canonical source evidence stays on facts; human-facing presentation uses
+reviewed human copy when an override exists.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from app.services.mars_human_copy import presentation_overrides_for_facts
 from app.services.mars_repeated_signals import MarsRepeatedSignal, detect_mars_repeated_signals
 from app.services.mars_source_profile import MarsSourceCoverage, MarsSourceFact, MarsSourceProfile
 
@@ -69,6 +71,7 @@ class MarsProfileSynthesis:
     limitations: tuple[str, ...]
     traceability: MarsSynthesisTraceability
     facts_by_id: dict[str, MarsSourceFact] = field(repr=False)
+    presentation_text_by_fact_id: dict[str, str] = field(default_factory=dict)
 
 
 def collect_activated_mars_facts(profile: MarsSourceProfile) -> list[MarsSourceFact]:
@@ -217,4 +220,5 @@ def build_mars_profile_synthesis(profile: MarsSourceProfile) -> MarsProfileSynth
             unclassified_fact_count=len(unclassified),
         ),
         facts_by_id=facts_by_id,
+        presentation_text_by_fact_id=presentation_overrides_for_facts(canonical),
     )
