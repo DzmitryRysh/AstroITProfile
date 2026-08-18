@@ -1261,6 +1261,53 @@ HUMAN_COPY_OVERRIDES: dict[str, str] = {
         "May support qualities associated with sales."
     ),
     "h1_youthful_quality": "May come across as youthful.",
+    # --- S4.33B house:1 Lesson 7 delta review (22) ---
+    "h1_l7_very_high_communicativeness": "May be highly communicative.",
+    "h1_l7_quick_situational_adjustment": (
+        "May quickly adjust or reorganize their approach to fit the situation."
+    ),
+    "h1_l7_appears_younger_than_age_vs_peers": (
+        "May appear younger than one's age, especially compared with peers."
+    ),
+    "h1_l7_active_curiosity": "May be actively curious.",
+    "h1_l7_initiative_in_contacts": (
+        "May take initiative in reaching out to others."
+    ),
+    "h1_l7_talkativeness": "May be talkative.",
+    "h1_l7_liveliness": "May come across as lively.",
+    "h1_l7_bodily_mobility": "May be physically mobile.",
+    "h1_l7_quick_wittedness": (
+        "May be quick-witted or mentally resourceful."
+    ),
+    "h1_l7_precise_movements": "Movements may be precise.",
+    "h1_l7_fast_movements": "Movements may be fast.",
+    "h1_l7_expressive_gesticulation": (
+        "May use gestures effectively or expressively."
+    ),
+    "h1_l7_teaching_association": (
+        "There may be a favorable association with teaching-related work."
+    ),
+    "h1_l7_commerce_association": (
+        "There may be a favorable association with commercial work."
+    ),
+    "h1_l7_accounting_association": (
+        "There may be a favorable association with accounting-related work."
+    ),
+    "h1_l7_secretary_association": (
+        "There may be a favorable association with secretarial roles."
+    ),
+    "h1_l7_scientist_association": (
+        "There may be a favorable association with scientific roles."
+    ),
+    "h1_l7_mathematician_association": (
+        "There may be a favorable association with mathematical roles."
+    ),
+    "h1_l7_nervousness": "May show nervousness.",
+    "h1_l7_restlessness": "May show restlessness.",
+    "h1_l7_excessive_talkativeness": "May be excessively talkative.",
+    "h1_l7_two_facedness": (
+        "May sometimes act in a two-faced or duplicitous way."
+    ),
     # --- S4.16B house:2 family review (19) ---
     "h2_accumulates_collects_books": "May accumulate or collect books.",
     "h2_advertising_income_association": (

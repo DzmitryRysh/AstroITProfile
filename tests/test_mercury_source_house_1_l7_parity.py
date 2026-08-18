@@ -10,6 +10,8 @@ from app.services.mercury_human_copy import HUMAN_COPY_OVERRIDES
 from app.services.mercury_human_copy_catalog import (
     APPROVED_RAW_FACT_IDS,
     NEEDS_REVIEW_FACT_IDS,
+    STATUS_APPROVED_OVERRIDE,
+    STATUS_APPROVED_RAW,
     STATUS_UNREVIEWED,
     build_catalog_entry,
     build_human_copy_catalog,
@@ -482,26 +484,42 @@ class House1RepeatSafetyTests(unittest.TestCase):
 
 
 class House1HumanCopyInventoryConsequenceTests(unittest.TestCase):
-    def test_new_l7_facts_are_unreviewed_and_not_in_registries(self):
+    L7_APPROVED_RAW: tuple[str, ...] = (
+        "h1_l7_impression_of_fussiness",
+        "h1_l7_undirected_activity",
+        "h1_l7_starts_but_does_not_complete_tasks",
+        "h1_l7_logic_displaces_intuition",
+        "h1_l7_youthfulness_leads_to_lack_of_respect",
+    )
+
+    def test_new_l7_facts_are_reviewed_and_ready(self):
         by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
+        raw_ids = set(self.L7_APPROVED_RAW)
         for fact_id in EXPECTED_L7_IDS:
             with self.subTest(fact_id=fact_id):
-                self.assertNotIn(fact_id, HUMAN_COPY_OVERRIDES)
-                self.assertNotIn(fact_id, APPROVED_RAW_FACT_IDS)
                 self.assertNotIn(fact_id, NEEDS_REVIEW_FACT_IDS)
                 entry = build_catalog_entry(by_id[fact_id])
-                self.assertEqual(entry.review_status, STATUS_UNREVIEWED)
+                self.assertNotEqual(entry.review_status, STATUS_UNREVIEWED)
+                if fact_id in raw_ids:
+                    self.assertIn(fact_id, APPROVED_RAW_FACT_IDS)
+                    self.assertNotIn(fact_id, HUMAN_COPY_OVERRIDES)
+                    self.assertEqual(entry.review_status, STATUS_APPROVED_RAW)
+                    self.assertEqual(entry.human_text, by_id[fact_id].text)
+                else:
+                    self.assertIn(fact_id, HUMAN_COPY_OVERRIDES)
+                    self.assertNotIn(fact_id, APPROVED_RAW_FACT_IDS)
+                    self.assertEqual(entry.review_status, STATUS_APPROVED_OVERRIDE)
 
-    def test_house_1_family_counts_after_source_parity(self):
+    def test_house_1_family_counts_after_l7_human_copy(self):
         report = build_human_copy_catalog()
         family = next(f for f in report.families if f.family_key == "house:1")
         self.assertEqual(family.total_facts, 44)
-        self.assertEqual(family.approved_override, 17)
-        self.assertEqual(family.approved_raw, 0)
+        self.assertEqual(family.approved_override, 39)
+        self.assertEqual(family.approved_raw, 5)
         self.assertEqual(family.needs_review, 0)
-        self.assertEqual(family.unreviewed, 27)
-        self.assertEqual(family.reviewed_count, 17)
-        self.assertEqual(family.presentation_ready_count, 17)
+        self.assertEqual(family.unreviewed, 0)
+        self.assertEqual(family.reviewed_count, 44)
+        self.assertEqual(family.presentation_ready_count, 44)
 
     def test_existing_bio_human_copy_decisions_unchanged(self):
         bio_ids = {item.id for item in HOUSE_1}

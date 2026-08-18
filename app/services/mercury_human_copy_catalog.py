@@ -402,6 +402,12 @@ APPROVED_RAW_FACT_IDS: frozenset[str] = frozenset(
         "h2_profit_through_public_speaking",
         # S4.17B house:3 approved_raw
         "h3_reads_a_lot",
+        # S4.33B house:1 Lesson 7 approved_raw
+        "h1_l7_impression_of_fussiness",
+        "h1_l7_undirected_activity",
+        "h1_l7_starts_but_does_not_complete_tasks",
+        "h1_l7_logic_displaces_intuition",
+        "h1_l7_youthfulness_leads_to_lack_of_respect",
     }
 )
 
