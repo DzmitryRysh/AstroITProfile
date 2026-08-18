@@ -1,8 +1,9 @@
-"""Mars source profile v1 — Lesson 9 SIGN activation only.
+"""Mars source profile v1 — Lesson 9 SIGN + HOUSE activation.
 
-House, motion, and aspect knowledge are not implemented yet.
+Motion and aspect knowledge are not implemented yet.
 Those calculated layers are reported as unimplemented source coverage,
 not as missing calculation.
+Unknown birth time makes the house source layer unavailable.
 """
 
 from __future__ import annotations
@@ -18,6 +19,7 @@ from app.services.mars_facts import (
 )
 from app.services.mars_source_knowledge import (
     ALL_MARS_SOURCE_FACTS,
+    SUPPORTED_HOUSE_KEYS,
     SUPPORTED_SIGN_KEYS,
     WORK_PROFILE_SCOPES,
     MarsSourceFactDef,
@@ -80,11 +82,15 @@ def _to_fact(definition: MarsSourceFactDef, *, activated: bool) -> MarsSourceFac
     )
 
 
-def _match_sign_definitions(sign: str) -> tuple[list[MarsSourceFact], list[MarsSourceFact]]:
+def _match_definitions(
+    *,
+    factor_type: str,
+    factor_key: str,
+) -> tuple[list[MarsSourceFact], list[MarsSourceFact]]:
     work_facts: list[MarsSourceFact] = []
     unresolved_facts: list[MarsSourceFact] = []
     for definition in ALL_MARS_SOURCE_FACTS:
-        if definition.factor_type != "sign" or definition.factor_key != sign:
+        if definition.factor_type != factor_type or definition.factor_key != factor_key:
             continue
         if definition.unresolved:
             unresolved_facts.append(_to_fact(definition, activated=False))
@@ -112,9 +118,20 @@ def _coverage_and_limitations(
                 f"Mars sign source knowledge for {factors.mars_sign} is not implemented yet."
             )
 
-    if factors.mars_house is not None:
-        unimplemented.append(f"house:{factors.mars_house}")
-        limitations.append("Mars house source knowledge is not implemented yet.")
+    if factors.mars_house is None:
+        if not factors.birth_time_known:
+            limitations.append(
+                "House source layer unavailable because birth time is unknown."
+            )
+    else:
+        house_key = f"house:{factors.mars_house}"
+        if str(factors.mars_house) in SUPPORTED_HOUSE_KEYS:
+            covered.append(house_key)
+        else:
+            unimplemented.append(house_key)
+            limitations.append(
+                f"Mars house source knowledge for house {factors.mars_house} is not implemented yet."
+            )
 
     if factors.mars_motion == "retrograde":
         unimplemented.append("motion:retrograde")
@@ -140,15 +157,30 @@ def build_mars_source_profile_from_factors(
     factors: MarsSourceFactors,
 ) -> MarsSourceProfile:
     sign_facts: list[MarsSourceFact] = []
+    house_facts: list[MarsSourceFact] = []
     unresolved: list[MarsSourceFact] = []
+
     if factors.mars_sign in SUPPORTED_SIGN_KEYS:
-        sign_facts, unresolved = _match_sign_definitions(factors.mars_sign or "")
+        sign_facts, sign_unresolved = _match_definitions(
+            factor_type="sign",
+            factor_key=factors.mars_sign or "",
+        )
+        unresolved.extend(sign_unresolved)
+
+    if factors.mars_house is not None:
+        house_key = str(factors.mars_house)
+        if house_key in SUPPORTED_HOUSE_KEYS:
+            house_facts, house_unresolved = _match_definitions(
+                factor_type="house",
+                factor_key=house_key,
+            )
+            unresolved.extend(house_unresolved)
 
     coverage, limitations = _coverage_and_limitations(factors)
     return MarsSourceProfile(
         calculated=factors,
         sign_facts=tuple(sign_facts),
-        house_facts=(),
+        house_facts=tuple(house_facts),
         motion_facts=(),
         aspect_facts=(),
         conditional_unresolved=tuple(unresolved),

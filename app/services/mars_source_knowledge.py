@@ -1,6 +1,6 @@
-"""Mars Lesson 9 sign source knowledge — HOW I ACT.
+"""Mars Lesson 9 sign and house source knowledge.
 
-Canonical facts only. No Bio parity, houses, motion packs, aspects,
+Canonical facts only. No Bio parity, motion packs, aspects,
 repeated-signal specs, strength score, or human copy.
 """
 
@@ -77,12 +77,13 @@ def _f(
     scope: str,
     *tags: str,
     source_reference: str,
+    factor_type: str = "sign",
     activation_condition: str | None = None,
     unresolved: bool = False,
 ) -> MarsSourceFactDef:
     return MarsSourceFactDef(
         id=fact_id,
-        factor_type="sign",
+        factor_type=factor_type,
         factor_key=factor_key,
         text=text,
         source_reference=source_reference,
@@ -534,7 +535,7 @@ SCORPIO_PACK: tuple[MarsSourceFactDef, ...] = (
        "strength", "WORK_CORE", source_reference=REF_SCORPIO),
     _f("mars_scorpio_strategic_and_tactical_ability", "Scorpio", "execution",
        "Source describes strong strategic and tactical ability; not a validated competency.",
-       "strength", "WORK_DETAIL", "strategic_action", source_reference=REF_SCORPIO),
+       "strength", "WORK_DETAIL", source_reference=REF_SCORPIO),
     _f("mars_scorpio_highly_driven_passionary_action", "Scorpio", "effort",
        "Highly driven / passionary action.",
        "strength", "WORK_CORE", source_reference=REF_SCORPIO),
@@ -846,9 +847,6 @@ SIGN_PACKS: dict[str, tuple[MarsSourceFactDef, ...]] = {
     "Pisces": PISCES_PACK,
 }
 
-ALL_MARS_SOURCE_FACTS: tuple[MarsSourceFactDef, ...] = tuple(
-    fact for pack in SIGN_PACKS.values() for fact in pack
-)
 SUPPORTED_SIGN_KEYS: frozenset[str] = frozenset(SIGN_PACKS)
 EXPECTED_SIGN_SOURCE_REFERENCES: dict[str, str] = {
     "Aries": REF_ARIES,
@@ -865,6 +863,16 @@ EXPECTED_SIGN_SOURCE_REFERENCES: dict[str, str] = {
     "Pisces": REF_PISCES,
 }
 
+from app.services.mars_source_knowledge_houses import (  # noqa: E402
+    EXPECTED_HOUSE_SOURCE_REFERENCES,
+    HOUSE_PACKS,
+    SUPPORTED_HOUSE_KEYS,
+)
+
+ALL_MARS_SOURCE_FACTS: tuple[MarsSourceFactDef, ...] = tuple(
+    fact for pack in SIGN_PACKS.values() for fact in pack
+) + tuple(fact for pack in HOUSE_PACKS.values() for fact in pack)
+
 
 def validate_mars_source_facts(
     facts: tuple[MarsSourceFactDef, ...] = ALL_MARS_SOURCE_FACTS,
@@ -875,17 +883,24 @@ def validate_mars_source_facts(
     for fact in facts:
         if not fact.id.startswith("mars_"):
             raise ValueError(f"Mars fact id must start with mars_: {fact.id}")
-        if fact.factor_type != "sign":
-            raise ValueError(f"M2 only supports sign facts: {fact.id}")
-        if fact.factor_key not in SUPPORTED_SIGN_KEYS:
-            raise ValueError(f"Unknown Mars sign key: {fact.factor_key}")
+        if fact.factor_type == "sign":
+            if fact.factor_key not in SUPPORTED_SIGN_KEYS:
+                raise ValueError(f"Unknown Mars sign key: {fact.factor_key}")
+            expected_ref = EXPECTED_SIGN_SOURCE_REFERENCES[fact.factor_key]
+        elif fact.factor_type == "house":
+            if fact.factor_key not in SUPPORTED_HOUSE_KEYS:
+                raise ValueError(f"Unknown Mars house key: {fact.factor_key}")
+            if not fact.id.startswith(f"mars_h{fact.factor_key}_"):
+                raise ValueError(f"House fact id must start with mars_h{fact.factor_key}_: {fact.id}")
+            expected_ref = EXPECTED_HOUSE_SOURCE_REFERENCES[fact.factor_key]
+        else:
+            raise ValueError(f"Unsupported Mars factor_type on {fact.id}: {fact.factor_type}")
         if fact.category not in MARS_CATEGORIES:
             raise ValueError(f"Invalid Mars category on {fact.id}: {fact.category}")
         if fact.scope not in MARS_SCOPES:
             raise ValueError(f"Invalid Mars scope on {fact.id}: {fact.scope}")
         if fact.polarity not in MARS_POLARITIES:
             raise ValueError(f"Invalid Mars polarity on {fact.id}: {fact.polarity}")
-        expected_ref = EXPECTED_SIGN_SOURCE_REFERENCES[fact.factor_key]
         if fact.source_reference != expected_ref:
             raise ValueError(
                 f"Wrong source_reference on {fact.id}: {fact.source_reference}"
