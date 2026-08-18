@@ -127,10 +127,7 @@ class MarsMotionCatalogTests(unittest.TestCase):
             any("low energy" == tag for fact in RETROGRADE_PACK for tag in fact.tags)
         )
 
-    def test_no_aspect_knowledge_or_mercury_contamination(self):
-        self.assertFalse(
-            any(fact.factor_type == "aspect" for fact in ALL_MARS_SOURCE_FACTS)
-        )
+    def test_no_mercury_contamination_or_repeat_specs(self):
         mercury_ids = {fact.id for fact in ALL_SOURCE_FACTS}
         mars_ids = {fact.id for fact in ALL_MARS_SOURCE_FACTS}
         self.assertFalse(mars_ids & mercury_ids)
@@ -215,12 +212,16 @@ class MarsMotionGoldenActivationTests(unittest.TestCase):
         self.assertNotIn(PERSONAL_RX_ID, {item.id for item in profile.motion_facts})
         self.assertEqual(
             profile.coverage.covered_factors,
-            ("sign:Capricorn", "house:6", "motion:retrograde"),
+            (
+                "sign:Capricorn",
+                "house:6",
+                "motion:retrograde",
+                "aspect:opposition_Sun",
+                "aspect:square_Moon",
+            ),
         )
-        self.assertTrue(
-            all(item.startswith("aspect:") for item in profile.coverage.unimplemented_source_factors)
-        )
-        self.assertEqual(profile.aspect_facts, ())
+        self.assertEqual(profile.coverage.unimplemented_source_factors, ())
+        self.assertTrue(profile.aspect_facts)
         self.assertNotIn(DIRECT_MOTION_NO_PACK_LIMITATION, profile.limitations)
 
     def test_vlad_does_not_activate_rx(self):
@@ -241,4 +242,12 @@ class MarsMotionGoldenActivationTests(unittest.TestCase):
         self.assertNotIn("motion:retrograde", profile.coverage.covered_factors)
         self.assertNotIn("motion:direct", profile.coverage.covered_factors)
         self.assertIn(DIRECT_MOTION_NO_PACK_LIMITATION, profile.limitations)
-        self.assertEqual(profile.coverage.covered_factors, ("sign:Libra", "house:7"))
+        self.assertEqual(
+            profile.coverage.covered_factors,
+            (
+                "sign:Libra",
+                "house:7",
+                "aspect:sextile_Mercury",
+                "aspect:trine_Jupiter",
+            ),
+        )

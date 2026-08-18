@@ -1,7 +1,8 @@
-"""Mars Lesson 9 sign, house, and retrograde-motion source knowledge.
+"""Mars Lesson 9 sign, house, retrograde-motion, and aspect source knowledge.
 
-Canonical facts only. No Bio parity, aspects, repeated-signal specs,
-strength score, or human copy. Direct Mars has no invented interpretation pack.
+Sign / house / motion are Lesson 9. Aspects add Lesson 9 tense blockers plus
+Bioastrology pair-level aptitude claims. No repeat specs, strength score,
+or human copy. Direct Mars has no invented interpretation pack.
 """
 
 from __future__ import annotations
@@ -873,12 +874,55 @@ from app.services.mars_source_knowledge_motion import (  # noqa: E402
     MOTION_PACKS,
     SUPPORTED_MOTION_KEYS,
 )
+from app.services.mars_source_knowledge_aspects_l9 import (  # noqa: E402
+    EXPECTED_L9_ASPECT_SOURCE_REFERENCES,
+    L9_ASPECT_PACKS,
+    L9_TENSE_PLANETS,
+    MARS_MAJOR_ASPECT_TYPES,
+    MARS_TENSE_ASPECT_TYPES,
+)
+from app.services.mars_source_knowledge_aspects_bio import (  # noqa: E402
+    BIO_MOON_NOT_EXTRACTED_LIMITATION,
+    BIO_PAIR_PACKS,
+    BIO_PAIR_PLANETS,
+    EXPECTED_BIO_ASPECT_SOURCE_REFERENCES,
+)
 
 ALL_MARS_SOURCE_FACTS: tuple[MarsSourceFactDef, ...] = (
     tuple(fact for pack in SIGN_PACKS.values() for fact in pack)
     + tuple(fact for pack in HOUSE_PACKS.values() for fact in pack)
     + tuple(fact for pack in MOTION_PACKS.values() for fact in pack)
+    + tuple(fact for pack in L9_ASPECT_PACKS.values() for fact in pack)
+    + tuple(fact for pack in BIO_PAIR_PACKS.values() for fact in pack)
 )
+
+
+def _expected_aspect_source_reference(fact: MarsSourceFactDef) -> str:
+    if fact.factor_key.startswith("pair_"):
+        planet = fact.factor_key.removeprefix("pair_")
+        if planet not in BIO_PAIR_PLANETS:
+            raise ValueError(f"Unknown Mars Bio pair key: {fact.factor_key}")
+        if not fact.id.startswith(f"mars_{planet.lower()}_bio_"):
+            raise ValueError(f"Bio aspect id must start with mars_{planet.lower()}_bio_: {fact.id}")
+        return EXPECTED_BIO_ASPECT_SOURCE_REFERENCES[planet]
+    if fact.factor_key not in L9_ASPECT_PACKS:
+        raise ValueError(f"Unknown Mars aspect key: {fact.factor_key}")
+    aspect_type, planet = fact.factor_key.split("_", 1)
+    if aspect_type not in MARS_TENSE_ASPECT_TYPES or planet not in L9_TENSE_PLANETS:
+        raise ValueError(f"Lesson 9 aspect key must be square/opposition to a target: {fact.factor_key}")
+    if not fact.id.startswith(f"mars_{aspect_type}_{planet.lower()}_l9_"):
+        raise ValueError(
+            f"Lesson 9 aspect id must start with mars_{aspect_type}_{planet.lower()}_l9_: {fact.id}"
+        )
+    return EXPECTED_L9_ASPECT_SOURCE_REFERENCES[planet]
+
+
+def mars_aspect_has_source_coverage(*, aspect_type: str, planet: str) -> bool:
+    if aspect_type in MARS_TENSE_ASPECT_TYPES and planet in L9_TENSE_PLANETS:
+        return True
+    if aspect_type in MARS_MAJOR_ASPECT_TYPES and planet in BIO_PAIR_PLANETS:
+        return True
+    return False
 
 
 def validate_mars_source_facts(
@@ -906,6 +950,8 @@ def validate_mars_source_facts(
             if fact.factor_key == "retrograde" and not fact.id.startswith("mars_rx_"):
                 raise ValueError(f"Retrograde fact id must start with mars_rx_: {fact.id}")
             expected_ref = EXPECTED_MOTION_SOURCE_REFERENCES[fact.factor_key]
+        elif fact.factor_type == "aspect":
+            expected_ref = _expected_aspect_source_reference(fact)
         else:
             raise ValueError(f"Unsupported Mars factor_type on {fact.id}: {fact.factor_type}")
         if fact.category not in MARS_CATEGORIES:

@@ -95,9 +95,6 @@ class MarsHouseCatalogTests(unittest.TestCase):
         self.assertNotIn("REPEATED_SIGNAL_SPECS", profile_src)
         self.assertNotIn("hard_aspected", houses_src)
         self.assertNotIn("hard_aspected", profile_src)
-        self.assertFalse(
-            any(fact.factor_type == "aspect" for fact in ALL_MARS_SOURCE_FACTS)
-        )
 
     def test_unresolved_house_conditions(self):
         by_id = {fact.id: fact for fact in ALL_MARS_SOURCE_FACTS}
@@ -191,7 +188,13 @@ class MarsHouseGoldenActivationTests(unittest.TestCase):
         })
         self.assertEqual(
             profile.coverage.covered_factors,
-            ("sign:Capricorn", "house:6", "motion:retrograde"),
+            (
+                "sign:Capricorn",
+                "house:6",
+                "motion:retrograde",
+                "aspect:opposition_Sun",
+                "aspect:square_Moon",
+            ),
         )
 
     def test_vlad_capricorn_house_4(self):

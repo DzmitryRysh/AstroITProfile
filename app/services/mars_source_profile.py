@@ -1,8 +1,6 @@
-"""Mars source profile v1 — Lesson 9 SIGN + HOUSE + RETROGRADE MOTION activation.
+"""Mars source profile v1 — Lesson 9 SIGN + HOUSE + RETROGRADE MOTION + ASPECTS.
 
 Direct Mars is a calculated state with no Lesson 9 interpretation pack.
-Aspect knowledge is not implemented yet and is reported as unimplemented
-source coverage, not as missing calculation.
 Unknown birth time makes the house source layer unavailable.
 """
 
@@ -19,11 +17,17 @@ from app.services.mars_facts import (
 )
 from app.services.mars_source_knowledge import (
     ALL_MARS_SOURCE_FACTS,
+    BIO_MOON_NOT_EXTRACTED_LIMITATION,
+    BIO_PAIR_PACKS,
+    BIO_PAIR_PLANETS,
+    MARS_MAJOR_ASPECT_TYPES,
+    MARS_TENSE_ASPECT_TYPES,
     SUPPORTED_HOUSE_KEYS,
     SUPPORTED_MOTION_KEYS,
     SUPPORTED_SIGN_KEYS,
     WORK_PROFILE_SCOPES,
     MarsSourceFactDef,
+    mars_aspect_has_source_coverage,
 )
 
 
@@ -66,11 +70,16 @@ class MarsSourceProfile:
     limitations: tuple[str, ...]
 
 
-def _to_fact(definition: MarsSourceFactDef, *, activated: bool) -> MarsSourceFact:
+def _to_fact(
+    definition: MarsSourceFactDef,
+    *,
+    activated: bool,
+    factor_key: str | None = None,
+) -> MarsSourceFact:
     return MarsSourceFact(
         id=definition.id,
         factor_type=definition.factor_type,
-        factor_key=definition.factor_key,
+        factor_key=factor_key if factor_key is not None else definition.factor_key,
         text=definition.text,
         source_reference=definition.source_reference,
         category=definition.category,
@@ -99,6 +108,35 @@ def _match_definitions(
         if definition.scope not in WORK_PROFILE_SCOPES:
             continue
         work_facts.append(_to_fact(definition, activated=True))
+    return work_facts, unresolved_facts
+
+
+def _match_aspects(
+    factors: MarsSourceFactors,
+) -> tuple[list[MarsSourceFact], list[MarsSourceFact]]:
+    work_facts: list[MarsSourceFact] = []
+    unresolved_facts: list[MarsSourceFact] = []
+    for aspect in factors.mars_aspects:
+        calc_key = aspect_factor_key(aspect)
+        if aspect.type in MARS_TENSE_ASPECT_TYPES:
+            l9_facts, l9_unresolved = _match_definitions(
+                factor_type="aspect",
+                factor_key=calc_key,
+            )
+            work_facts.extend(l9_facts)
+            unresolved_facts.extend(l9_unresolved)
+        if aspect.type in MARS_MAJOR_ASPECT_TYPES and aspect.planet in BIO_PAIR_PLANETS:
+            for definition in BIO_PAIR_PACKS[aspect.planet]:
+                if definition.unresolved:
+                    unresolved_facts.append(
+                        _to_fact(definition, activated=False, factor_key=calc_key)
+                    )
+                    continue
+                if definition.scope not in WORK_PROFILE_SCOPES:
+                    continue
+                work_facts.append(
+                    _to_fact(definition, activated=True, factor_key=calc_key)
+                )
     return work_facts, unresolved_facts
 
 
@@ -153,9 +191,24 @@ def _coverage_and_limitations(
             )
 
     if factors.mars_aspects:
+        has_moon_aspect = False
         for aspect in factors.mars_aspects:
-            unimplemented.append(f"aspect:{aspect_factor_key(aspect)}")
-        limitations.append("Mars aspect source knowledge is not implemented yet.")
+            aspect_key = f"aspect:{aspect_factor_key(aspect)}"
+            if aspect.planet == "Moon":
+                has_moon_aspect = True
+            if mars_aspect_has_source_coverage(
+                aspect_type=aspect.type,
+                planet=aspect.planet,
+            ):
+                covered.append(aspect_key)
+            else:
+                unimplemented.append(aspect_key)
+                limitations.append(
+                    f"Mars aspect source knowledge for {aspect.type} {aspect.planet} "
+                    "is not implemented yet."
+                )
+        if has_moon_aspect:
+            limitations.append(BIO_MOON_NOT_EXTRACTED_LIMITATION)
 
     status = "complete" if not unimplemented else "partial"
     return (
@@ -199,13 +252,16 @@ def build_mars_source_profile_from_factors(
         )
         unresolved.extend(motion_unresolved)
 
+    aspect_facts, aspect_unresolved = _match_aspects(factors)
+    unresolved.extend(aspect_unresolved)
+
     coverage, limitations = _coverage_and_limitations(factors)
     return MarsSourceProfile(
         calculated=factors,
         sign_facts=tuple(sign_facts),
         house_facts=tuple(house_facts),
         motion_facts=tuple(motion_facts),
-        aspect_facts=(),
+        aspect_facts=tuple(aspect_facts),
         conditional_unresolved=tuple(unresolved),
         coverage=coverage,
         limitations=tuple(limitations),
