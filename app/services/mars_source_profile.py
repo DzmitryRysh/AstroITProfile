@@ -15,6 +15,10 @@ from app.services.mars_facts import (
     aspect_factor_key,
     compute_mars_source_factors,
 )
+from app.services.mars_repeated_signals import (
+    MarsRepeatedSignal,
+    detect_mars_repeated_signals,
+)
 from app.services.mars_source_knowledge import (
     ALL_MARS_SOURCE_FACTS,
     BIO_MOON_NOT_EXTRACTED_LIMITATION,
@@ -66,6 +70,7 @@ class MarsSourceProfile:
     motion_facts: tuple[MarsSourceFact, ...]
     aspect_facts: tuple[MarsSourceFact, ...]
     conditional_unresolved: tuple[MarsSourceFact, ...]
+    repeated_signals: tuple[MarsRepeatedSignal, ...]
     coverage: MarsSourceCoverage
     limitations: tuple[str, ...]
 
@@ -255,6 +260,7 @@ def build_mars_source_profile_from_factors(
     aspect_facts, aspect_unresolved = _match_aspects(factors)
     unresolved.extend(aspect_unresolved)
 
+    activated = tuple(sign_facts) + tuple(house_facts) + tuple(motion_facts) + tuple(aspect_facts)
     coverage, limitations = _coverage_and_limitations(factors)
     return MarsSourceProfile(
         calculated=factors,
@@ -263,6 +269,7 @@ def build_mars_source_profile_from_factors(
         motion_facts=tuple(motion_facts),
         aspect_facts=tuple(aspect_facts),
         conditional_unresolved=tuple(unresolved),
+        repeated_signals=detect_mars_repeated_signals(activated),
         coverage=coverage,
         limitations=tuple(limitations),
     )
