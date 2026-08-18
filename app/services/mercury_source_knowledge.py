@@ -36,8 +36,7 @@ House Batch B2:
 House 10 has Lesson 7 + Bioastrology (dual-source parity).
 
 House Batch B3:
-- House 8, House 11 (Bioastrology parity)
-- House 12 (Lesson 7 only until Bio pass)
+- House 8, House 11, House 12 (Bioastrology parity)
 
 Aspect Batch C1 (verified Bioastrology harmonious parity):
 - Moon / Jupiter / Saturn harmonious aliases

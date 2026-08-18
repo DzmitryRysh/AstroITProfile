@@ -2,7 +2,7 @@
 
 House 8 has Lesson 7 + Bioastrology (dual-source parity).
 House 11 has Lesson 7 + Bioastrology (dual-source parity).
-House 12 remains Lesson 7 only until its Bioastrology pass.
+House 12 has Lesson 7 + Bioastrology (dual-source parity).
 
 SOURCE FIRST → SYNTHESIS SECOND.
 
@@ -59,6 +59,7 @@ REF_H8_BIO = "bioastrology_mercury_house_8"
 REF_H11_L7 = "lesson7_mercury_house_11"
 REF_H11_BIO = "bioastrology_mercury_house_11"
 REF_H12_L7 = "lesson7_mercury_house_12"
+REF_H12_BIO = "bioastrology_mercury_house_12"
 
 # ---------------------------------------------------------------------------
 # Mercury in House 8 — Lesson 7
@@ -509,7 +510,117 @@ HOUSE_12: tuple[SourceFactDef, ...] = (
        source_reference=REF_H12_L7),
 )
 
+# ---------------------------------------------------------------------------
+# Mercury in House 12 — Bioastrology (dual-source parity; HOUSE_12 L7 is frozen)
+# ---------------------------------------------------------------------------
+HOUSE_12_BIO: tuple[SourceFactDef, ...] = (
+    _f("h12_bio_communication_learning_hidden_from_broad_public", "house", "12",
+       "source_specific",
+       "Communication and learning may appear hidden from the broad public.",
+       "neutral",
+       source_reference=REF_H12_BIO),
+    _f("h12_bio_circumstances_make_person_solitary", "house", "12", "environment",
+       "Circumstances may make the person more solitary.",
+       "neutral",
+       source_reference=REF_H12_BIO),
+    _f("h12_bio_learning_from_own_experience", "house", "12", "learning",
+       "Learning may occur through one's own experience.",
+       "strength",
+       source_reference=REF_H12_BIO),
+    _f("h12_bio_inspiration_through_dialogues_with_god", "house", "12",
+       "source_specific",
+       "Inspiration may come through source-described 'dialogues with God.'",
+       "strength",
+       source_reference=REF_H12_BIO),
+    _f("h12_bio_mystic_qualities", "house", "12", "source_specific",
+       "May support qualities associated with a mystic role.",
+       "strength",
+       source_reference=REF_H12_BIO),
+    _f("h12_bio_doctor_qualities", "house", "12", "work_application",
+       "May support qualities associated with a doctor role.",
+       "strength",
+       source_reference=REF_H12_BIO),
+    _f("h12_bio_psychologist_qualities", "house", "12", "work_application",
+       "May support qualities associated with a psychologist role.",
+       "strength",
+       source_reference=REF_H12_BIO),
+    _f("h12_bio_intuitive_revelations_insights", "house", "12", "thinking",
+       "May support intuitive revelations or insights.",
+       "strength",
+       source_reference=REF_H12_BIO),
+    _f("h12_bio_paradoxical_philosophical_intellect", "house", "12", "thinking",
+       "Source describes a paradoxical philosophical intellect.",
+       "strength",
+       source_reference=REF_H12_BIO),
+    _f("h12_bio_source_broad_intellectual_capacity", "house", "12", "source_specific",
+       "The source describes this intellect as able to do whatever it wishes.",
+       "strength",
+       source_reference=REF_H12_BIO),
+    _f("h12_bio_foreign_languages", "house", "12", "learning",
+       "Favorable association with foreign languages.",
+       "strength", "foreign_languages",
+       source_reference=REF_H12_BIO),
+    _f("h12_bio_core_strong_tense_investor_qualities", "house", "12",
+       "work_application",
+       "When the core is strong and tense, the source associates this placement "
+       "with investor qualities (core-strength/tension dependency; no House 12 "
+       "core resolver is applied).",
+       "conditional",
+       source_reference=REF_H12_BIO, unresolved=True),
+    _f("h12_bio_core_strong_tense_major_manager_researcher_qualities", "house", "12",
+       "work_application",
+       "When the core is strong and tense, the source associates this placement "
+       "with qualities of a major manager-researcher role (core-strength/tension "
+       "dependency; no House 12 core resolver is applied).",
+       "conditional",
+       source_reference=REF_H12_BIO, unresolved=True),
+    _f("h12_bio_afflicted_gossip", "house", "12", "source_specific",
+       "When Mercury is afflicted, the source associates this placement with "
+       "gossip (afflicted-Mercury dependency; no house-affliction resolver is "
+       "applied; not hard_aspected).",
+       "conditional",
+       source_reference=REF_H12_BIO, unresolved=True),
+    _f("h12_bio_afflicted_hate", "house", "12", "source_specific",
+       "When Mercury is afflicted, the source associates this placement with "
+       "hate (afflicted-Mercury dependency; no house-affliction resolver is "
+       "applied; not hard_aspected).",
+       "conditional",
+       source_reference=REF_H12_BIO, unresolved=True),
+    _f("h12_bio_afflicted_traffic_accident_association", "house", "12",
+       "source_specific",
+       "When Mercury is afflicted, the source associates this placement with "
+       "traffic accidents (afflicted-Mercury dependency; no house-affliction "
+       "resolver is applied; not hard_aspected).",
+       "conditional",
+       source_reference=REF_H12_BIO, unresolved=True),
+    _f("h12_bio_afflicted_vascular_disease_association", "house", "12",
+       "source_specific",
+       "When Mercury is afflicted, the source associates this placement with "
+       "diseases involving blood vessels (afflicted-Mercury dependency; "
+       "no house-affliction resolver is applied; not hard_aspected).",
+       "conditional",
+       source_reference=REF_H12_BIO, unresolved=True),
+    _f("h12_bio_afflicted_joint_disease_association", "house", "12", "source_specific",
+       "When Mercury is afflicted, the source associates this placement with "
+       "diseases involving joints (afflicted-Mercury dependency; no house-affliction "
+       "resolver is applied; not hard_aspected).",
+       "conditional",
+       source_reference=REF_H12_BIO, unresolved=True),
+    _f("h12_bio_afflicted_lung_disease_association", "house", "12", "source_specific",
+       "When Mercury is afflicted, the source associates this placement with "
+       "diseases involving lungs (afflicted-Mercury dependency; no house-affliction "
+       "resolver is applied; not hard_aspected).",
+       "conditional",
+       source_reference=REF_H12_BIO, unresolved=True),
+    _f("h12_bio_afflicted_limb_disease_association", "house", "12", "source_specific",
+       "When Mercury is afflicted, the source associates this placement with "
+       "diseases involving limbs (afflicted-Mercury dependency; no house-affliction "
+       "resolver is applied; not hard_aspected).",
+       "conditional",
+       source_reference=REF_H12_BIO, unresolved=True),
+)
+
 B3_HOUSE_PACKS: tuple[SourceFactDef, ...] = (
-    HOUSE_8 + HOUSE_8_BIO + HOUSE_11 + HOUSE_11_BIO + HOUSE_12
+    HOUSE_8 + HOUSE_8_BIO + HOUSE_11 + HOUSE_11_BIO + HOUSE_12 + HOUSE_12_BIO
 )
 B3_SUPPORTED_HOUSE_KEYS = frozenset({"8", "11", "12"})
