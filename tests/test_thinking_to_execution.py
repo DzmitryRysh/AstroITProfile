@@ -27,12 +27,16 @@ from app.services.person_perspective import build_person_perspective
 from app.services import thinking_to_execution as tte
 from app.services.mercury_human_copy_catalog import (
     APPROVED_RAW_FACT_IDS,
+    STATUS_APPROVED_OVERRIDE,
     STATUS_APPROVED_RAW,
     STATUS_UNREVIEWED,
     derive_review_status,
 )
+from app.services.mercury_human_copy import HUMAN_COPY_OVERRIDES
+from app.services.mars_human_copy_catalog import derive_review_status as mars_review_status
 from app.services.thinking_to_execution import (
     CROSS_PATTERN_SPECS,
+    EXCLUDED_MARS_SCOPES,
     build_thinking_to_execution,
 )
 
@@ -110,7 +114,7 @@ class ThinkingToExecutionRegistryTests(unittest.TestCase):
 
 
 class ThinkingToExecutionProfileTests(unittest.TestCase):
-    def test_avdey_unreviewed_analytical_facts_do_not_feed_bridges(self):
+    def test_avdey_reviewed_analytical_facts_feed_evidence_backed_bridges(self):
         mercury = _mercury(**AVDEY)
         mars = _mars(**AVDEY)
         result = build_thinking_to_execution(
@@ -129,8 +133,18 @@ class ThinkingToExecutionProfileTests(unittest.TestCase):
             {"saturn_tr_analytical_ability", "pluto_sq_analytical_ability"},
         )
         for fact_id in analytical_ids:
-            self.assertEqual(derive_review_status(fact_id), STATUS_UNREVIEWED)
-        self.assertEqual([item.id for item in result.patterns], [])
+            self.assertIn(
+                derive_review_status(fact_id),
+                {STATUS_APPROVED_RAW, STATUS_APPROVED_OVERRIDE},
+            )
+        self.assertEqual(
+            [item.id for item in result.patterns],
+            [
+                "analysis_to_deliberate_execution",
+                "analysis_slower_commitment",
+                "analysis_to_practical_execution",
+            ],
+        )
         self.assertNotIn("technical_ability", [item.mercury_semantic for item in result.patterns])
 
     def test_vlad_gets_only_evidence_backed_pattern(self):
@@ -282,6 +296,72 @@ class ThinkingToExecutionProfileTests(unittest.TestCase):
         self.assertNotIn("score", blob)
         self.assertNotIn("clear analysis", blob)
         self.assertNotIn("fast processing", blob)
+
+
+BRIDGE_ELIGIBLE_MERCURY_RAW = frozenset(
+    {
+        "saturn_tr_analytical_ability",
+        "pluto_sq_analytical_ability",
+        "pluto_harm_analytical_quality",
+    }
+)
+BRIDGE_ELIGIBLE_MERCURY_OVERRIDE = frozenset(
+    {
+        "plu_cj_analytical_thinking",
+        "plu_opp_analytical_thinking",
+    }
+)
+
+
+class BridgeEligibleFactAuditTests(unittest.TestCase):
+    def test_bridge_eligible_mercury_facts_all_reviewed(self):
+        merc_tags = {spec.mercury_semantic for spec in CROSS_PATTERN_SPECS}
+        mars_tags = {spec.mars_semantic for spec in CROSS_PATTERN_SPECS}
+        eligible_mercury = [
+            fact
+            for fact in ALL_SOURCE_FACTS
+            if any(tag in merc_tags for tag in (fact.tags or ()))
+        ]
+        eligible_mars = [
+            fact
+            for fact in ALL_MARS_SOURCE_FACTS
+            if any(tag in mars_tags for tag in (fact.tags or ()))
+        ]
+        reviewable_mercury = [fact for fact in eligible_mercury if not fact.unresolved]
+        unreviewed_mercury = [
+            fact.id
+            for fact in reviewable_mercury
+            if derive_review_status(fact.id) == STATUS_UNREVIEWED
+        ]
+        self.assertEqual(unreviewed_mercury, [])
+        self.assertEqual(len(reviewable_mercury), 13)
+        self.assertEqual(
+            [fact.id for fact in eligible_mercury if fact.unresolved],
+            ["saturn_sq_branch_mercury_analytical_qualities"],
+        )
+        for fact_id in BRIDGE_ELIGIBLE_MERCURY_RAW:
+            self.assertIn(fact_id, APPROVED_RAW_FACT_IDS)
+            self.assertEqual(derive_review_status(fact_id), STATUS_APPROVED_RAW)
+        for fact_id in BRIDGE_ELIGIBLE_MERCURY_OVERRIDE:
+            self.assertIn(fact_id, HUMAN_COPY_OVERRIDES)
+            self.assertEqual(derive_review_status(fact_id), STATUS_APPROVED_OVERRIDE)
+        for fact in eligible_mars:
+            if fact.scope in EXCLUDED_MARS_SCOPES:
+                continue
+            self.assertIn(
+                mars_review_status(fact.id),
+                {STATUS_APPROVED_RAW, STATUS_APPROVED_OVERRIDE},
+            )
+
+    def test_m93_review_did_not_touch_unrelated_facts(self):
+        reviewed_in_m93 = BRIDGE_ELIGIBLE_MERCURY_RAW | BRIDGE_ELIGIBLE_MERCURY_OVERRIDE
+        unrelated_unreviewed = {
+            fact.id
+            for fact in ALL_SOURCE_FACTS
+            if fact.id not in reviewed_in_m93
+            and derive_review_status(fact.id) == STATUS_UNREVIEWED
+        }
+        self.assertGreater(len(unrelated_unreviewed), 600)
 
 
 if __name__ == "__main__":

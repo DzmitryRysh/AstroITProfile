@@ -55,6 +55,10 @@ APPROVED_RAW_FACT_IDS: frozenset[str] = frozenset(
         "mars_tr_persuasive",
         "mars_tr_thinking_faster",
         "mars_tr_thinking_more_analytical",
+        # M9.3 bridge-eligible analytical_thinking review
+        "saturn_tr_analytical_ability",
+        "pluto_sq_analytical_ability",
+        "pluto_harm_analytical_quality",
         "jupiter_sx_oratory_and_persuasion",
         # S4.4B Sagittarius approved_raw
         "sag_searches_higher_meaning_in_ordinary",

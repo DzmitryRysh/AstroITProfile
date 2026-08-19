@@ -58,6 +58,9 @@ HUMAN_COPY_OVERRIDES: dict[str, str] = {
         "Thinking, communication, and learning can conflict strongly with "
         "intense drives for power, depth, and control."
     ),
+    # M9.3 bridge-eligible: source +1 notation is not recruiter-safe as raw.
+    "plu_cj_analytical_thinking": "Analytical tendency in thinking.",
+    "plu_opp_analytical_thinking": "Analytical tendency in thinking.",
     "leo_afflicted_lying_distortion": (
         "Communication may involve lying, distortion, or misrepresentation."
     ),
