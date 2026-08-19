@@ -341,7 +341,7 @@ class RecruiterUxPolishTests(unittest.TestCase):
         self.assertNotIn("Fact IDs:", self.js)
         # No gender / score / strongest marketing language for recurring block.
         patterns_fn = self.js.split("function renderStrongestPatterns", 1)[1].split("function renderSynthesisSections", 1)[0].lower()
-        audience_helpers = self.js.split("function resolveProfileAudience", 1)[1].split("function showWorkspaceShell", 1)[0].lower()
+        audience_helpers = self.js.split("function resolveProfileAudience", 1)[1].split("const PERSON_PRONOUN_FORMS", 1)[0].lower()
         for blob in (patterns_fn, audience_helpers):
             self.assertNotIn("he/she", blob)
             self.assertNotIn("his/her", blob)
@@ -605,17 +605,24 @@ class RecruiterMarsHowYouWorkTests(unittest.TestCase):
         cls.html = RECRUITER_INDEX.read_text(encoding="utf-8")
 
     def test_how_you_work_dimension_exists_after_how_you_think(self):
-        self.assertIn('dimension-heading">How you work', self.js)
+        self.assertIn("howWorksHeading", self.js)
+        self.assertIn("howThinksHeading", self.js)
         self.assertIn("renderHowYouWorkDimension", self.js)
         self.assertIn("renderSelfProfile(mercury, displayName, mars, null)", self.js)
-        think_title = self.js.find('thinking: "How you think"')
-        work_title = self.js.find('dimension-heading">How you work')
-        self.assertGreater(think_title, 0)
-        self.assertGreater(work_title, think_title)
+        self.assertIn("How ${person.name} thinks", self.js)
+        self.assertIn("How ${person.name} works", self.js)
+        think_fn = self.js.find("function howThinksHeading")
+        work_fn = self.js.find("function howWorksHeading")
+        work_render = self.js.find("function renderHowYouWorkDimension")
+        self.assertGreater(think_fn, 0)
+        self.assertGreater(work_fn, think_fn)
+        self.assertGreater(work_render, work_fn)
 
     def test_ui_reads_mars_api_contract(self):
         self.assertIn("/api/v1/mars-source-profile", self.js)
         self.assertIn("/api/v1/mercury-source-profile", self.js)
+        self.assertIn("renderMarsWorkGlance", self.js)
+        self.assertIn("work_style_at_a_glance", self.js)
         self.assertIn("renderMarsRecurringPatterns", self.js)
         self.assertIn("renderMarsPrimarySections", self.js)
         self.assertIn("presentation_text_by_fact_id", self.js)
@@ -624,12 +631,59 @@ class RecruiterMarsHowYouWorkTests(unittest.TestCase):
         self.assertIn("section.fact_ids", self.js)
         self.assertIn("section.fact_count", self.js)
 
+    def test_how_you_work_hierarchy_is_takeaway_first(self):
+        work_fn = self.js.split("function renderHowYouWorkDimension", 1)[1].split(
+            "function renderSelfProfile", 1
+        )[0]
+        glance = work_fn.find("renderMarsWorkGlance")
+        recurring = work_fn.find("renderMarsRecurringPatterns")
+        primary = work_fn.find("renderMarsPrimarySections")
+        secondary = work_fn.find("renderMarsSecondarySections")
+        methodology = work_fn.find("renderMarsDetailsMethodology")
+        self.assertLess(glance, recurring)
+        self.assertLess(recurring, primary)
+        self.assertLess(primary, secondary)
+        self.assertLess(secondary, methodology)
+        self.assertIn("Work style at a glance", self.js)
+        self.assertIn(">Recurring patterns<", self.js)
+        self.assertNotIn("Recurring work patterns", self.js)
+        self.assertIn("What helps ${person.object} work better", self.js)
+
+    def test_mars_primary_surface_avoids_system_counts_and_risk_badges(self):
+        body_fn = self.js.split("function renderMarsSectionBody", 1)[1].split(
+            "function renderMarsWorkGlance", 1
+        )[0]
+        self.assertIn("renderMarsPreviewFactItem(facts.get(id), presentationMap)", body_fn)
+        self.assertNotIn("renderPreviewFactItem(facts.get(id), presentationMap)", body_fn)
+        self.assertGreater(body_fn.find("section-evidence-meta"), body_fn.find("hasMore"))
+        preview_fn = self.js.split("function renderMarsPreviewFactItem", 1)[1].split(
+            "function renderMarsGroupedFactItem", 1
+        )[0]
+        self.assertIn("Watch", preview_fn)
+        self.assertNotIn("Risk", preview_fn)
+        self.assertNotIn("fact-provenance", preview_fn)
+        self.assertIn(".watch-mark", self.css)
+        self.assertIn(".work-glance", self.css)
+        self.assertIn(".work-glance-card", self.css)
+        recurring_fn = self.js.split("function renderMarsRecurringPatterns", 1)[1].split(
+            "function renderMarsPrimarySections", 1
+        )[0]
+        self.assertIn("Why this appears", recurring_fn)
+        self.assertIn("more than one calculated factor", recurring_fn)
+        self.assertNotIn("Recurring work patterns supported by more than one calculated factor", recurring_fn)
+        self.assertIn("signal-takeaway", recurring_fn)
+
     def test_mercury_how_you_think_remains_intact(self):
         self.assertIn('thinking: "How you think"', self.js)
         self.assertIn("renderStrongestPatterns", self.js)
         self.assertIn("renderSynthesisSections", self.js)
         self.assertIn("Key recurring patterns", self.js)
         self.assertNotIn("HOW YOU THINK", self.js.replace('thinking: "How you think"', ""))
+        mercury_preview = self.js.split("function renderPreviewFactItem", 1)[1].split(
+            "function renderStrongestPatterns", 1
+        )[0]
+        self.assertIn("risk-mark", mercury_preview)
+        self.assertIn("Risk", mercury_preview)
 
     def test_no_score_hire_or_rank_language(self):
         blob = f"{self.html}\n{self.css}\n{self.js}".lower()
@@ -645,23 +699,66 @@ class RecruiterMarsHowYouWorkTests(unittest.TestCase):
         primary = self.js.split("function renderMarsPrimarySections", 1)[1].split(
             "function renderMarsSecondarySections", 1
         )[0]
-        self.assertIn("if (!section.fact_count) return \"\"", primary)
+        self.assertIn("if (!section || !section.fact_count) return \"\"", primary)
         self.assertNotIn("No data means", self.js)
         self.assertNotIn("no obstacle ability", self.js.lower())
         repeats = self.js.split("function renderMarsRecurringPatterns", 1)[1].split(
             "function renderMarsPrimarySections", 1
         )[0]
         self.assertIn("if (!patterns.length) return \"\"", repeats)
+        glance = self.js.split("function renderMarsWorkGlance", 1)[1].split(
+            "function renderMarsRecurringPatterns", 1
+        )[0]
+        self.assertIn("if (!cards.length) return \"\"", glance)
 
     def test_professional_associations_are_source_bounded(self):
         secondary = self.js.split("function renderMarsSecondarySections", 1)[1].split(
             "function renderMarsDetailsMethodology", 1
         )[0]
-        self.assertIn("professional_associations", secondary)
-        self.assertIn("source-described associations and aptitudes", secondary)
-        self.assertIn("not recommended jobs", secondary)
+        methodology = self.js.split("function renderMarsDetailsMethodology", 1)[1].split(
+            "function renderHowYouWorkDimension", 1
+        )[0]
+        self.assertIn("professional_associations", self.js.split("MARS_SECONDARY_SECTION_KEYS", 1)[1].split(";", 1)[0])
+        self.assertIn("MARS_SECONDARY_SECTION_KEYS.map", secondary)
         self.assertIn("watchouts-block", secondary)
         self.assertNotIn("best role", secondary.lower())
+        self.assertNotIn("source-described associations and aptitudes", secondary)
+        self.assertIn("source-described associations and aptitudes", methodology)
+        self.assertIn("not recommended jobs", methodology)
+        self.assertIn("Source material from the framework", methodology)
+        self.assertNotIn("Source material from the framework", secondary)
+
+    def test_recruiter_uses_third_person_person_context(self):
+        self.assertIn("function buildPersonPerspective", self.js)
+        self.assertIn("function fillPersonTemplate", self.js)
+        self.assertIn("id=\"self-sex\"", self.html)
+        self.assertIn('sex: "male"', self.js)
+        helper = self.js.split("function buildPersonPerspective", 1)[1].split(
+            "function fillPersonTemplate", 1
+        )[0]
+        self.assertNotIn("Avdey", helper)
+        self.assertNotIn("toLowerCase() === \"avdey\"", self.js.lower())
+        work_fn = self.js.split("function renderHowYouWorkDimension", 1)[1].split(
+            "function renderSelfProfile", 1
+        )[0]
+        self.assertIn("howWorksHeading(person)", work_fn)
+        self.assertNotIn('dimension-heading">How you work', work_fn)
+        glance_fn = self.js.split("function renderMarsWorkGlance", 1)[1].split(
+            "function renderMarsRecurringPatterns", 1
+        )[0]
+        self.assertIn("marsGlanceText(card, person)", glance_fn)
+        self.assertNotIn("card.text", glance_fn)
+        think_wrap = self.js.split("function renderSelfProfile", 1)[1].split(
+            "async function buildMyProfile", 1
+        )[0]
+        self.assertIn("how-you-think", think_wrap)
+        self.assertIn("howThinksHeading(person)", think_wrap)
+        self.assertIn("howWorksHeading", self.js)
+        primary_mars = self.js.split("function renderMarsWorkGlance", 1)[1].split(
+            "function renderMarsDetailsMethodology", 1
+        )[0].lower()
+        self.assertNotIn("how you work", primary_mars)
+        self.assertNotIn("what may slow you down", primary_mars)
 
     def test_mars_error_does_not_destroy_mercury_block(self):
         build = self.js.split("async function buildMyProfile", 1)[1].split(

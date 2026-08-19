@@ -81,9 +81,23 @@ class MarsSynthesisTraceability(BaseModel):
     unclassified_fact_count: int
 
 
+class MarsGlanceCard(BaseModel):
+    """Presentation-only takeaway. Does not add source meaning."""
+
+    key: str
+    title: str
+    text: str
+    source: Literal["template", "observation"]
+    fact_ids: list[str] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=list)
+    repeated_signals: list[str] = Field(default_factory=list)
+    display_template: str = ""
+
+
 class MarsProfileSynthesisResponse(BaseModel):
     """API-facing HOW YOU WORK synthesis index (additive to source profile)."""
 
+    work_style_at_a_glance: list[MarsGlanceCard] = Field(default_factory=list)
     repeated_signals: list[MarsRepeatedSignal] = Field(default_factory=list)
     sections: list[MarsSynthesisSection] = Field(default_factory=list)
     source_specific_fact_ids: list[str] = Field(default_factory=list)

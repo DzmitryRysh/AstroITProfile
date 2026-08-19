@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from app.schemas.mars_source_profile import (
     CalculatedMarsSnapshot,
     MarsAspect as MarsAspectSchema,
+    MarsGlanceCard as MarsGlanceCardSchema,
     MarsProfileSynthesisResponse,
     MarsRepeatedSignal as MarsRepeatedSignalSchema,
     MarsSourceCoverage as MarsSourceCoverageSchema,
@@ -277,7 +278,23 @@ def serialize_mars_profile_synthesis(
     synthesis: MarsProfileSynthesis,
 ) -> MarsProfileSynthesisResponse:
     """Convert internal Mars synthesis dataclasses to the API response schema."""
+    from app.services.mars_work_glance import build_mars_work_glance
+
+    glance = build_mars_work_glance(synthesis)
     return MarsProfileSynthesisResponse(
+        work_style_at_a_glance=[
+            MarsGlanceCardSchema(
+                key=card.key,
+                title=card.title,
+                text=card.text,
+                source=card.source,  # type: ignore[arg-type]
+                fact_ids=list(card.fact_ids),
+                tags=list(card.tags),
+                repeated_signals=list(card.repeated_signals),
+                display_template=card.display_template,
+            )
+            for card in glance
+        ],
         repeated_signals=[_to_repeated_schema(item) for item in synthesis.repeated_signals],
         sections=[
             MarsSynthesisSectionSchema(

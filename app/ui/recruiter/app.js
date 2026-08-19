@@ -171,6 +171,96 @@
     return String(displayName || "").trim() ? "person" : "self";
   }
 
+  const PERSON_PRONOUN_FORMS = {
+    male: { subject: "he", object: "him", possessive: "his", independent: "his", reflexive: "himself", pluralVerb: false },
+    female: { subject: "she", object: "her", possessive: "her", independent: "hers", reflexive: "herself", pluralVerb: false },
+    they: { subject: "they", object: "them", possessive: "their", independent: "theirs", reflexive: "themselves", pluralVerb: true },
+    you: { subject: "you", object: "you", possessive: "your", independent: "yours", reflexive: "yourself", pluralVerb: true },
+  };
+
+  function normalizePersonSex(value) {
+    const token = String(value || "").trim().toLowerCase();
+    if (["male", "m", "he", "him", "he/him"].includes(token)) return "male";
+    if (["female", "f", "she", "her", "she/her"].includes(token)) return "female";
+    if (["neutral", "they", "them", "they/them", "nonbinary", "non-binary"].includes(token)) return "neutral";
+    return "unknown";
+  }
+
+  function buildPersonPerspective({ name, sex, perspective } = {}) {
+    const trimmed = String(name || "").trim();
+    const resolvedPerspective = perspective || (trimmed ? "third_person" : "self");
+    const resolvedSex = normalizePersonSex(sex);
+    let forms = PERSON_PRONOUN_FORMS.they;
+    if (resolvedPerspective === "self") forms = PERSON_PRONOUN_FORMS.you;
+    else if (resolvedSex === "male") forms = PERSON_PRONOUN_FORMS.male;
+    else if (resolvedSex === "female") forms = PERSON_PRONOUN_FORMS.female;
+    const subjectCap = forms.subject.charAt(0).toUpperCase() + forms.subject.slice(1);
+    const possessiveCap = forms.possessive.charAt(0).toUpperCase() + forms.possessive.slice(1);
+    return {
+      name: trimmed,
+      perspective: resolvedPerspective,
+      sex: resolvedSex,
+      subject: forms.subject,
+      object: forms.object,
+      possessive: forms.possessive,
+      independent: forms.independent,
+      reflexive: forms.reflexive,
+      subjectCap,
+      possessiveCap,
+      pluralVerb: forms.pluralVerb,
+    };
+  }
+
+  function fillPersonTemplate(template, person) {
+    if (!template || !person) return template || "";
+    const name = person.name || person.subjectCap;
+    return String(template)
+      .replaceAll("{name}", name)
+      .replaceAll("{They}", person.subjectCap)
+      .replaceAll("{they}", person.subject)
+      .replaceAll("{them}", person.object)
+      .replaceAll("{their}", person.possessive)
+      .replaceAll("{theirs}", person.independent)
+      .replaceAll("{themself}", person.reflexive);
+  }
+
+  function contextualizeNeutralSentence(text, person) {
+    const stripped = String(text || "").trim();
+    if (!person) return stripped;
+    if (stripped.toLowerCase().startsWith("may ")) {
+      let rest = stripped.slice(4);
+      if (rest) rest = rest.charAt(0).toLowerCase() + rest.slice(1);
+      return `${person.subjectCap} may ${rest}`;
+    }
+    return stripped;
+  }
+
+  function presentVerb(person, base, singular) {
+    return person && person.pluralVerb ? base : singular;
+  }
+
+  function howThinksHeading(person) {
+    if (!person || person.perspective === "self" || !person.name) return "How you think";
+    return `How ${person.name} thinks`;
+  }
+
+  function howWorksHeading(person) {
+    if (!person || person.perspective === "self" || !person.name) return "How you work";
+    return `How ${person.name} works`;
+  }
+
+  function currentPersonPerspective() {
+    const nameEl = document.getElementById("self-name");
+    const sexEl = document.getElementById("self-sex");
+    const name = nameEl ? String(nameEl.value || "").trim() : "";
+    const sex = sexEl ? sexEl.value : "";
+    return buildPersonPerspective({
+      name,
+      sex,
+      perspective: name ? "third_person" : "self",
+    });
+  }
+
   function possessiveLabel(name) {
     const trimmed = String(name || "").trim();
     if (!trimmed) return "";
@@ -270,18 +360,21 @@
       birth_date: "1986-07-14",
       birth_time: "07:10",
       birth_place: "Simferopol, Ukraine",
+      sex: "male",
     },
     vlad: {
       display_name: "Vlad",
       birth_date: "1986-05-16",
       birth_time: "15:00",
       birth_place: "Dnipro, Ukraine",
+      sex: "male",
     },
     dzmitry: {
       display_name: "Dzmitry",
       birth_date: "1985-11-12",
       birth_time: "14:15",
       birth_place: "Zhodino, Belarus",
+      sex: "male",
     },
   };
 
@@ -337,6 +430,8 @@
     document.getElementById("self-birth-date").value = demo.birth_date;
     document.getElementById("self-birth-time").value = demo.birth_time;
     document.getElementById("self-birth-place").value = demo.birth_place;
+    const sexEl = document.getElementById("self-sex");
+    if (sexEl) sexEl.value = demo.sex || "";
     setStatus(selfSetupStatus, `Filled ${demo.display_name}. Click Build My Profile to call the API.`);
   }
 
@@ -985,9 +1080,72 @@
     "watchouts",
   ];
   const MARS_SECONDARY_SECTION_KEYS = [
-    "professional_associations",
     "compensations",
+    "professional_associations",
   ];
+  const MARS_PRESSURE_TAGS = [
+    "effort_overload",
+    "crisis_execution",
+    "crisis_activation",
+  ];
+
+  function marsSectionTitle(section, person) {
+    const key = section && section.key;
+    if (person) {
+      if (key === "how_you_start") return `How ${person.subject} ${presentVerb(person, "start", "starts")}`;
+      if (key === "how_you_execute") return `How ${person.subject} ${presentVerb(person, "execute", "executes")}`;
+      if (key === "work_rhythm") return `${person.possessiveCap} work rhythm`;
+      if (key === "when_you_get_stuck") return `When ${person.subject} ${presentVerb(person, "get", "gets")} stuck`;
+      if (key === "how_you_handle_obstacles") return `How ${person.subject} ${presentVerb(person, "handle", "handles")} obstacles`;
+      if (key === "compensations") return `What helps ${person.object} work better`;
+    }
+    if (key === "compensations") return "What helps you work better";
+    return (section && section.title) || "";
+  }
+
+  function marsGlanceTitle(card, person) {
+    if (card && card.key === "execution_style") return "Execution style";
+    if (card && card.key === "what_may_slow_you_down") {
+      return person ? `What may slow ${person.object} down` : "What may slow them down";
+    }
+    if (card && card.key === "under_pressure") return "Under pressure";
+    return (card && card.title) || "";
+  }
+
+  function marsGlanceText(card, person) {
+    if (!card) return "";
+    if (card.display_template) return fillPersonTemplate(card.display_template, person);
+    return contextualizeNeutralSentence(card.text, person);
+  }
+
+  function marsShowsWatch(fact) {
+    if (!fact) return false;
+    if (fact.category === "watchout" || fact.category === "stuck_blocker") return true;
+    if (fact.polarity !== "risk") return false;
+    if (fact.category === "conflict" || fact.category === "action_start") return true;
+    const tags = fact.tags || [];
+    return MARS_PRESSURE_TAGS.some((tag) => tags.includes(tag));
+  }
+
+  function renderMarsPreviewFactItem(fact, presentationMap) {
+    if (!fact) return "";
+    const watch = marsShowsWatch(fact);
+    const marker = watch
+      ? `<span class="watch-mark" title="Friction to be aware of">Watch</span>`
+      : `<span class="fact-bullet" aria-hidden="true">•</span>`;
+    const text = humanFactText(fact, presentationMap);
+    return `<li class="fact-item${watch ? " fact-watch" : ""}">${marker}<span class="fact-text">${escapeHtml(text)}</span></li>`;
+  }
+
+  function renderMarsGroupedFactItem(fact, presentationMap) {
+    if (!fact) return "";
+    const watch = marsShowsWatch(fact);
+    const marker = watch
+      ? `<span class="watch-mark" title="Friction to be aware of">Watch</span>`
+      : `<span class="fact-bullet" aria-hidden="true">•</span>`;
+    const text = humanFactText(fact, presentationMap);
+    return `<li class="fact-item${watch ? " fact-watch" : ""}">${marker}<span class="fact-text">${escapeHtml(text)}</span></li>`;
+  }
 
   function marsFactorCardTitle(factorType, factorKey) {
     if (factorType === "sign") return `Mars in ${factorKey}`;
@@ -1048,7 +1206,7 @@
       const n = group.facts.length;
       const countLabel = n === 1 ? "1 observation" : `${n} observations`;
       const items = group.facts
-        .map((fact) => renderGroupedFactItem(fact, presentationMap))
+        .map((fact) => renderMarsGroupedFactItem(fact, presentationMap))
         .filter(Boolean)
         .join("");
       return `<details class="section-factor-group">
@@ -1071,99 +1229,106 @@
   function renderMarsSectionBody(section, facts, presentationMap) {
     const previewIds = section.preview_fact_ids || [];
     const previewItems = previewIds
-      .map((id) => renderPreviewFactItem(facts.get(id), presentationMap))
+      .map((id) => renderMarsPreviewFactItem(facts.get(id), presentationMap))
       .filter(Boolean)
       .join("");
     const total = Number(section.fact_count) || (section.fact_ids || []).length;
     const evidence = `${total} source-backed observations across ${section.factor_count} factor${section.factor_count === 1 ? "" : "s"}`;
     const hasMore = total > previewIds.length;
-    const exploreLabel = total === 1
-      ? "Explore all 1 observation"
-      : `Explore all ${total} observations`;
+    const exploreLabel = `Explore all ${total} observations`;
     const explore = hasMore
       ? `<details class="section-explore">
           <summary class="section-explore-summary">
             <span class="explore-all-label">${escapeHtml(exploreLabel)}</span>
           </summary>
+          <p class="section-evidence-meta">${escapeHtml(evidence)}</p>
           ${renderMarsSectionFactorExplore(section, facts, presentationMap)}
           <button type="button" class="section-show-less" onclick="this.closest('details.section-explore').open=false">Show less</button>
         </details>`
       : "";
     return `<div class="section-body">
-      <p class="section-evidence-meta">${escapeHtml(evidence)}</p>
       <ul class="fact-list section-preview">${previewItems}</ul>
       ${explore}
     </div>`;
   }
 
+  function renderMarsWorkGlance(synthesis, person) {
+    const cards = (synthesis && synthesis.work_style_at_a_glance) || [];
+    if (!cards.length) return "";
+    const items = cards.map((card) => `<article class="work-glance-card" data-glance-key="${escapeHtml(card.key)}">
+      <h3>${escapeHtml(marsGlanceTitle(card, person))}</h3>
+      <p>${escapeHtml(marsGlanceText(card, person))}</p>
+    </article>`).join("");
+    return `<section class="panel work-style-glance level-1">
+      <div class="panel-head"><h2>Work style at a glance</h2></div>
+      <div class="work-glance">${items}</div>
+    </section>`;
+  }
+
   function renderMarsRecurringPatterns(synthesis) {
     const patterns = (synthesis && synthesis.repeated_signals) || [];
     if (!patterns.length) return "";
-    const intro = `<p class="section-helper">Recurring work patterns supported by more than one calculated factor:</p>`;
+    const facts = synthesisFactMap(synthesis);
+    const presentation = presentationTextMap(synthesis);
     const rows = patterns.map((signal) => {
       const count = Number(signal.source_count) || (signal.sources || []).length || 0;
       const supportLabel = count === 1
         ? "Supported by 1 profile factor"
         : `Supported by ${count} profile factors`;
+      const firstId = (signal.fact_ids || [])[0];
+      const takeawayFact = firstId ? facts.get(firstId) : null;
+      const takeaway = takeawayFact ? humanFactText(takeawayFact, presentation) : "";
       const whyItems = (signal.sources || [])
         .map((src) => `<li>${escapeHtml(marsFactorLabelFromSource(src))}</li>`)
         .join("");
       return `<article class="signal-row">
         <div class="signal-row-main">
           <strong class="signal-label">${escapeHtml(titleCaseSignal(signal.signal))}</strong>
-          <span class="signal-meta">${escapeHtml(supportLabel)}</span>
+          ${takeaway ? `<p class="signal-takeaway">${escapeHtml(takeaway)}</p>` : ""}
         </div>
         <details class="signal-why">
           <summary>Why this appears</summary>
           <div class="signal-why-body">
-            <p class="signal-why-label">Supported by:</p>
+            <p class="signal-why-label">Recurring patterns appear when more than one calculated factor supports the same work signal.</p>
+            <p class="signal-why-label">${escapeHtml(supportLabel)}</p>
             <ul class="signal-why-list">${whyItems}</ul>
           </div>
         </details>
       </article>`;
     }).join("");
     return `<section class="panel synthesis-patterns level-1">
-      <div class="panel-head"><h2>Recurring work patterns</h2></div>
-      ${intro}
+      <div class="panel-head"><h2>Recurring patterns</h2></div>
       <div class="result-list-group">${rows}</div>
     </section>`;
   }
 
-  function renderMarsPrimarySections(synthesis) {
+  function renderMarsPrimarySections(synthesis, person) {
     if (!synthesis || !synthesis.sections) return "";
     const facts = synthesisFactMap(synthesis);
     const presentation = presentationTextMap(synthesis);
-    return (synthesis.sections || []).map((section) => {
-      if (!section.fact_count) return "";
-      if (!MARS_PRIMARY_SECTION_KEYS.includes(section.key)) return "";
+    return MARS_PRIMARY_SECTION_KEYS.map((key) => {
+      const section = (synthesis.sections || []).find((item) => item.key === key);
+      if (!section || !section.fact_count) return "";
       return `<section class="panel synthesis-section level-1" data-section-key="${escapeHtml(section.key)}">
-        <div class="panel-head"><h2>${escapeHtml(section.title)}</h2></div>
+        <div class="panel-head"><h2>${escapeHtml(marsSectionTitle(section, person))}</h2></div>
         ${renderMarsSectionBody(section, facts, presentation)}
       </section>`;
     }).join("");
   }
 
-  function renderMarsSecondarySections(synthesis) {
+  function renderMarsSecondarySections(synthesis, person) {
     if (!synthesis || !synthesis.sections) return "";
     const facts = synthesisFactMap(synthesis);
     const presentation = presentationTextMap(synthesis);
-    return (synthesis.sections || []).map((section) => {
-      if (!section.fact_count) return "";
-      if (!MARS_SECONDARY_SECTION_KEYS.includes(section.key)) return "";
-      const countLabel = section.fact_count === 1
-        ? "1 source-backed observation"
-        : `${section.fact_count} source-backed observations`;
-      const helper = section.key === "professional_associations"
-        ? "These are source-described associations and aptitudes, not recommended jobs, verified competencies, or hiring recommendations."
-        : "Source material from the framework — not treated as an automatically active work trait.";
+    return MARS_SECONDARY_SECTION_KEYS.map((key) => {
+      const section = (synthesis.sections || []).find((item) => item.key === key);
+      if (!section || !section.fact_count) return "";
       return `<section class="panel synthesis-watchouts level-2" data-section-key="${escapeHtml(section.key)}">
         <details class="watchouts-block">
           <summary>
-            <span class="watchouts-summary-main">${escapeHtml(section.title)}</span>
-            <span class="factor-summary-meta">${escapeHtml(countLabel)}</span>
+            <span class="watchouts-summary-main">${escapeHtml(marsSectionTitle(section, person))}</span>
           </summary>
           <div class="watchouts-body">
-            <p class="section-helper">${escapeHtml(helper)}</p>
             ${renderMarsSectionBody(section, facts, presentation)}
           </div>
         </details>
@@ -1171,16 +1336,25 @@
     }).join("");
   }
 
-  function renderMarsDetailsMethodology(profile, synthesis) {
+  function renderMarsDetailsMethodology(profile, synthesis, person) {
     const calc = (profile && profile.calculated) || {};
     const notes = (profile && profile.limitations) || [];
     const unresolved = (profile && profile.conditional_unresolved) || [];
+    const sections = (synthesis && synthesis.sections) || [];
+    const repeats = (synthesis && synthesis.repeated_signals) || [];
     const motion = String(calc.mars_motion || "");
     const motionLabel = motion.toLowerCase() === "retrograde" ? "Retrograde" : titleCaseSignal(motion);
     const aspectList = (calc.aspects || [])
       .map((aspect) => `${titleCaseSignal(aspect.type)} ${aspect.planet}`)
       .join(" · ");
     const calcLine = `Mars in ${calc.mars_sign || "—"} · House ${calc.mars_house ?? "—"} · ${motionLabel || "—"}`;
+    const populated = sections.filter((section) => section.fact_count);
+    const countItems = populated.map((section) => {
+      const title = marsSectionTitle(section, person);
+      const facts = section.fact_count === 1 ? "1 observation" : `${section.fact_count} observations`;
+      const factors = section.factor_count === 1 ? "1 factor" : `${section.factor_count} factors`;
+      return `<li>${escapeHtml(title)}: ${facts} across ${factors}</li>`;
+    }).join("");
     const notesHtml = notes.length
       ? `<details class="methodology-row profile-notes-block">
           <summary>Profile notes <span class="factor-summary-meta">${notes.length}</span></summary>
@@ -1193,37 +1367,68 @@
           <p class="section-helper">These source notes depend on conditions that are not resolved from the available chart data. They are not treated as active.</p>
         </details>`
       : "";
+    const countsHtml = countItems
+      ? `<details class="methodology-row">
+          <summary>Source-backed observation counts</summary>
+          <ul class="profile-notes-list">${countItems}</ul>
+        </details>`
+      : "";
+    const repeatsHtml = repeats.length
+      ? `<details class="methodology-row">
+          <summary>Recurring patterns</summary>
+          <p class="section-helper">Recurring patterns appear when more than one calculated factor supports the same work signal.</p>
+        </details>`
+      : "";
+    const professional = populated.find((section) => section.key === "professional_associations");
+    const professionalHtml = professional
+      ? `<details class="methodology-row">
+          <summary>Professional associations</summary>
+          <p class="section-helper">These are source-described associations and aptitudes, not recommended jobs, verified competencies, or hiring recommendations.</p>
+        </details>`
+      : "";
+    const compensation = populated.find((section) => section.key === "compensations");
+    const compensationHtml = compensation
+      ? `<details class="methodology-row">
+          <summary>${escapeHtml(marsSectionTitle(compensation, person))}</summary>
+          <p class="section-helper">Source material from the framework — not treated as an automatically active work trait.</p>
+        </details>`
+      : "";
     const evidenceHtml = `<details class="methodology-row">
       <summary>Calculated work factors</summary>
       <p class="self-calc-line">${escapeHtml(calcLine)}</p>
       ${aspectList ? `<p class="meta">${escapeHtml(aspectList)}</p>` : ""}
     </details>`;
-    if (!notesHtml && !unresolvedHtml && !synthesis) return evidenceHtml;
     return `<section class="panel details-methodology level-3">
       <div class="panel-head"><h2>Details &amp; methodology</h2></div>
       <div class="details-methodology-rows">
         ${unresolvedHtml}
         ${notesHtml}
+        ${repeatsHtml}
+        ${countsHtml}
+        ${compensationHtml}
+        ${professionalHtml}
         ${evidenceHtml}
       </div>
     </section>`;
   }
 
-  function renderHowYouWorkDimension(profile, error) {
+  function renderHowYouWorkDimension(profile, error, person) {
+    const heading = howWorksHeading(person);
     if (error) {
       return `<section class="profile-dimension how-you-work" data-dimension="work">
-        <h2 class="dimension-heading">How you work</h2>
+        <h2 class="dimension-heading">${escapeHtml(heading)}</h2>
         <p class="status-line error how-you-work-error" role="status">${escapeHtml(error)}</p>
       </section>`;
     }
     if (!profile) return "";
     const synthesis = profile.synthesis || null;
     return `<section class="profile-dimension how-you-work" data-dimension="work">
-      <h2 class="dimension-heading">How you work</h2>
+      <h2 class="dimension-heading">${escapeHtml(heading)}</h2>
+      ${renderMarsWorkGlance(synthesis, person)}
       ${renderMarsRecurringPatterns(synthesis)}
-      ${renderMarsPrimarySections(synthesis)}
-      ${renderMarsSecondarySections(synthesis)}
-      ${renderMarsDetailsMethodology(profile, synthesis)}
+      ${renderMarsPrimarySections(synthesis, person)}
+      ${renderMarsSecondarySections(synthesis, person)}
+      ${renderMarsDetailsMethodology(profile, synthesis, person)}
     </section>`;
   }
 
@@ -1231,6 +1436,7 @@
     const calc = profile.calculated || {};
     const synthesis = profile.synthesis || null;
     const audience = resolveProfileAudience(displayName);
+    const person = currentPersonPerspective();
     const motion = String(calc.mercury_motion || "");
     const motionHtml = motion.toLowerCase() === "retrograde"
       ? `<span class="motion-rx">Retrograde</span>`
@@ -1246,13 +1452,16 @@
         <p class="self-calc-line">Mercury in ${escapeHtml(calc.mercury_sign || "—")} · House ${escapeHtml(String(calc.mercury_house ?? "—"))} · ${motionHtml}</p>
         ${aspectList ? `<ul class="self-aspect-list">${aspectList}</ul>` : `<p class="meta">No calculated aspects in orb.</p>`}
       </section>
-      ${renderStrongestPatterns(synthesis, audience, displayName)}
-      ${renderSynthesisSections(synthesis, audience)}
-      ${renderResolvedTensions(synthesis, audience)}
-      ${renderConditionalTensions(synthesis)}
-      ${renderContextWatchOuts(synthesis, audience)}
-      ${renderDetailsMethodology(profile, synthesis, displayName, factCount)}
-      ${renderHowYouWorkDimension(marsProfile, marsError)}
+      <section class="profile-dimension how-you-think" data-dimension="think">
+        <h2 class="dimension-heading">${escapeHtml(howThinksHeading(person))}</h2>
+        ${renderStrongestPatterns(synthesis, audience, displayName)}
+        ${renderSynthesisSections(synthesis, audience)}
+        ${renderResolvedTensions(synthesis, audience)}
+        ${renderConditionalTensions(synthesis)}
+        ${renderContextWatchOuts(synthesis, audience)}
+        ${renderDetailsMethodology(profile, synthesis, displayName, factCount)}
+      </section>
+      ${renderHowYouWorkDimension(marsProfile, marsError, person)}
     `;
   }
 
@@ -1289,9 +1498,9 @@
       setStatus(selfProfileStatus, err.message, "error");
       try {
         const marsOnly = await marsPromise;
-        selfProfileContent.innerHTML = renderHowYouWorkDimension(marsOnly, null);
+        selfProfileContent.innerHTML = renderHowYouWorkDimension(marsOnly, null, currentPersonPerspective());
       } catch (marsErr) {
-        selfProfileContent.innerHTML = renderHowYouWorkDimension(null, marsErr.message);
+        selfProfileContent.innerHTML = renderHowYouWorkDimension(null, marsErr.message, currentPersonPerspective());
       }
       return;
     }

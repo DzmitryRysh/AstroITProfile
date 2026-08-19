@@ -1365,10 +1365,71 @@ details.more-details > summary::-webkit-details-marker {
   letter-spacing: 0.01em;
 }
 
+.profile-dimension.how-you-think {
+  margin-top: 0.35rem;
+}
+
 .profile-dimension.how-you-work {
   margin-top: 2rem;
   padding-top: 1.35rem;
   border-top: 1px solid var(--border);
+}
+
+.work-glance {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 720px) {
+  .work-glance {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.work-glance-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.85rem 0.95rem;
+  background: var(--bg-soft);
+}
+
+.work-glance-card h3 {
+  margin: 0 0 0.4rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.work-glance-card p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.signal-takeaway {
+  margin: 0.2rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.4;
+  font-weight: 400;
+}
+
+.fact-item.fact-watch {
+  border-left: 2px solid var(--border-strong);
+  padding-left: 0.45rem;
+  background: transparent;
+}
+
+.watch-mark {
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.55;
 }
 
 .dimension-heading {

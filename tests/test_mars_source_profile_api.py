@@ -281,6 +281,25 @@ class MarsSourceProfileApiContractTests(unittest.TestCase):
             self.assertNotIn("Strong technical skills", tech)
             self.assertEqual(response.calculated.mars_motion, "direct")
 
+    def test_work_style_at_a_glance_is_serialized(self):
+        response = create_mars_source_profile(_avdey_request())
+        cards = response.synthesis.work_style_at_a_glance
+        self.assertEqual(
+            [card.key for card in cards],
+            ["execution_style", "what_may_slow_you_down", "under_pressure"],
+        )
+        self.assertEqual(
+            cards[0].text,
+            "Work tends to be deliberate and calculated, with strong focus on the task.",
+        )
+        self.assertEqual(
+            cards[1].text,
+            "Action may slow through internal hesitation and braking.",
+        )
+        known_ids = set(response.synthesis.facts_by_id)
+        for card in cards:
+            self.assertTrue(set(card.fact_ids) <= known_ids)
+
     def test_serialize_matches_route(self):
         raw = build_mars_source_profile(
             birth_date=date(1985, 11, 12),
