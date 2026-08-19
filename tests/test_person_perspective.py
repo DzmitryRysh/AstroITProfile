@@ -25,6 +25,7 @@ from app.services.person_perspective import (
     how_works_heading,
     mars_section_heading,
     normalize_sex,
+    possessive_name,
 )
 
 AVDEY = dict(
@@ -120,6 +121,15 @@ class PersonPerspectiveTests(unittest.TestCase):
         person = build_person_perspective(perspective=PERSPECTIVE_SELF)
         text = fill_person_template("{They} may hesitate before {their} next step.", person)
         self.assertEqual(text, "You may hesitate before your next step.")
+        self.assertEqual(possessive_name(person), "Your")
+        named = build_person_perspective(name="Alex", sex="female")
+        self.assertEqual(possessive_name(named), "Alex's")
+        self.assertEqual(
+            fill_person_template("{NamePossessive} analytical thinking can pair with planned execution.", named),
+            "Alex's analytical thinking can pair with planned execution.",
+        )
+        james = build_person_perspective(name="James")
+        self.assertEqual(possessive_name(james), "James'")
 
 
 if __name__ == "__main__":

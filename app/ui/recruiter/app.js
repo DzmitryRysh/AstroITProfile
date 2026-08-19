@@ -1650,7 +1650,61 @@
     </section>`;
   }
 
-  function renderProfileOverview(profile, marsProfile, person, audience) {
+  function bridgeKindLabel(kind) {
+    if (kind === "reinforcement") return "Reinforcement";
+    if (kind === "friction") return "Friction";
+    if (kind === "contrast") return "Contrast";
+    return "";
+  }
+
+  function renderThinkingToExecutionOverview(bridge) {
+    const patterns = ((bridge && bridge.patterns) || []).slice(0, 3);
+    if (!patterns.length) return "";
+    const rows = patterns.map((pattern) => {
+      const kind = bridgeKindLabel(pattern.kind);
+      return `<article class="bridge-row" data-bridge-id="${escapeHtml(pattern.id)}">
+        ${kind ? `<span class="bridge-kind">${escapeHtml(kind)}</span>` : ""}
+        <strong class="bridge-title">${escapeHtml(pattern.title || "")}</strong>
+        <p class="bridge-takeaway">${escapeHtml(pattern.presentation_text || "")}</p>
+      </article>`;
+    }).join("");
+    return `<section class="panel thinking-to-execution">
+      <div class="panel-head"><h2>From thinking to execution</h2></div>
+      <div class="bridge-list">${rows}</div>
+    </section>`;
+  }
+
+  function renderThinkingToExecutionEvidence(bridge) {
+    const patterns = (bridge && bridge.patterns) || [];
+    if (!patterns.length) return "";
+    const rows = patterns.map((pattern) => {
+      const mercuryProv = (pattern.mercury_provenance || []).map((item) => escapeHtml(item)).join(" · ");
+      const marsProv = (pattern.mars_provenance || []).map((item) => escapeHtml(item)).join(" · ");
+      return `<article class="bridge-evidence-row" data-bridge-id="${escapeHtml(pattern.id)}">
+        <h3>${escapeHtml(pattern.title || "")}</h3>
+        <details class="methodology-row">
+          <summary>Mercury support</summary>
+          <p class="meta">${escapeHtml(pattern.mercury_semantic || "")}</p>
+          ${mercuryProv ? `<p class="meta">${mercuryProv}</p>` : ""}
+        </details>
+        <details class="methodology-row">
+          <summary>Mars support</summary>
+          <p class="meta">${escapeHtml(pattern.mars_semantic || "")}</p>
+          ${marsProv ? `<p class="meta">${marsProv}</p>` : ""}
+        </details>
+        <details class="signal-why">
+          <summary>Why this connection appears</summary>
+          <p class="signal-why-label">${escapeHtml(pattern.why_this_appears || "")}</p>
+        </details>
+      </article>`;
+    }).join("");
+    return `<section class="panel thinking-to-execution-evidence">
+      <div class="panel-head"><h2>Thinking → Execution evidence</h2></div>
+      <div class="bridge-evidence-list">${rows}</div>
+    </section>`;
+  }
+
+  function renderProfileOverview(profile, marsProfile, person, audience, bridge) {
     const mercurySynthesis = (profile && profile.synthesis) || null;
     const marsSynthesis = (marsProfile && marsProfile.synthesis) || null;
     const thinks = renderMercuryOverviewTakeaways(mercurySynthesis, audience);
@@ -1674,6 +1728,7 @@
         <button type="button" class="btn btn-ghost overview-cta" data-profile-tab="working">Explore work style</button>
       </section>
     </div>
+    ${renderThinkingToExecutionOverview(bridge)}
     ${renderOverviewTensions(mercurySynthesis)}`;
   }
 
@@ -1818,7 +1873,7 @@
     return `${mercuryHtml}${marsHtml}`;
   }
 
-  function renderProfileEvidence(profile, marsProfile, displayName, person) {
+  function renderProfileEvidence(profile, marsProfile, displayName, person, bridge) {
     const mercurySynthesis = (profile && profile.synthesis) || null;
     const factCount = profile ? countActiveSourceFacts(profile) : 0;
     const mercuryCalc = renderMercuryCalculatedFactors(profile);
@@ -1834,6 +1889,7 @@
     return `<div class="evidence-stack">
       ${mercuryCalc}
       ${patterns}
+      ${renderThinkingToExecutionEvidence(bridge)}
       ${tensions}
       ${conditional}
       ${mercuryMethod}
@@ -1882,7 +1938,7 @@
     return renderProfileWorking(profile, error, person);
   }
 
-  function renderSelfProfile(profile, displayName, marsProfile, marsError) {
+  function renderSelfProfile(profile, displayName, marsProfile, marsError, bridge) {
     const synthesis = (profile && profile.synthesis) || null;
     const audience = resolveProfileAudience(displayName);
     const person = currentPersonPerspective();
@@ -1892,7 +1948,7 @@
     selfProfileContent.innerHTML = `
       ${renderProfileTabNav()}
       <div class="profile-tab-panels">
-        <div class="profile-tab-panel" data-profile-panel="overview" role="tabpanel">${renderProfileOverview(profile, marsProfile, person, audience)}</div>
+        <div class="profile-tab-panel" data-profile-panel="overview" role="tabpanel">${renderProfileOverview(profile, marsProfile, person, audience, bridge)}</div>
         <div class="profile-tab-panel how-you-think" data-profile-panel="thinking" data-dimension="think" role="tabpanel" hidden>
           <h2 class="dimension-heading">${escapeHtml(howThinksHeading(person))}</h2>
           ${renderProfileThinking(synthesis, audience)}
@@ -1903,7 +1959,7 @@
         </div>
         <div class="profile-tab-panel" data-profile-panel="evidence" role="tabpanel" hidden>
           <h2 class="dimension-heading">Evidence</h2>
-          ${renderProfileEvidence(profile, marsProfile, displayName, person)}
+          ${renderProfileEvidence(profile, marsProfile, displayName, person, bridge)}
         </div>
       </div>
     `;
@@ -1927,6 +1983,10 @@
       birth_place: birthPlace,
     };
     if (birthTime) payload.birth_time = birthTime;
+    const sexEl = document.getElementById("self-sex");
+    const bridgePayload = { ...payload };
+    if (displayName) bridgePayload.display_name = displayName;
+    if (sexEl && sexEl.value) bridgePayload.sex = sexEl.value;
 
     setStatus(selfSetupStatus, "Building source-backed profile…", "loading");
     setStatus(selfProfileStatus, "Building source-backed profile…", "loading");
@@ -1935,6 +1995,15 @@
 
     const mercuryPromise = apiPost("/api/v1/mercury-source-profile", payload);
     const marsPromise = apiPost("/api/v1/mars-source-profile", payload);
+    const bridgePromise = apiPost("/api/v1/thinking-to-execution", bridgePayload);
+
+    async function loadBridge() {
+      try {
+        return await bridgePromise;
+      } catch (_err) {
+        return null;
+      }
+    }
 
     let mercury = null;
     try {
@@ -1952,15 +2021,15 @@
     }
 
     closeSelfDrawer();
-    renderSelfProfile(mercury, displayName, null, null);
+    renderSelfProfile(mercury, displayName, null, null, null);
     setStatus(selfProfileStatus, "");
     setStatus(selfSetupStatus, "");
 
     try {
       const mars = await marsPromise;
-      renderSelfProfile(mercury, displayName, mars, null);
+      renderSelfProfile(mercury, displayName, mars, null, await loadBridge());
     } catch (err) {
-      renderSelfProfile(mercury, displayName, null, err.message);
+      renderSelfProfile(mercury, displayName, null, err.message, await loadBridge());
     }
   }
 

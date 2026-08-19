@@ -67,6 +67,7 @@ class RecruiterPrototypeRouteTests(unittest.TestCase):
         self.assertIn("/api/v1/mercury-work-profile", paths)
         self.assertIn("/api/v1/mercury-source-profile", paths)
         self.assertIn("/api/v1/mars-source-profile", paths)
+        self.assertIn("/api/v1/thinking-to-execution", paths)
         self.assertIn("/api/v1/candidate-compare", paths)
         self.assertIn("/api/v1/team-map", paths)
         self.assertIn("/api/v1/team-gap", paths)
@@ -623,7 +624,7 @@ class RecruiterMarsHowYouWorkTests(unittest.TestCase):
         self.assertIn("howWorksHeading", self.js)
         self.assertIn("howThinksHeading", self.js)
         self.assertIn("renderHowYouWorkDimension", self.js)
-        self.assertIn("renderSelfProfile(mercury, displayName, mars, null)", self.js)
+        self.assertIn("renderSelfProfile(mercury, displayName, mars, null, await loadBridge())", self.js)
         self.assertIn("How ${person.name} thinks", self.js)
         self.assertIn("How ${person.name} works", self.js)
         think_fn = self.js.find("function howThinksHeading")
@@ -789,8 +790,8 @@ class RecruiterMarsHowYouWorkTests(unittest.TestCase):
         build = self.js.split("async function buildMyProfile", 1)[1].split(
             "function createMemberCard", 1
         )[0]
-        self.assertIn("renderSelfProfile(mercury, displayName, null, err.message)", build)
-        self.assertIn("renderSelfProfile(mercury, displayName, mars, null)", build)
+        self.assertIn("renderSelfProfile(mercury, displayName, null, err.message, await loadBridge())", build)
+        self.assertIn("renderSelfProfile(mercury, displayName, mars, null, await loadBridge())", build)
         self.assertIn("how-you-work-error", self.js)
         self.assertIn(".profile-dimension.how-you-work", self.css)
         self.assertIn(".profile-tab-nav", self.css)
@@ -858,6 +859,11 @@ class RecruiterProfileArchitectureTests(unittest.TestCase):
         self.assertIn("const OVERVIEW_MERCURY_TAKEAWAY_LIMIT = 4", self.js)
         self.assertNotIn("const OVERVIEW_MERCURY_PATTERN_LIMIT", self.js)
         self.assertNotIn("renderOverviewKeyPatterns", overview)
+        self.assertIn("renderThinkingToExecutionOverview", overview)
+        self.assertLess(
+            overview.find("renderThinkingToExecutionOverview"),
+            overview.find("renderOverviewTensions"),
+        )
 
     def test_thinking_groups_mercury_into_four_blocks(self):
         groups = self._fn("const MERCURY_THINKING_GROUPS", "const MARS_WORKING_GROUPS")
@@ -1072,6 +1078,46 @@ class RecruiterProfileArchitectureTests(unittest.TestCase):
         self.assertNotIn("validated technical", f"{overview}\n{presentation}".lower())
         self.assertNotIn("verified competency", f"{overview}\n{presentation}".lower())
         self.assertIn("technical_ability", self.js)
+
+
+class RecruiterThinkingToExecutionUiTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.js = RECRUITER_JS.read_text(encoding="utf-8")
+        cls.css = RECRUITER_CSS.read_text(encoding="utf-8")
+
+    def _fn(self, start, end):
+        return self.js.split(start, 1)[1].split(end, 1)[0]
+
+    def test_overview_has_compact_bridge_and_evidence_has_support(self):
+        overview = self._fn("function renderThinkingToExecutionOverview", "function renderThinkingToExecutionEvidence")
+        evidence = self._fn("function renderThinkingToExecutionEvidence", "function renderProfileOverview")
+        self.assertIn("From thinking to execution", overview)
+        self.assertIn(".slice(0, 3)", overview)
+        self.assertIn("bridge-takeaway", overview)
+        self.assertNotIn("Why this connection appears", overview)
+        self.assertNotIn("mercury:", overview)
+        self.assertIn("Thinking → Execution evidence", evidence)
+        self.assertIn("Mercury support", evidence)
+        self.assertIn("Mars support", evidence)
+        self.assertIn("Why this connection appears", evidence)
+        self.assertIn("mercury_provenance", evidence)
+        thinking = self._fn("function renderProfileThinking", "function renderWorkingGroup")
+        working = self._fn("function renderProfileWorking", "function renderMercuryCalculatedFactors")
+        self.assertNotIn("thinking-to-execution", thinking)
+        self.assertNotIn("thinking-to-execution", working)
+        self.assertIn("/api/v1/thinking-to-execution", self.js)
+        self.assertIn(".thinking-to-execution", self.css)
+        apply_fn = self._fn("function applyProfileTab", "function bindProfileTabClicks")
+        self.assertNotIn("thinking-to-execution", apply_fn)
+
+    def test_no_score_or_think_do_product_language(self):
+        blob = f"{self.js}\n{self.css}".lower()
+        self.assertNotIn("think -> do", blob)
+        self.assertNotIn("think→do", blob)
+        self.assertNotIn("overthinking", blob)
+        self.assertNotIn("technical worker", blob)
+        self.assertNotIn("candidate ranking", blob)
 
 
 if __name__ == "__main__":

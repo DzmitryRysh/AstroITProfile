@@ -120,11 +120,22 @@ def build_person_perspective(
     )
 
 
+def possessive_name(person: PersonPerspective) -> str:
+    """Possessive page/person label. Never inferred from the name string's gender."""
+    if person.perspective == PERSPECTIVE_SELF or not person.name:
+        return "Your"
+    name = person.name.strip()
+    if name.lower().endswith("s"):
+        return f"{name}'"
+    return f"{name}'s"
+
+
 def fill_person_template(template: str, person: PersonPerspective) -> str:
-    """Fill {name}/{They}/{they}/{them}/{their}/{theirs}/{themself} slots."""
+    """Fill {name}/{NamePossessive}/{They}/{they}/{them}/{their}/{theirs}/{themself} slots."""
     name = person.name or person.subject_cap
     return (
-        template.replace("{name}", name)
+        template.replace("{NamePossessive}", possessive_name(person))
+        .replace("{name}", name)
         .replace("{They}", person.subject_cap)
         .replace("{they}", person.subject)
         .replace("{them}", person.object)
