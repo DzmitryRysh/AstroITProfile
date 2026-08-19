@@ -27,7 +27,7 @@
   const workspacesStatus = document.getElementById("workspaces-status");
   const workspaceSaveStatus = document.getElementById("workspace-save-status");
   const DEFAULT_BRAND_TITLE = "Team Intelligence";
-  const SELF_BRAND_TITLE = "Your Mercury Profile";
+  const SELF_BRAND_TITLE = "Your Work Profile";
 
   /** Presentation-only: named entry → person profile; empty name → self. */
   const PERSON_SECTION_TITLES = {
@@ -271,7 +271,7 @@
   function profileHeaderTitle(audience, displayName) {
     if (audience === "person") {
       const name = String(displayName || "").trim();
-      return name ? `${possessiveLabel(name)} Mercury Profile` : "Mercury Profile";
+      return name ? `${possessiveLabel(name)} Work Profile` : "Work Profile";
     }
     return SELF_BRAND_TITLE;
   }
@@ -1424,9 +1424,23 @@
 
   const PROFILE_TABS = ["overview", "thinking", "working", "evidence"];
   const OVERVIEW_MERCURY_TAKEAWAY_LIMIT = 4;
-  const OVERVIEW_MERCURY_PATTERN_LIMIT = 3;
-  const OVERVIEW_MARS_PATTERN_LIMIT = 2;
   const GROUP_PREVIEW_LIMIT = 3;
+  // Overview-only recruiter labels. Canonical signal ids / tags are unchanged.
+  const OVERVIEW_MERCURY_SIGNAL_PRESENTATION = {
+    technical_ability: {
+      label: "Technical aptitude signal",
+      takeaway: "The profile contains repeated source-described technical aptitude signals.",
+    },
+    debate: {
+      label: "Debate tendency",
+    },
+    argumentation: {
+      label: "Argumentation pattern",
+    },
+    sales: {
+      label: "Sales-related aptitude signal",
+    },
+  };
   const MERCURY_THINKING_GROUPS = [
     {
       key: "thinking_problem_solving",
@@ -1519,6 +1533,31 @@
     </article>`;
   }
 
+  function overviewMercurySignalLabel(signal) {
+    const key = signal && signal.signal;
+    const bounded = key ? OVERVIEW_MERCURY_SIGNAL_PRESENTATION[key] : null;
+    if (bounded && bounded.label) return bounded.label;
+    return titleCaseSignal(key);
+  }
+
+  function overviewMercurySignalTakeaway(signal, facts, presentation) {
+    const key = signal && signal.signal;
+    const bounded = key ? OVERVIEW_MERCURY_SIGNAL_PRESENTATION[key] : null;
+    if (bounded && bounded.takeaway) return bounded.takeaway;
+    return signalTakeaway(signal, facts, presentation);
+  }
+
+  function renderOverviewMercuryTakeawayRow(signal, facts, presentation) {
+    if (!signal) return "";
+    const takeaway = overviewMercurySignalTakeaway(signal, facts, presentation);
+    return `<article class="signal-row signal-row-compact" data-signal="${escapeHtml(signal.signal)}">
+      <div class="signal-row-main">
+        <strong class="signal-label">${escapeHtml(overviewMercurySignalLabel(signal))}</strong>
+        ${takeaway ? `<p class="signal-takeaway">${escapeHtml(takeaway)}</p>` : ""}
+      </div>
+    </article>`;
+  }
+
   function renderQuietMercuryFact(fact, presentationMap) {
     if (!fact) return "";
     const text = humanFactText(fact, presentationMap);
@@ -1582,7 +1621,7 @@
     const facts = synthesisFactMap(synthesis);
     const presentation = presentationTextMap(synthesis);
     const rows = patterns.slice(0, OVERVIEW_MERCURY_TAKEAWAY_LIMIT)
-      .map((signal) => renderCompactSignalRow(signal, facts, presentation))
+      .map((signal) => renderOverviewMercuryTakeawayRow(signal, facts, presentation))
       .filter(Boolean);
     if (rows.length) {
       return `<div class="overview-takeaways result-list-group">${rows.join("")}</div>`;
@@ -1598,32 +1637,6 @@
     );
     if (!fallback.length) return "";
     return `<ul class="fact-list">${fallback.join("")}</ul>`;
-  }
-
-  function renderOverviewKeyPatterns(mercurySynthesis, marsSynthesis) {
-    const mercuryFacts = synthesisFactMap(mercurySynthesis);
-    const mercuryPresentation = presentationTextMap(mercurySynthesis);
-    const marsFacts = synthesisFactMap(marsSynthesis);
-    const marsPresentation = presentationTextMap(marsSynthesis);
-    const mercuryAll = (mercurySynthesis && mercurySynthesis.strongest_patterns) || [];
-    const marsAll = (marsSynthesis && marsSynthesis.repeated_signals) || [];
-    const mercuryRows = mercuryAll.slice(0, OVERVIEW_MERCURY_PATTERN_LIMIT)
-      .map((signal) => renderCompactSignalRow(signal, mercuryFacts, mercuryPresentation));
-    const marsRows = marsAll.slice(0, OVERVIEW_MARS_PATTERN_LIMIT)
-      .map((signal) => renderCompactSignalRow(signal, marsFacts, marsPresentation));
-    const rows = [...mercuryRows, ...marsRows].filter(Boolean);
-    if (!rows.length) return "";
-    const hasMore = mercuryAll.length > OVERVIEW_MERCURY_PATTERN_LIMIT
-      || marsAll.length > OVERVIEW_MARS_PATTERN_LIMIT;
-    const moreTab = mercuryAll.length > OVERVIEW_MERCURY_PATTERN_LIMIT ? "thinking" : "working";
-    const more = hasMore
-      ? `<button type="button" class="btn btn-ghost overview-cta" data-profile-tab="${moreTab}">Explore all patterns</button>`
-      : "";
-    return `<section class="panel overview-patterns">
-      <div class="panel-head"><h2>Key recurring patterns</h2></div>
-      <div class="result-list-group">${rows.join("")}</div>
-      ${more}
-    </section>`;
   }
 
   function renderOverviewTensions(synthesis) {
@@ -1661,7 +1674,6 @@
         <button type="button" class="btn btn-ghost overview-cta" data-profile-tab="working">Explore work style</button>
       </section>
     </div>
-    ${renderOverviewKeyPatterns(mercurySynthesis, marsSynthesis)}
     ${renderOverviewTensions(mercurySynthesis)}`;
   }
 
@@ -1874,15 +1886,10 @@
     const synthesis = (profile && profile.synthesis) || null;
     const audience = resolveProfileAudience(displayName);
     const person = currentPersonPerspective();
-    const identityName = person.name || (audience === "self" ? "Your profile" : "Profile");
     setBrandTitleForProfile(audience, displayName);
     activeProfileTab = profileTabFromHash();
 
     selfProfileContent.innerHTML = `
-      <section class="panel self-header profile-identity">
-        <h2>${escapeHtml(identityName)}</h2>
-        <p class="profile-kicker">Work profile</p>
-      </section>
       ${renderProfileTabNav()}
       <div class="profile-tab-panels">
         <div class="profile-tab-panel" data-profile-panel="overview" role="tabpanel">${renderProfileOverview(profile, marsProfile, person, audience)}</div>

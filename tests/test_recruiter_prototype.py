@@ -145,7 +145,7 @@ class RecruiterUxPolishTests(unittest.TestCase):
         self.assertNotIn("hardcodedProfile", self.js)
 
     def test_self_mode_title_and_presentation_hierarchy(self):
-        self.assertIn('SELF_BRAND_TITLE = "Your Mercury Profile"', self.js)
+        self.assertIn('SELF_BRAND_TITLE = "Your Work Profile"', self.js)
         self.assertIn('DEFAULT_BRAND_TITLE = "Team Intelligence"', self.js)
         self.assertIn("setBrandTitleMode", self.js)
         self.assertIn("setBrandTitleForProfile", self.js)
@@ -339,9 +339,9 @@ class RecruiterUxPolishTests(unittest.TestCase):
         self.assertIn("How it can show up in work", self.js)
         self.assertIn("possessiveLabel", self.js)
         self.assertIn("profileHeaderTitle", self.js)
-        self.assertIn("Mercury Profile", self.js)
-        self.assertIn("${possessiveLabel(name)} Mercury Profile", self.js)
-        self.assertIn(': "Mercury Profile"', self.js)
+        self.assertIn("${possessiveLabel(name)} Work Profile", self.js)
+        self.assertIn(': "Work Profile"', self.js)
+        self.assertNotIn("${possessiveLabel(name)} Mercury Profile", self.js)
         self.assertIn("${possessiveLabel(name)} profile", self.js)
         self.assertIn('subjectTail = "your profile"', self.js)
         self.assertIn('subjectTail = "this profile"', self.js)
@@ -853,11 +853,11 @@ class RecruiterProfileArchitectureTests(unittest.TestCase):
         self.assertIn("Explore work style", overview)
         self.assertIn('data-overview-dimension="think"', overview)
         self.assertIn('data-overview-dimension="work"', overview)
-        takeaways = self._fn("function renderMercuryOverviewTakeaways", "function renderOverviewKeyPatterns")
+        takeaways = self._fn("function renderMercuryOverviewTakeaways", "function renderOverviewTensions")
         self.assertIn("OVERVIEW_MERCURY_TAKEAWAY_LIMIT", takeaways)
         self.assertIn("const OVERVIEW_MERCURY_TAKEAWAY_LIMIT = 4", self.js)
-        self.assertIn("const OVERVIEW_MERCURY_PATTERN_LIMIT = 3", self.js)
-        self.assertIn("const OVERVIEW_MARS_PATTERN_LIMIT = 2", self.js)
+        self.assertNotIn("const OVERVIEW_MERCURY_PATTERN_LIMIT", self.js)
+        self.assertNotIn("renderOverviewKeyPatterns", overview)
 
     def test_thinking_groups_mercury_into_four_blocks(self):
         groups = self._fn("const MERCURY_THINKING_GROUPS", "const MARS_WORKING_GROUPS")
@@ -937,11 +937,8 @@ class RecruiterProfileArchitectureTests(unittest.TestCase):
         self.assertIn("const GROUP_PREVIEW_LIMIT = 3", self.js)
         join_fn = self._fn("function joinPreviewPieces", "function renderProfileGroup")
         self.assertIn(".slice(0, limit)", join_fn)
-        takeaways = self._fn("function renderMercuryOverviewTakeaways", "function renderOverviewKeyPatterns")
+        takeaways = self._fn("function renderMercuryOverviewTakeaways", "function renderOverviewTensions")
         self.assertIn("patterns.slice(0, OVERVIEW_MERCURY_TAKEAWAY_LIMIT)", takeaways)
-        key_patterns = self._fn("function renderOverviewKeyPatterns", "function renderOverviewTensions")
-        self.assertIn("mercuryAll.slice(0, OVERVIEW_MERCURY_PATTERN_LIMIT)", key_patterns)
-        self.assertIn("marsAll.slice(0, OVERVIEW_MARS_PATTERN_LIMIT)", key_patterns)
         tensions = self._fn("function renderOverviewTensions", "function renderProfileOverview")
         self.assertIn("tensions.slice(0, 1)", tensions)
 
@@ -995,6 +992,86 @@ class RecruiterProfileArchitectureTests(unittest.TestCase):
         bind_fn = self._fn("function bindProfileTabClicks", "function renderProfileTabNav")
         self.assertNotIn("apiPost", bind_fn)
         self.assertNotIn("buildMyProfile", bind_fn)
+
+    def test_page_title_is_named_work_profile(self):
+        title_fn = self._fn("function profileHeaderTitle", "function setBrandTitleForProfile")
+        self.assertIn("${possessiveLabel(name)} Work Profile", title_fn)
+        self.assertIn(': "Work Profile"', title_fn)
+        self.assertNotIn("Mercury Profile", title_fn)
+        self.assertNotIn("Avdey", title_fn)
+        self.assertIn("possessiveLabel", self.js)
+        self.assertIn('SELF_BRAND_TITLE = "Your Work Profile"', self.js)
+        self.assertNotIn('SELF_BRAND_TITLE = "Your Mercury Profile"', self.js)
+
+    def test_duplicate_identity_card_removed(self):
+        self_fn = self._fn("function renderSelfProfile", "async function buildMyProfile")
+        self.assertIn("renderProfileTabNav", self_fn)
+        self.assertNotIn("profile-identity", self_fn)
+        self.assertNotIn("profile-kicker", self_fn)
+        self.assertNotIn("Work profile", self_fn)
+        self.assertIn("setBrandTitleForProfile", self_fn)
+
+    def test_overview_omits_standalone_key_recurring_patterns(self):
+        overview = self._fn("function renderProfileOverview", "function renderThinkingGroup")
+        self.assertNotIn("Key recurring patterns", overview)
+        self.assertNotIn("renderOverviewKeyPatterns", overview)
+        self.assertNotIn("overview-patterns", overview)
+        self.assertNotIn("Explore all patterns", overview)
+        thinking = self._fn("function renderThinkingGroup", "function renderProfileThinking")
+        working = self._fn("function renderWorkingGroup", "function renderProfileWorking")
+        evidence = self._fn("function renderEvidencePatterns", "function renderProfileEvidence")
+        self.assertIn("strongest_patterns", thinking)
+        self.assertIn("repeated_signals", working)
+        self.assertIn("renderStrongestPatterns", evidence)
+        self.assertIn("renderMarsRecurringPatterns", evidence)
+        self.assertIn("Key recurring patterns", self.js)
+
+    def test_overview_tension_block_stays_compact(self):
+        overview = self._fn("function renderProfileOverview", "function renderThinkingGroup")
+        self.assertIn("renderOverviewTensions", overview)
+        tensions = self._fn("function renderOverviewTensions", "function renderProfileOverview")
+        self.assertIn("Tensions to be aware of", tensions)
+        self.assertIn("compact: true", tensions)
+        self.assertIn("tensions.slice(0, 1)", tensions)
+
+    def test_overview_bounds_competence_inflating_mercury_labels(self):
+        presentation = self._fn(
+            "const OVERVIEW_MERCURY_SIGNAL_PRESENTATION",
+            "const MERCURY_THINKING_GROUPS",
+        )
+        self.assertIn("technical_ability:", presentation)
+        self.assertIn("Technical aptitude signal", presentation)
+        self.assertIn("repeated source-described technical aptitude signals", presentation)
+        self.assertIn('debate:', presentation)
+        self.assertIn("Debate tendency", presentation)
+        self.assertIn("argumentation:", presentation)
+        self.assertIn("Argumentation pattern", presentation)
+        self.assertIn("sales:", presentation)
+        self.assertIn("Sales-related aptitude signal", presentation)
+        self.assertNotIn("analytical_thinking", presentation)
+        self.assertNotIn("validated", presentation.lower())
+        self.assertNotIn("verified skill", presentation.lower())
+        self.assertNotIn("hiring", presentation.lower())
+        takeaways = self._fn("function renderMercuryOverviewTakeaways", "function renderOverviewTensions")
+        self.assertIn("renderOverviewMercuryTakeawayRow", takeaways)
+        row = self._fn("function renderOverviewMercuryTakeawayRow", "function renderQuietMercuryFact")
+        self.assertIn('data-signal="${escapeHtml(signal.signal)}"', row)
+        compact = self._fn("function renderCompactSignalRow", "function overviewMercurySignalLabel")
+        self.assertIn("titleCaseSignal(signal.signal)", compact)
+        self.assertNotIn("OVERVIEW_MERCURY_SIGNAL_PRESENTATION", compact)
+
+    def test_overview_does_not_imply_verified_technical_skill(self):
+        overview = self._fn("function renderMercuryOverviewTakeaways", "function renderOverviewTensions")
+        presentation = self._fn(
+            "const OVERVIEW_MERCURY_SIGNAL_PRESENTATION",
+            "const MERCURY_THINKING_GROUPS",
+        )
+        self.assertIn("Technical aptitude signal", presentation)
+        self.assertNotIn("Technical Ability", overview)
+        self.assertNotIn("Technical talent", presentation)
+        self.assertNotIn("validated technical", f"{overview}\n{presentation}".lower())
+        self.assertNotIn("verified competency", f"{overview}\n{presentation}".lower())
+        self.assertIn("technical_ability", self.js)
 
 
 if __name__ == "__main__":
