@@ -1365,6 +1365,22 @@ details.more-details > summary::-webkit-details-marker {
   letter-spacing: 0.01em;
 }
 
+.profile-dimension.how-you-work {
+  margin-top: 2rem;
+  padding-top: 1.35rem;
+  border-top: 1px solid var(--border);
+}
+
+.dimension-heading {
+  margin: 0 0 1rem;
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+}
+
+.how-you-work-error {
+  margin: 0 0 1rem;
+}
+
 .details-methodology-rows {
   display: grid;
   gap: 0.15rem;

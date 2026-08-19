@@ -973,7 +973,261 @@
     </section>`;
   }
 
-  function renderSelfProfile(profile, displayName) {
+  const MARS_PRIMARY_SECTION_KEYS = [
+    "how_you_start",
+    "how_you_execute",
+    "work_rhythm",
+    "when_you_get_stuck",
+    "under_pressure",
+    "how_you_handle_obstacles",
+    "conflict_style",
+    "best_work_conditions",
+    "watchouts",
+  ];
+  const MARS_SECONDARY_SECTION_KEYS = [
+    "professional_associations",
+    "compensations",
+  ];
+
+  function marsFactorCardTitle(factorType, factorKey) {
+    if (factorType === "sign") return `Mars in ${factorKey}`;
+    if (factorType === "house") return `House ${factorKey}`;
+    if (factorType === "motion") {
+      if (String(factorKey).toLowerCase() === "retrograde") return "Retrograde Mars";
+      if (String(factorKey).toLowerCase() === "direct") return "Direct Mars";
+      return `Mars ${titleCaseSignal(factorKey)}`;
+    }
+    if (factorType === "aspect") {
+      const [type, ...rest] = String(factorKey).split("_");
+      const planet = rest.join("_");
+      return `Mars ${aspectPhrase(type, planet)} ${planet}`;
+    }
+    return `${factorType}:${factorKey}`;
+  }
+
+  function marsFactorLabelFromSource(sourceKey) {
+    const [type, ...rest] = String(sourceKey || "").split(":");
+    const key = rest.join(":");
+    if (type && key) return marsFactorCardTitle(type, key);
+    return provenanceLabel(sourceKey);
+  }
+
+  function marsGroupSectionFactsByFactor(section, facts) {
+    const groups = new Map();
+    const firstIndex = new Map();
+    (section.fact_ids || []).forEach((id, index) => {
+      const fact = facts.get(id);
+      if (!fact) return;
+      const key = `${fact.factor_type}:${fact.factor_key}`;
+      if (!groups.has(key)) {
+        groups.set(key, {
+          factor_type: fact.factor_type,
+          factor_key: fact.factor_key,
+          facts: [],
+        });
+        firstIndex.set(key, index);
+      }
+      groups.get(key).facts.push(fact);
+    });
+    return [...groups.keys()]
+      .sort((a, b) => {
+        const groupA = groups.get(a);
+        const groupB = groups.get(b);
+        const rankDiff = factorTypeRank(groupA.factor_type) - factorTypeRank(groupB.factor_type);
+        if (rankDiff !== 0) return rankDiff;
+        return firstIndex.get(a) - firstIndex.get(b);
+      })
+      .map((key) => groups.get(key));
+  }
+
+  function renderMarsSectionFactorExplore(section, facts, presentationMap) {
+    const groups = marsGroupSectionFactsByFactor(section, facts);
+    if (!groups.length) return "";
+    const rows = groups.map((group) => {
+      const label = marsFactorCardTitle(group.factor_type, group.factor_key);
+      const n = group.facts.length;
+      const countLabel = n === 1 ? "1 observation" : `${n} observations`;
+      const items = group.facts
+        .map((fact) => renderGroupedFactItem(fact, presentationMap))
+        .filter(Boolean)
+        .join("");
+      return `<details class="section-factor-group">
+        <summary>
+          <span class="section-factor-label">${escapeHtml(label)}</span>
+          <span class="section-factor-meta">
+            <span class="factor-summary-meta">${escapeHtml(countLabel)}</span>
+            <span class="section-factor-chevron" aria-hidden="true"></span>
+          </span>
+        </summary>
+        <ul class="fact-list section-factor-facts">${items}</ul>
+      </details>`;
+    }).join("");
+    return `<div class="section-factor-explore">
+      <p class="section-factor-explore-label">Profile factors behind this section</p>
+      ${rows}
+    </div>`;
+  }
+
+  function renderMarsSectionBody(section, facts, presentationMap) {
+    const previewIds = section.preview_fact_ids || [];
+    const previewItems = previewIds
+      .map((id) => renderPreviewFactItem(facts.get(id), presentationMap))
+      .filter(Boolean)
+      .join("");
+    const total = Number(section.fact_count) || (section.fact_ids || []).length;
+    const evidence = `${total} source-backed observations across ${section.factor_count} factor${section.factor_count === 1 ? "" : "s"}`;
+    const hasMore = total > previewIds.length;
+    const exploreLabel = total === 1
+      ? "Explore all 1 observation"
+      : `Explore all ${total} observations`;
+    const explore = hasMore
+      ? `<details class="section-explore">
+          <summary class="section-explore-summary">
+            <span class="explore-all-label">${escapeHtml(exploreLabel)}</span>
+          </summary>
+          ${renderMarsSectionFactorExplore(section, facts, presentationMap)}
+          <button type="button" class="section-show-less" onclick="this.closest('details.section-explore').open=false">Show less</button>
+        </details>`
+      : "";
+    return `<div class="section-body">
+      <p class="section-evidence-meta">${escapeHtml(evidence)}</p>
+      <ul class="fact-list section-preview">${previewItems}</ul>
+      ${explore}
+    </div>`;
+  }
+
+  function renderMarsRecurringPatterns(synthesis) {
+    const patterns = (synthesis && synthesis.repeated_signals) || [];
+    if (!patterns.length) return "";
+    const intro = `<p class="section-helper">Recurring work patterns supported by more than one calculated factor:</p>`;
+    const rows = patterns.map((signal) => {
+      const count = Number(signal.source_count) || (signal.sources || []).length || 0;
+      const supportLabel = count === 1
+        ? "Supported by 1 profile factor"
+        : `Supported by ${count} profile factors`;
+      const whyItems = (signal.sources || [])
+        .map((src) => `<li>${escapeHtml(marsFactorLabelFromSource(src))}</li>`)
+        .join("");
+      return `<article class="signal-row">
+        <div class="signal-row-main">
+          <strong class="signal-label">${escapeHtml(titleCaseSignal(signal.signal))}</strong>
+          <span class="signal-meta">${escapeHtml(supportLabel)}</span>
+        </div>
+        <details class="signal-why">
+          <summary>Why this appears</summary>
+          <div class="signal-why-body">
+            <p class="signal-why-label">Supported by:</p>
+            <ul class="signal-why-list">${whyItems}</ul>
+          </div>
+        </details>
+      </article>`;
+    }).join("");
+    return `<section class="panel synthesis-patterns level-1">
+      <div class="panel-head"><h2>Recurring work patterns</h2></div>
+      ${intro}
+      <div class="result-list-group">${rows}</div>
+    </section>`;
+  }
+
+  function renderMarsPrimarySections(synthesis) {
+    if (!synthesis || !synthesis.sections) return "";
+    const facts = synthesisFactMap(synthesis);
+    const presentation = presentationTextMap(synthesis);
+    return (synthesis.sections || []).map((section) => {
+      if (!section.fact_count) return "";
+      if (!MARS_PRIMARY_SECTION_KEYS.includes(section.key)) return "";
+      return `<section class="panel synthesis-section level-1" data-section-key="${escapeHtml(section.key)}">
+        <div class="panel-head"><h2>${escapeHtml(section.title)}</h2></div>
+        ${renderMarsSectionBody(section, facts, presentation)}
+      </section>`;
+    }).join("");
+  }
+
+  function renderMarsSecondarySections(synthesis) {
+    if (!synthesis || !synthesis.sections) return "";
+    const facts = synthesisFactMap(synthesis);
+    const presentation = presentationTextMap(synthesis);
+    return (synthesis.sections || []).map((section) => {
+      if (!section.fact_count) return "";
+      if (!MARS_SECONDARY_SECTION_KEYS.includes(section.key)) return "";
+      const countLabel = section.fact_count === 1
+        ? "1 source-backed observation"
+        : `${section.fact_count} source-backed observations`;
+      const helper = section.key === "professional_associations"
+        ? "These are source-described associations and aptitudes, not recommended jobs, verified competencies, or hiring recommendations."
+        : "Source material from the framework — not treated as an automatically active work trait.";
+      return `<section class="panel synthesis-watchouts level-2" data-section-key="${escapeHtml(section.key)}">
+        <details class="watchouts-block">
+          <summary>
+            <span class="watchouts-summary-main">${escapeHtml(section.title)}</span>
+            <span class="factor-summary-meta">${escapeHtml(countLabel)}</span>
+          </summary>
+          <div class="watchouts-body">
+            <p class="section-helper">${escapeHtml(helper)}</p>
+            ${renderMarsSectionBody(section, facts, presentation)}
+          </div>
+        </details>
+      </section>`;
+    }).join("");
+  }
+
+  function renderMarsDetailsMethodology(profile, synthesis) {
+    const calc = (profile && profile.calculated) || {};
+    const notes = (profile && profile.limitations) || [];
+    const unresolved = (profile && profile.conditional_unresolved) || [];
+    const motion = String(calc.mars_motion || "");
+    const motionLabel = motion.toLowerCase() === "retrograde" ? "Retrograde" : titleCaseSignal(motion);
+    const aspectList = (calc.aspects || [])
+      .map((aspect) => `${titleCaseSignal(aspect.type)} ${aspect.planet}`)
+      .join(" · ");
+    const calcLine = `Mars in ${calc.mars_sign || "—"} · House ${calc.mars_house ?? "—"} · ${motionLabel || "—"}`;
+    const notesHtml = notes.length
+      ? `<details class="methodology-row profile-notes-block">
+          <summary>Profile notes <span class="factor-summary-meta">${notes.length}</span></summary>
+          <ul class="profile-notes-list">${notes.map((note) => `<li>${escapeHtml(note)}</li>`).join("")}</ul>
+        </details>`
+      : "";
+    const unresolvedHtml = unresolved.length
+      ? `<details class="methodology-row conditional-notes-block">
+          <summary>Conditional source notes <span class="factor-summary-meta">${unresolved.length}</span></summary>
+          <p class="section-helper">These source notes depend on conditions that are not resolved from the available chart data. They are not treated as active.</p>
+        </details>`
+      : "";
+    const evidenceHtml = `<details class="methodology-row">
+      <summary>Calculated work factors</summary>
+      <p class="self-calc-line">${escapeHtml(calcLine)}</p>
+      ${aspectList ? `<p class="meta">${escapeHtml(aspectList)}</p>` : ""}
+    </details>`;
+    if (!notesHtml && !unresolvedHtml && !synthesis) return evidenceHtml;
+    return `<section class="panel details-methodology level-3">
+      <div class="panel-head"><h2>Details &amp; methodology</h2></div>
+      <div class="details-methodology-rows">
+        ${unresolvedHtml}
+        ${notesHtml}
+        ${evidenceHtml}
+      </div>
+    </section>`;
+  }
+
+  function renderHowYouWorkDimension(profile, error) {
+    if (error) {
+      return `<section class="profile-dimension how-you-work" data-dimension="work">
+        <h2 class="dimension-heading">How you work</h2>
+        <p class="status-line error how-you-work-error" role="status">${escapeHtml(error)}</p>
+      </section>`;
+    }
+    if (!profile) return "";
+    const synthesis = profile.synthesis || null;
+    return `<section class="profile-dimension how-you-work" data-dimension="work">
+      <h2 class="dimension-heading">How you work</h2>
+      ${renderMarsRecurringPatterns(synthesis)}
+      ${renderMarsPrimarySections(synthesis)}
+      ${renderMarsSecondarySections(synthesis)}
+      ${renderMarsDetailsMethodology(profile, synthesis)}
+    </section>`;
+  }
+
+  function renderSelfProfile(profile, displayName, marsProfile, marsError) {
     const calc = profile.calculated || {};
     const synthesis = profile.synthesis || null;
     const audience = resolveProfileAudience(displayName);
@@ -998,6 +1252,7 @@
       ${renderConditionalTensions(synthesis)}
       ${renderContextWatchOuts(synthesis, audience)}
       ${renderDetailsMethodology(profile, synthesis, displayName, factCount)}
+      ${renderHowYouWorkDimension(marsProfile, marsError)}
     `;
   }
 
@@ -1023,15 +1278,34 @@
     showSelfProfileShell();
     selfProfileContent.innerHTML = "";
 
+    const mercuryPromise = apiPost("/api/v1/mercury-source-profile", payload);
+    const marsPromise = apiPost("/api/v1/mars-source-profile", payload);
+
+    let mercury = null;
     try {
-      const profile = await apiPost("/api/v1/mercury-source-profile", payload);
-      closeSelfDrawer();
-      renderSelfProfile(profile, displayName);
-      setStatus(selfProfileStatus, "");
-      setStatus(selfSetupStatus, "");
+      mercury = await mercuryPromise;
     } catch (err) {
       setStatus(selfSetupStatus, err.message, "error");
       setStatus(selfProfileStatus, err.message, "error");
+      try {
+        const marsOnly = await marsPromise;
+        selfProfileContent.innerHTML = renderHowYouWorkDimension(marsOnly, null);
+      } catch (marsErr) {
+        selfProfileContent.innerHTML = renderHowYouWorkDimension(null, marsErr.message);
+      }
+      return;
+    }
+
+    closeSelfDrawer();
+    renderSelfProfile(mercury, displayName, null, null);
+    setStatus(selfProfileStatus, "");
+    setStatus(selfSetupStatus, "");
+
+    try {
+      const mars = await marsPromise;
+      renderSelfProfile(mercury, displayName, mars, null);
+    } catch (err) {
+      renderSelfProfile(mercury, displayName, null, err.message);
     }
   }
 

@@ -10,6 +10,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from app.schemas.mars_source_profile import (
+    CalculatedMarsSnapshot,
+    MarsAspect as MarsAspectSchema,
+    MarsProfileSynthesisResponse,
+    MarsRepeatedSignal as MarsRepeatedSignalSchema,
+    MarsSourceCoverage as MarsSourceCoverageSchema,
+    MarsSourceFact as MarsSourceFactSchema,
+    MarsSourceProfileResponse,
+    MarsSynthesisSection as MarsSynthesisSectionSchema,
+    MarsSynthesisTraceability as MarsSynthesisTraceabilitySchema,
+)
 from app.services.mars_human_copy import presentation_overrides_for_facts
 from app.services.mars_repeated_signals import MarsRepeatedSignal, detect_mars_repeated_signals
 from app.services.mars_source_profile import MarsSourceCoverage, MarsSourceFact, MarsSourceProfile
@@ -221,4 +232,114 @@ def build_mars_profile_synthesis(profile: MarsSourceProfile) -> MarsProfileSynth
         ),
         facts_by_id=facts_by_id,
         presentation_text_by_fact_id=presentation_overrides_for_facts(canonical),
+    )
+
+
+MARS_PREVIEW_FACT_LIMIT = 3
+
+
+def _to_fact_schema(fact: MarsSourceFact) -> MarsSourceFactSchema:
+    return MarsSourceFactSchema(
+        id=fact.id,
+        factor_type=fact.factor_type,  # type: ignore[arg-type]
+        factor_key=fact.factor_key,
+        category=fact.category,
+        text=fact.text,
+        polarity=fact.polarity,  # type: ignore[arg-type]
+        scope=fact.scope,  # type: ignore[arg-type]
+        tags=list(fact.tags),
+        source_reference=fact.source_reference,
+        activation_condition=fact.activation_condition,
+        activated=fact.activated,
+        unresolved=fact.unresolved,
+    )
+
+
+def _to_repeated_schema(signal: MarsRepeatedSignal) -> MarsRepeatedSignalSchema:
+    return MarsRepeatedSignalSchema(
+        signal=signal.signal,
+        tag=signal.tag,
+        source_count=signal.source_count,
+        sources=list(signal.sources),
+        fact_ids=list(signal.fact_ids),
+    )
+
+
+def _to_coverage_schema(coverage: MarsSourceCoverage) -> MarsSourceCoverageSchema:
+    return MarsSourceCoverageSchema(
+        status=coverage.status,  # type: ignore[arg-type]
+        covered_factors=list(coverage.covered_factors),
+        unimplemented_source_factors=list(coverage.unimplemented_source_factors),
+    )
+
+
+def serialize_mars_profile_synthesis(
+    synthesis: MarsProfileSynthesis,
+) -> MarsProfileSynthesisResponse:
+    """Convert internal Mars synthesis dataclasses to the API response schema."""
+    return MarsProfileSynthesisResponse(
+        repeated_signals=[_to_repeated_schema(item) for item in synthesis.repeated_signals],
+        sections=[
+            MarsSynthesisSectionSchema(
+                key=item.key,
+                title=item.title,
+                categories=list(item.categories),
+                tags=list(item.tags),
+                fact_ids=list(item.fact_ids),
+                fact_count=item.fact_count,
+                factor_keys=list(item.factor_keys),
+                factor_count=item.factor_count,
+                repeated_fact_ids=list(item.repeated_fact_ids),
+                repeated_signals=list(item.repeated_signals),
+                preview_fact_ids=list(item.fact_ids[:MARS_PREVIEW_FACT_LIMIT]),
+            )
+            for item in synthesis.sections
+        ],
+        source_specific_fact_ids=list(synthesis.source_specific_fact_ids),
+        unresolved_fact_ids=list(synthesis.unresolved_fact_ids),
+        coverage=_to_coverage_schema(synthesis.coverage),
+        limitations=list(synthesis.limitations),
+        traceability=MarsSynthesisTraceabilitySchema(
+            activated_fact_count=synthesis.traceability.activated_fact_count,
+            section_fact_count=synthesis.traceability.section_fact_count,
+            detail_fact_count=synthesis.traceability.detail_fact_count,
+            unresolved_fact_count=synthesis.traceability.unresolved_fact_count,
+            unclassified_fact_count=synthesis.traceability.unclassified_fact_count,
+        ),
+        facts_by_id={
+            fact_id: _to_fact_schema(fact) for fact_id, fact in synthesis.facts_by_id.items()
+        },
+        presentation_text_by_fact_id=dict(synthesis.presentation_text_by_fact_id),
+    )
+
+
+def serialize_mars_source_profile(profile: MarsSourceProfile) -> MarsSourceProfileResponse:
+    """Serialize calculated Mars source + additive synthesis for API/UI delivery."""
+    calculated = profile.calculated
+    synthesis = serialize_mars_profile_synthesis(build_mars_profile_synthesis(profile))
+    return MarsSourceProfileResponse(
+        calculated=CalculatedMarsSnapshot(
+            mars_sign=calculated.mars_sign,
+            mars_house=calculated.mars_house,
+            mars_motion=calculated.mars_motion,  # type: ignore[arg-type]
+            birth_time_known=calculated.birth_time_known,
+            aspects=[
+                MarsAspectSchema(
+                    planet=item.planet,
+                    type=item.type,
+                    orb_deg=item.orb_deg,
+                )
+                for item in calculated.mars_aspects
+            ],
+            house_system_used=calculated.house_system_used,
+        ),
+        sign_facts=[_to_fact_schema(fact) for fact in profile.sign_facts],
+        house_facts=[_to_fact_schema(fact) for fact in profile.house_facts],
+        motion_facts=[_to_fact_schema(fact) for fact in profile.motion_facts],
+        aspect_facts=[_to_fact_schema(fact) for fact in profile.aspect_facts],
+        repeated_signals=[_to_repeated_schema(item) for item in profile.repeated_signals],
+        conditional_unresolved=[_to_fact_schema(fact) for fact in profile.conditional_unresolved],
+        coverage=_to_coverage_schema(profile.coverage),
+        limitations=list(profile.limitations),
+        synthesis=synthesis,
     )

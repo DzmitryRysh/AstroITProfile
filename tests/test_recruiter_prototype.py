@@ -66,6 +66,7 @@ class RecruiterPrototypeRouteTests(unittest.TestCase):
         self.assertIn("/api/v1/profile", paths)
         self.assertIn("/api/v1/mercury-work-profile", paths)
         self.assertIn("/api/v1/mercury-source-profile", paths)
+        self.assertIn("/api/v1/mars-source-profile", paths)
         self.assertIn("/api/v1/candidate-compare", paths)
         self.assertIn("/api/v1/team-map", paths)
         self.assertIn("/api/v1/team-gap", paths)
@@ -594,6 +595,82 @@ class RecruiterUxPolishTests(unittest.TestCase):
         self.assertNotIn("team_map", self.js.split("collectWorkspacePayload", 1)[1].split("function ", 1)[0])
         self.assertNotIn("closed_missing_functions", self.js.split("collectWorkspacePayload", 1)[1].split("function ", 1)[0])
         self.assertNotIn("missing_required_functions", self.js.split("collectWorkspacePayload", 1)[1].split("function ", 1)[0])
+
+
+class RecruiterMarsHowYouWorkTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.js = RECRUITER_JS.read_text(encoding="utf-8")
+        cls.css = RECRUITER_CSS.read_text(encoding="utf-8")
+        cls.html = RECRUITER_INDEX.read_text(encoding="utf-8")
+
+    def test_how_you_work_dimension_exists_after_how_you_think(self):
+        self.assertIn('dimension-heading">How you work', self.js)
+        self.assertIn("renderHowYouWorkDimension", self.js)
+        self.assertIn("renderSelfProfile(mercury, displayName, mars, null)", self.js)
+        think_title = self.js.find('thinking: "How you think"')
+        work_title = self.js.find('dimension-heading">How you work')
+        self.assertGreater(think_title, 0)
+        self.assertGreater(work_title, think_title)
+
+    def test_ui_reads_mars_api_contract(self):
+        self.assertIn("/api/v1/mars-source-profile", self.js)
+        self.assertIn("/api/v1/mercury-source-profile", self.js)
+        self.assertIn("renderMarsRecurringPatterns", self.js)
+        self.assertIn("renderMarsPrimarySections", self.js)
+        self.assertIn("presentation_text_by_fact_id", self.js)
+        self.assertIn("humanFactText", self.js)
+        self.assertIn("preview_fact_ids", self.js)
+        self.assertIn("section.fact_ids", self.js)
+        self.assertIn("section.fact_count", self.js)
+
+    def test_mercury_how_you_think_remains_intact(self):
+        self.assertIn('thinking: "How you think"', self.js)
+        self.assertIn("renderStrongestPatterns", self.js)
+        self.assertIn("renderSynthesisSections", self.js)
+        self.assertIn("Key recurring patterns", self.js)
+        self.assertNotIn("HOW YOU THINK", self.js.replace('thinking: "How you think"', ""))
+
+    def test_no_score_hire_or_rank_language(self):
+        blob = f"{self.html}\n{self.css}\n{self.js}".lower()
+        self.assertNotIn("mars score", blob)
+        self.assertNotIn("productivity score", blob)
+        self.assertNotIn("hire/reject", blob)
+        self.assertNotIn("job-fit", blob)
+        self.assertNotIn("best role for this person", blob)
+        self.assertNotIn("candidate ranking", blob)
+        self.assertNotIn("validated ability", blob)
+
+    def test_empty_sections_do_not_invent_content(self):
+        primary = self.js.split("function renderMarsPrimarySections", 1)[1].split(
+            "function renderMarsSecondarySections", 1
+        )[0]
+        self.assertIn("if (!section.fact_count) return \"\"", primary)
+        self.assertNotIn("No data means", self.js)
+        self.assertNotIn("no obstacle ability", self.js.lower())
+        repeats = self.js.split("function renderMarsRecurringPatterns", 1)[1].split(
+            "function renderMarsPrimarySections", 1
+        )[0]
+        self.assertIn("if (!patterns.length) return \"\"", repeats)
+
+    def test_professional_associations_are_source_bounded(self):
+        secondary = self.js.split("function renderMarsSecondarySections", 1)[1].split(
+            "function renderMarsDetailsMethodology", 1
+        )[0]
+        self.assertIn("professional_associations", secondary)
+        self.assertIn("source-described associations and aptitudes", secondary)
+        self.assertIn("not recommended jobs", secondary)
+        self.assertIn("watchouts-block", secondary)
+        self.assertNotIn("best role", secondary.lower())
+
+    def test_mars_error_does_not_destroy_mercury_block(self):
+        build = self.js.split("async function buildMyProfile", 1)[1].split(
+            "function createMemberCard", 1
+        )[0]
+        self.assertIn("renderSelfProfile(mercury, displayName, null, err.message)", build)
+        self.assertIn("renderSelfProfile(mercury, displayName, mars, null)", build)
+        self.assertIn("how-you-work-error", self.js)
+        self.assertIn(".profile-dimension.how-you-work", self.css)
 
 
 if __name__ == "__main__":
