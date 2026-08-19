@@ -5,6 +5,7 @@ from __future__ import annotations
 import inspect
 import unittest
 from datetime import date, time
+from unittest.mock import patch
 
 from app.api.routes.thinking_to_execution import create_thinking_to_execution
 from app.core.app import create_app
@@ -24,10 +25,14 @@ from app.services.mercury_source_profile import (
 )
 from app.services.person_perspective import build_person_perspective
 from app.services import thinking_to_execution as tte
+from app.services.mercury_human_copy_catalog import (
+    APPROVED_RAW_FACT_IDS,
+    STATUS_APPROVED_RAW,
+    STATUS_UNREVIEWED,
+    derive_review_status,
+)
 from app.services.thinking_to_execution import (
     CROSS_PATTERN_SPECS,
-    EXCLUDED_MARS_SCOPES,
-    OVERVIEW_BRIDGE_LIMIT,
     build_thinking_to_execution,
 )
 
@@ -96,10 +101,16 @@ class ThinkingToExecutionRegistryTests(unittest.TestCase):
         self.assertNotIn("hiring", templates)
         self.assertNotIn("avdey", templates)
         self.assertNotIn("score", tte.WHY_TEMPLATE.lower())
+        analysis = next(spec for spec in CROSS_PATTERN_SPECS if spec.id == "analysis_slower_commitment")
+        speed = next(spec for spec in CROSS_PATTERN_SPECS if spec.id == "fast_processing_slower_commitment")
+        self.assertNotIn("clear analysis", analysis.title.lower())
+        self.assertNotIn("clearly", analysis.presentation_template.lower())
+        self.assertNotIn("fast processing", speed.title.lower())
+        self.assertNotIn("process quickly", speed.presentation_template.lower())
 
 
 class ThinkingToExecutionProfileTests(unittest.TestCase):
-    def test_avdey_patterns_are_evidence_backed(self):
+    def test_avdey_unreviewed_analytical_facts_do_not_feed_bridges(self):
         mercury = _mercury(**AVDEY)
         mars = _mars(**AVDEY)
         result = build_thinking_to_execution(
@@ -107,40 +118,19 @@ class ThinkingToExecutionProfileTests(unittest.TestCase):
             mars,
             build_person_perspective(name="Avdey", sex="male"),
         )
-        ids = [item.id for item in result.patterns]
-        self.assertEqual(
-            ids,
-            [
-                "analysis_to_deliberate_execution",
-                "analysis_slower_commitment",
-                "analysis_to_practical_execution",
-            ],
-        )
-        self.assertLessEqual(len(result.patterns), OVERVIEW_BRIDGE_LIMIT)
-        mercury_ids = {
+        analytical_ids = {
             fact.id
             for bucket in (mercury.sign_facts, mercury.house_facts, mercury.motion_facts, mercury.aspect_facts)
             for fact in bucket
-            if fact.activated and not fact.unresolved
+            if fact.activated and not fact.unresolved and "analytical_thinking" in (fact.tags or [])
         }
-        mars_by_id = {
-            fact.id: fact
-            for bucket in (mars.sign_facts, mars.house_facts, mars.motion_facts, mars.aspect_facts)
-            for fact in bucket
-        }
-        for pattern in result.patterns:
-            self.assertTrue(pattern.mercury_support)
-            self.assertTrue(pattern.mars_support)
-            self.assertTrue(set(pattern.mercury_support) <= mercury_ids)
-            for fact_id in pattern.mars_support:
-                self.assertIn(fact_id, mars_by_id)
-                self.assertNotIn(mars_by_id[fact_id].scope, EXCLUDED_MARS_SCOPES)
-            self.assertTrue(all(item.startswith("mercury:") for item in pattern.mercury_provenance))
-            self.assertTrue(all(item.startswith("mars:") for item in pattern.mars_provenance))
-            self.assertNotIn("overthinking", pattern.presentation_text.lower())
-        self.assertTrue(
-            any("Avdey" in item.presentation_text for item in result.patterns)
+        self.assertEqual(
+            analytical_ids,
+            {"saturn_tr_analytical_ability", "pluto_sq_analytical_ability"},
         )
+        for fact_id in analytical_ids:
+            self.assertEqual(derive_review_status(fact_id), STATUS_UNREVIEWED)
+        self.assertEqual([item.id for item in result.patterns], [])
         self.assertNotIn("technical_ability", [item.mercury_semantic for item in result.patterns])
 
     def test_vlad_gets_only_evidence_backed_pattern(self):
@@ -159,6 +149,72 @@ class ThinkingToExecutionProfileTests(unittest.TestCase):
         )
         self.assertNotIn("analysis_to_deliberate_execution", ids)
         self.assertNotIn("fast_processing_to_fast_action", ids)
+
+    def test_two_mercury_support_facts_are_presentation_ready(self):
+        for fact_id in (
+            "mars_tr_thinking_more_analytical",
+            "mars_tr_thinking_faster",
+        ):
+            self.assertIn(fact_id, APPROVED_RAW_FACT_IDS)
+            self.assertEqual(derive_review_status(fact_id), STATUS_APPROVED_RAW)
+        by_id = {fact.id: fact for fact in ALL_SOURCE_FACTS}
+        self.assertEqual(
+            by_id["mars_tr_thinking_more_analytical"].text,
+            "Thinking becomes more analytical.",
+        )
+        self.assertEqual(by_id["mars_tr_thinking_faster"].text, "Thinking becomes faster.")
+        self.assertEqual(
+            by_id["mars_tr_thinking_more_analytical"].tags,
+            ("analytical_thinking",),
+        )
+        self.assertEqual(by_id["mars_tr_thinking_faster"].tags, ("fast_thinking",))
+
+    def test_dzmitry_bridges_use_exact_semantics_not_inflated_wording(self):
+        result = _bridge({"name": "Dzmitry", "sex": "male"}, DZMITRY)
+        by_id = {item.id: item for item in result.patterns}
+        analysis = by_id["analysis_slower_commitment"]
+        self.assertEqual(analysis.title, "More analytical thinking → Slower commitment")
+        self.assertEqual(analysis.mercury_semantic, "analytical_thinking")
+        self.assertEqual(analysis.mars_semantic, "action_hesitation")
+        self.assertEqual(analysis.mercury_support, ["mars_tr_thinking_more_analytical"])
+        self.assertEqual(analysis.mars_support, ["mars_libra_indecision_delayed_choice"])
+        self.assertEqual(
+            analysis.presentation_text,
+            "Dzmitry's thinking may become more analytical while still "
+            "taking more time to commit to action.",
+        )
+        self.assertNotIn("clear", analysis.presentation_text.lower())
+        speed = by_id["fast_processing_slower_commitment"]
+        self.assertEqual(speed.title, "Faster thinking → Slower commitment")
+        self.assertEqual(speed.mercury_semantic, "fast_thinking")
+        self.assertEqual(speed.mars_semantic, "action_hesitation")
+        self.assertEqual(speed.mercury_support, ["mars_tr_thinking_faster"])
+        self.assertNotIn("conjunction_Uranus", " ".join(speed.mercury_provenance))
+        self.assertNotIn("fast processing", speed.title.lower())
+        self.assertNotIn("process", speed.presentation_text.lower())
+        self.assertEqual(
+            speed.presentation_text,
+            "Dzmitry's thinking may move faster while still hesitating "
+            "before fully committing to action.",
+        )
+
+    def test_unreviewed_support_does_not_render_or_fallback(self):
+        real = tte.mercury_review_status
+
+        def fake_status(fact_id: str) -> str:
+            if fact_id in {
+                "mars_tr_thinking_more_analytical",
+                "mars_tr_thinking_faster",
+            }:
+                return STATUS_UNREVIEWED
+            return real(fact_id)
+
+        with patch.object(tte, "mercury_review_status", fake_status):
+            result = _bridge({"name": "Dzmitry", "sex": "male"}, DZMITRY)
+        ids = [item.id for item in result.patterns]
+        self.assertNotIn("analysis_slower_commitment", ids)
+        self.assertNotIn("fast_processing_slower_commitment", ids)
+        self.assertEqual(result.patterns, [])
 
     def test_zero_pattern_result_is_valid_and_has_no_fallback_prose(self):
         mercury = build_source_profile_from_factors(
@@ -191,37 +247,41 @@ class ThinkingToExecutionProfileTests(unittest.TestCase):
         self.assertNotIn("analysis_to_deliberate_execution", ids)
 
     def test_deterministic_and_female_self_unknown_perspectives(self):
-        first = _bridge({"name": "Avdey", "sex": "male"}, AVDEY)
-        second = _bridge({"name": "Avdey", "sex": "male"}, AVDEY)
+        first = _bridge({"name": "Dzmitry", "sex": "male"}, DZMITRY)
+        second = _bridge({"name": "Dzmitry", "sex": "male"}, DZMITRY)
         self.assertEqual(first.model_dump(), second.model_dump())
-        female = _bridge({"name": "Nadia", "sex": "female"}, AVDEY)
+        female = _bridge({"name": "Nadia", "sex": "female"}, DZMITRY)
         self.assertTrue(any("Nadia" in item.presentation_text for item in female.patterns))
         self.assertFalse(any(" he " in item.presentation_text.lower() for item in female.patterns))
-        unknown = _bridge({"name": "Avdey"}, AVDEY)
+        unknown = _bridge({"name": "Dzmitry"}, DZMITRY)
         self.assertFalse(any(item.presentation_text.startswith("He ") for item in unknown.patterns))
-        self_view = _bridge({"name": "", "perspective": "self"}, AVDEY)
+        self_view = _bridge({"name": "", "perspective": "self"}, DZMITRY)
         self.assertTrue(any(item.presentation_text.startswith("Your ") or item.presentation_text.startswith("You ") for item in self_view.patterns))
-        self.assertFalse(any("Avdey" in item.presentation_text for item in self_view.patterns))
+        self.assertFalse(any("Dzmitry" in item.presentation_text for item in self_view.patterns))
 
-    def test_api_returns_namespaced_avdey_bridge(self):
+    def test_api_returns_namespaced_dzmitry_bridge(self):
         app = create_app()
         paths = {getattr(route, "path", None) for route in app.routes}
         self.assertIn("/api/v1/thinking-to-execution", paths)
         response = create_thinking_to_execution(
             ThinkingToExecutionRequest(
-                birth_date=AVDEY["birth_date"],
-                birth_time=AVDEY["birth_time"],
-                birth_place=AVDEY["birth_place"],
-                display_name="Avdey",
+                birth_date=DZMITRY["birth_date"],
+                birth_time=DZMITRY["birth_time"],
+                birth_place=DZMITRY["birth_place"],
+                display_name="Dzmitry",
                 sex="male",
             )
         )
-        self.assertEqual(len(response.patterns), 3)
+        self.assertEqual(len(response.patterns), 2)
         self.assertTrue(all(item.mercury_provenance[0].startswith("mercury:") for item in response.patterns))
+        self.assertTrue(all("sextile_Mars" in " ".join(item.mercury_provenance) for item in response.patterns))
+        self.assertFalse(any("conjunction_Uranus" in " ".join(item.mercury_provenance) for item in response.patterns))
         blob = response.model_dump_json().lower()
         self.assertNotIn("hire", blob)
         self.assertNotIn("ranking", blob)
         self.assertNotIn("score", blob)
+        self.assertNotIn("clear analysis", blob)
+        self.assertNotIn("fast processing", blob)
 
 
 if __name__ == "__main__":

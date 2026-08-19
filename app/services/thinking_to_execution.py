@@ -14,12 +14,30 @@ from app.schemas.thinking_to_execution import (
     CrossProfilePattern,
     ThinkingToExecutionSynthesis,
 )
+from app.services.mars_human_copy_catalog import (
+    STATUS_APPROVED_OVERRIDE as MARS_APPROVED_OVERRIDE,
+    STATUS_APPROVED_RAW as MARS_APPROVED_RAW,
+    derive_review_status as mars_review_status,
+)
 from app.services.mars_profile_synthesis import collect_activated_mars_facts
 from app.services.mars_source_profile import MarsSourceFact, MarsSourceProfile
+from app.services.mercury_human_copy_catalog import (
+    STATUS_APPROVED_OVERRIDE as MERCURY_APPROVED_OVERRIDE,
+    STATUS_APPROVED_RAW as MERCURY_APPROVED_RAW,
+    derive_review_status as mercury_review_status,
+)
 from app.services.person_perspective import PersonPerspective, fill_person_template
 
 EXCLUDED_MARS_SCOPES = frozenset({"SOURCE_ONLY", "PERSONAL_MARS"})
 OVERVIEW_BRIDGE_LIMIT = 3
+PRESENTATION_READY_STATUSES = frozenset(
+    {
+        MERCURY_APPROVED_OVERRIDE,
+        MERCURY_APPROVED_RAW,
+        MARS_APPROVED_OVERRIDE,
+        MARS_APPROVED_RAW,
+    }
+)
 
 WHY_TEMPLATE = (
     "This connection appears because both an exact Mercury {mercury_semantic} "
@@ -55,13 +73,13 @@ CROSS_PATTERN_SPECS: tuple[CrossPatternSpec, ...] = (
     ),
     CrossPatternSpec(
         id="analysis_slower_commitment",
-        title="Clear analysis → Slower commitment",
+        title="More analytical thinking → Slower commitment",
         kind="friction",
         mercury_semantic="analytical_thinking",
         mars_semantic="action_hesitation",
         presentation_template=(
-            "{name} may analyze a situation clearly while still taking more "
-            "time to commit to action."
+            "{NamePossessive} thinking may become more analytical while still "
+            "taking more time to commit to action."
         ),
     ),
     CrossPatternSpec(
@@ -76,13 +94,13 @@ CROSS_PATTERN_SPECS: tuple[CrossPatternSpec, ...] = (
     ),
     CrossPatternSpec(
         id="fast_processing_slower_commitment",
-        title="Fast processing → Slower commitment",
+        title="Faster thinking → Slower commitment",
         kind="friction",
         mercury_semantic="fast_thinking",
         mars_semantic="action_hesitation",
         presentation_template=(
-            "{name} may process quickly while still hesitating before fully "
-            "committing to action."
+            "{NamePossessive} thinking may move faster while still hesitating "
+            "before fully committing to action."
         ),
     ),
     CrossPatternSpec(
@@ -130,6 +148,14 @@ def _facts_with_tag(facts, tag: str):
     return [fact for fact in facts if tag in (fact.tags or ())]
 
 
+def _mercury_is_presentation_ready(fact: SourceFact) -> bool:
+    return mercury_review_status(fact.id) in PRESENTATION_READY_STATUSES
+
+
+def _mars_is_presentation_ready(fact: MarsSourceFact) -> bool:
+    return mars_review_status(fact.id) in PRESENTATION_READY_STATUSES
+
+
 def _mercury_provenance(fact: SourceFact) -> str:
     return f"mercury:{fact.factor_type}:{fact.factor_key}"
 
@@ -152,8 +178,16 @@ def build_thinking_to_execution(
     mars_facts = _active_mars_facts(mars_profile)
     patterns: list[CrossProfilePattern] = []
     for spec in CROSS_PATTERN_SPECS:
-        mercury_support = _facts_with_tag(mercury_facts, spec.mercury_semantic)
-        mars_support = _facts_with_tag(mars_facts, spec.mars_semantic)
+        mercury_support = [
+            fact
+            for fact in _facts_with_tag(mercury_facts, spec.mercury_semantic)
+            if _mercury_is_presentation_ready(fact)
+        ]
+        mars_support = [
+            fact
+            for fact in _facts_with_tag(mars_facts, spec.mars_semantic)
+            if _mars_is_presentation_ready(fact)
+        ]
         if not mercury_support or not mars_support:
             continue
         patterns.append(
