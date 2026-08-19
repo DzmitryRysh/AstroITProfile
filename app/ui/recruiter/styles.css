@@ -1375,6 +1375,119 @@ details.more-details > summary::-webkit-details-marker {
   border-top: 1px solid var(--border);
 }
 
+.profile-identity {
+  padding: 1.05rem 1.25rem 1.1rem;
+}
+
+.profile-kicker {
+  margin: 0.15rem 0 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.profile-tab-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.35rem 0 1.25rem;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.profile-tab {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 650;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.profile-tab:hover {
+  color: var(--text);
+  background: var(--bg-soft);
+}
+
+.profile-tab.is-active {
+  color: var(--text);
+  background: var(--accent-soft);
+}
+
+.profile-tab-panels {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.profile-tab-panel[hidden] {
+  display: none !important;
+}
+
+.overview-grid {
+  display: grid;
+  gap: 1.35rem;
+}
+
+@media (min-width: 900px) {
+  .overview-grid {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+}
+
+.overview-dimension,
+.overview-patterns,
+.overview-tensions,
+.profile-group {
+  padding: 1.05rem 1.15rem 1.15rem;
+}
+
+.overview-cta {
+  margin-top: 0.9rem;
+}
+
+.overview-dimension .work-glance {
+  grid-template-columns: 1fr;
+}
+
+.overview-mars-repeat {
+  margin-top: 0.75rem;
+}
+
+.profile-group .section-helper {
+  margin-top: -0.25rem;
+}
+
+.profile-subsection {
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border);
+}
+
+.profile-subsection:first-child {
+  margin-top: 0.35rem;
+}
+
+.profile-subsection h3 {
+  margin: 0 0 0.55rem;
+  font-size: 0.95rem;
+}
+
+.profile-professional {
+  margin-top: 1rem;
+}
+
+.evidence-stack {
+  display: grid;
+  gap: 1rem;
+}
+
 .work-glance {
   display: grid;
   gap: 0.85rem;
@@ -1527,6 +1640,10 @@ details.more-details > summary::-webkit-details-marker {
 }
 
 @media (max-width: 700px) {
+  .profile-tab-nav {
+    gap: 0.2rem;
+  }
+
   .signal-row {
     grid-template-columns: 1fr;
   }

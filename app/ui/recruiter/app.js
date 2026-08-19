@@ -55,6 +55,7 @@
   let impactByCandidateId = {};
   let analyzed = false;
   let activeWorkspaceId = null;
+  let activeProfileTab = "overview";
 
   const DEMO = {
     teamName: "AI Platform Team",
@@ -781,7 +782,8 @@
     </div>`;
   }
 
-  function renderSectionBody(section, facts, presentationMap) {
+  function renderSectionBody(section, facts, presentationMap, options) {
+    const hideMeta = options && options.hideMeta;
     const previewIds = section.preview_fact_ids || [];
     const previewItems = previewIds
       .map((id) => renderPreviewFactItem(facts.get(id), presentationMap))
@@ -800,12 +802,13 @@
           <summary class="section-explore-summary">
             <span class="explore-all-label">${escapeHtml(exploreLabel)}</span>
           </summary>
+          ${hideMeta ? "" : `<p class="section-evidence-meta">${escapeHtml(evidence)}</p>`}
           ${renderSectionFactorExplore(section, facts, presentationMap)}
           <button type="button" class="section-show-less" onclick="this.closest('details.section-explore').open=false">Show less</button>
         </details>`
       : "";
     return `<div class="section-body">
-      <p class="section-evidence-meta">${escapeHtml(evidence)}</p>
+      ${hideMeta ? "" : `<p class="section-evidence-meta">${escapeHtml(evidence)}</p>`}
       <ul class="fact-list section-preview">${previewItems}</ul>
       ${explore}
     </div>`;
@@ -850,7 +853,8 @@
     </section>`;
   }
 
-  function renderTensionRows(tensions, factsLookup) {
+  function renderTensionRows(tensions, factsLookup, options) {
+    const compact = options && options.compact;
     return (tensions || []).map((pair) => {
       const keysA = [...new Set((pair.facts_a || []).map((id) => {
         const fact = factsLookup.get(id);
@@ -862,6 +866,12 @@
       }))];
       const provA = keysA.map(provenanceLabel).join(" · ");
       const provB = keysB.map(provenanceLabel).join(" · ");
+      const sources = compact
+        ? ""
+        : `<details class="contrast-sources">
+          <summary>Sources</summary>
+          <p class="meta">${escapeHtml(provA)} · ${escapeHtml(provB)}</p>
+        </details>`;
       return `<div class="contrast-row">
         <div class="contrast-pair">
           <div class="contrast-side">
@@ -872,10 +882,7 @@
             <h4>${escapeHtml(titleCaseSignal(pair.tag_b))}</h4>
           </div>
         </div>
-        <details class="contrast-sources">
-          <summary>Sources</summary>
-          <p class="meta">${escapeHtml(provA)} · ${escapeHtml(provB)}</p>
-        </details>
+        ${sources}
       </div>`;
     }).join("");
   }
@@ -1252,13 +1259,16 @@
     </div>`;
   }
 
-  function renderMarsWorkGlance(synthesis, person) {
+  function renderMarsWorkGlance(synthesis, person, options) {
     const cards = (synthesis && synthesis.work_style_at_a_glance) || [];
     if (!cards.length) return "";
     const items = cards.map((card) => `<article class="work-glance-card" data-glance-key="${escapeHtml(card.key)}">
       <h3>${escapeHtml(marsGlanceTitle(card, person))}</h3>
       <p>${escapeHtml(marsGlanceText(card, person))}</p>
     </article>`).join("");
+    if (options && options.cardsOnly) {
+      return `<div class="work-glance">${items}</div>`;
+    }
     return `<section class="panel work-style-glance level-1">
       <div class="panel-head"><h2>Work style at a glance</h2></div>
       <div class="work-glance">${items}</div>
@@ -1412,31 +1422,369 @@
     </section>`;
   }
 
-  function renderHowYouWorkDimension(profile, error, person) {
-    const heading = howWorksHeading(person);
-    if (error) {
-      return `<section class="profile-dimension how-you-work" data-dimension="work">
-        <h2 class="dimension-heading">${escapeHtml(heading)}</h2>
-        <p class="status-line error how-you-work-error" role="status">${escapeHtml(error)}</p>
-      </section>`;
-    }
-    if (!profile) return "";
-    const synthesis = profile.synthesis || null;
-    return `<section class="profile-dimension how-you-work" data-dimension="work">
-      <h2 class="dimension-heading">${escapeHtml(heading)}</h2>
-      ${renderMarsWorkGlance(synthesis, person)}
-      ${renderMarsRecurringPatterns(synthesis)}
-      ${renderMarsPrimarySections(synthesis, person)}
-      ${renderMarsSecondarySections(synthesis, person)}
-      ${renderMarsDetailsMethodology(profile, synthesis, person)}
+  const PROFILE_TABS = ["overview", "thinking", "working", "evidence"];
+  const OVERVIEW_MERCURY_TAKEAWAY_LIMIT = 4;
+  const OVERVIEW_MERCURY_PATTERN_LIMIT = 3;
+  const OVERVIEW_MARS_PATTERN_LIMIT = 2;
+  const GROUP_PREVIEW_LIMIT = 3;
+  const MERCURY_THINKING_GROUPS = [
+    {
+      key: "thinking_problem_solving",
+      title: "Thinking & problem solving",
+      blurb: "Thinking style, memory, and focus.",
+      sections: ["thinking", "memory_focus"],
+      includeThinkingPatterns: true,
+    },
+    {
+      key: "communication_influence",
+      title: "Communication & influence",
+      blurb: "How ideas are expressed and applied with others.",
+      sections: ["communication", "work_application"],
+    },
+    {
+      key: "learning_adaptation",
+      title: "Learning & adaptation",
+      blurb: "How new material is taken in.",
+      sections: ["learning"],
+    },
+    {
+      key: "tensions_context",
+      title: "Tensions & context",
+      blurb: "Contrasts and situational watch-outs.",
+      sections: ["context_risks"],
+      includeTensions: true,
+    },
+  ];
+  const MARS_WORKING_GROUPS = [
+    {
+      key: "execution",
+      title: "Execution",
+      blurb: "Starting, carrying through, rhythm, and conditions.",
+      sections: ["how_you_start", "how_you_execute", "work_rhythm", "best_work_conditions"],
+    },
+    {
+      key: "friction_pressure",
+      title: "Friction & pressure",
+      blurb: "Where action slows, overloads, or needs caution.",
+      sections: ["when_you_get_stuck", "under_pressure", "how_you_handle_obstacles", "watchouts"],
+    },
+    {
+      key: "collaboration_conflict",
+      title: "Collaboration & conflict",
+      blurb: "How disagreement shows up at work.",
+      sections: ["conflict_style"],
+    },
+    {
+      key: "growth_support",
+      title: "Growth & support",
+      blurb: "What helps, plus source associations.",
+      sections: ["compensations"],
+      includeMarsPatterns: true,
+      includeProfessional: true,
+    },
+  ];
+
+  function mercurySectionByKey(synthesis, key) {
+    return ((synthesis && synthesis.sections) || []).find((item) => item.key === key) || null;
+  }
+
+  function marsSectionByKey(synthesis, key) {
+    return ((synthesis && synthesis.sections) || []).find((item) => item.key === key) || null;
+  }
+
+  function populatedMercurySection(synthesis, key) {
+    const section = mercurySectionByKey(synthesis, key);
+    return section && section.resolved_fact_count ? section : null;
+  }
+
+  function populatedMarsSection(synthesis, key) {
+    const section = marsSectionByKey(synthesis, key);
+    return section && section.fact_count ? section : null;
+  }
+
+  function signalTakeaway(signal, facts, presentation) {
+    const firstId = (signal && signal.fact_ids || [])[0];
+    const fact = firstId ? facts.get(firstId) : null;
+    return fact ? humanFactText(fact, presentation) : "";
+  }
+
+  function renderCompactSignalRow(signal, facts, presentation) {
+    if (!signal) return "";
+    const takeaway = signalTakeaway(signal, facts, presentation);
+    return `<article class="signal-row signal-row-compact">
+      <div class="signal-row-main">
+        <strong class="signal-label">${escapeHtml(titleCaseSignal(signal.signal))}</strong>
+        ${takeaway ? `<p class="signal-takeaway">${escapeHtml(takeaway)}</p>` : ""}
+      </div>
+    </article>`;
+  }
+
+  function renderQuietMercuryFact(fact, presentationMap) {
+    if (!fact) return "";
+    const text = humanFactText(fact, presentationMap);
+    return `<li class="fact-item"><span class="fact-bullet" aria-hidden="true">•</span><span class="fact-text">${escapeHtml(text)}</span></li>`;
+  }
+
+  function collectPreviewFacts(sections, facts, presentation, limit, renderer) {
+    const items = [];
+    (sections || []).forEach((section) => {
+      (section.preview_fact_ids || []).forEach((id) => {
+        if (items.length >= limit) return;
+        const fact = facts.get(id);
+        const html = renderer(fact, presentation);
+        if (html) items.push(html);
+      });
+    });
+    return items.slice(0, limit);
+  }
+
+  function joinPreviewPieces(pieces, limit) {
+    const chosen = (pieces || []).filter((item) => item && item.html).slice(0, limit);
+    const parts = [];
+    const facts = [];
+    const flushFacts = () => {
+      if (!facts.length) return;
+      parts.push(`<ul class="fact-list">${facts.join("")}</ul>`);
+      facts.length = 0;
+    };
+    chosen.forEach((item) => {
+      if (item.type === "fact") {
+        facts.push(item.html);
+        return;
+      }
+      flushFacts();
+      parts.push(item.html);
+    });
+    flushFacts();
+    return parts.join("");
+  }
+
+  function renderProfileGroup(spec) {
+    const preview = (spec.previewHtml || "").trim();
+    const details = (spec.detailsHtml || "").trim();
+    if (!preview && !details) return "";
+    const explore = details
+      ? `<details class="profile-group-explore">
+          <summary class="section-explore-summary"><span class="explore-all-label">Explore details</span></summary>
+          <div class="profile-group-details">${details}</div>
+        </details>`
+      : "";
+    return `<section class="panel profile-group" data-group-key="${escapeHtml(spec.key)}">
+      <div class="panel-head"><h2>${escapeHtml(spec.title)}</h2></div>
+      ${spec.blurb ? `<p class="section-helper">${escapeHtml(spec.blurb)}</p>` : ""}
+      ${preview}
+      ${explore}
     </section>`;
   }
 
-  function renderSelfProfile(profile, displayName, marsProfile, marsError) {
-    const calc = profile.calculated || {};
-    const synthesis = profile.synthesis || null;
-    const audience = resolveProfileAudience(displayName);
-    const person = currentPersonPerspective();
+  function renderMercuryOverviewTakeaways(synthesis, audience) {
+    const patterns = (synthesis && synthesis.strongest_patterns) || [];
+    const facts = synthesisFactMap(synthesis);
+    const presentation = presentationTextMap(synthesis);
+    const rows = patterns.slice(0, OVERVIEW_MERCURY_TAKEAWAY_LIMIT)
+      .map((signal) => renderCompactSignalRow(signal, facts, presentation))
+      .filter(Boolean);
+    if (rows.length) {
+      return `<div class="overview-takeaways result-list-group">${rows.join("")}</div>`;
+    }
+    const thinking = populatedMercurySection(synthesis, "thinking");
+    if (!thinking) return `<p class="section-helper">${escapeHtml(recurringPatternsEmptyCopy(audience))}</p>`;
+    const fallback = collectPreviewFacts(
+      [thinking],
+      facts,
+      presentation,
+      OVERVIEW_MERCURY_TAKEAWAY_LIMIT,
+      renderQuietMercuryFact,
+    );
+    if (!fallback.length) return "";
+    return `<ul class="fact-list">${fallback.join("")}</ul>`;
+  }
+
+  function renderOverviewKeyPatterns(mercurySynthesis, marsSynthesis) {
+    const mercuryFacts = synthesisFactMap(mercurySynthesis);
+    const mercuryPresentation = presentationTextMap(mercurySynthesis);
+    const marsFacts = synthesisFactMap(marsSynthesis);
+    const marsPresentation = presentationTextMap(marsSynthesis);
+    const mercuryAll = (mercurySynthesis && mercurySynthesis.strongest_patterns) || [];
+    const marsAll = (marsSynthesis && marsSynthesis.repeated_signals) || [];
+    const mercuryRows = mercuryAll.slice(0, OVERVIEW_MERCURY_PATTERN_LIMIT)
+      .map((signal) => renderCompactSignalRow(signal, mercuryFacts, mercuryPresentation));
+    const marsRows = marsAll.slice(0, OVERVIEW_MARS_PATTERN_LIMIT)
+      .map((signal) => renderCompactSignalRow(signal, marsFacts, marsPresentation));
+    const rows = [...mercuryRows, ...marsRows].filter(Boolean);
+    if (!rows.length) return "";
+    const hasMore = mercuryAll.length > OVERVIEW_MERCURY_PATTERN_LIMIT
+      || marsAll.length > OVERVIEW_MARS_PATTERN_LIMIT;
+    const moreTab = mercuryAll.length > OVERVIEW_MERCURY_PATTERN_LIMIT ? "thinking" : "working";
+    const more = hasMore
+      ? `<button type="button" class="btn btn-ghost overview-cta" data-profile-tab="${moreTab}">Explore all patterns</button>`
+      : "";
+    return `<section class="panel overview-patterns">
+      <div class="panel-head"><h2>Key recurring patterns</h2></div>
+      <div class="result-list-group">${rows.join("")}</div>
+      ${more}
+    </section>`;
+  }
+
+  function renderOverviewTensions(synthesis) {
+    const tensions = (synthesis && synthesis.resolved_tensions) || [];
+    if (!tensions.length) return "";
+    const facts = synthesisFactMap(synthesis);
+    const first = tensions.slice(0, 1);
+    return `<section class="panel overview-tensions">
+      <div class="panel-head"><h2>Tensions to be aware of</h2></div>
+      <div class="result-list-group result-list-group-tensions">${renderTensionRows(first, facts, { compact: true })}</div>
+    </section>`;
+  }
+
+  function renderProfileOverview(profile, marsProfile, person, audience) {
+    const mercurySynthesis = (profile && profile.synthesis) || null;
+    const marsSynthesis = (marsProfile && marsProfile.synthesis) || null;
+    const thinks = renderMercuryOverviewTakeaways(mercurySynthesis, audience);
+    const worksGlance = renderMarsWorkGlance(marsSynthesis, person, { cardsOnly: true });
+    const marsFacts = synthesisFactMap(marsSynthesis);
+    const marsPresentation = presentationTextMap(marsSynthesis);
+    const marsRepeat = ((marsSynthesis && marsSynthesis.repeated_signals) || [])[0];
+    const marsRepeatHtml = marsRepeat
+      ? `<div class="overview-mars-repeat">${renderCompactSignalRow(marsRepeat, marsFacts, marsPresentation)}</div>`
+      : "";
+    const worksBody = `${worksGlance}${marsRepeatHtml}`;
+    return `<div class="overview-grid">
+      <section class="panel overview-dimension" data-overview-dimension="think">
+        <div class="panel-head"><h2>${escapeHtml(howThinksHeading(person))}</h2></div>
+        ${thinks}
+        <button type="button" class="btn btn-ghost overview-cta" data-profile-tab="thinking">Explore thinking</button>
+      </section>
+      <section class="panel overview-dimension" data-overview-dimension="work">
+        <div class="panel-head"><h2>${escapeHtml(howWorksHeading(person))}</h2></div>
+        ${worksBody}
+        <button type="button" class="btn btn-ghost overview-cta" data-profile-tab="working">Explore work style</button>
+      </section>
+    </div>
+    ${renderOverviewKeyPatterns(mercurySynthesis, marsSynthesis)}
+    ${renderOverviewTensions(mercurySynthesis)}`;
+  }
+
+  function renderThinkingGroup(spec, synthesis, audience) {
+    const facts = synthesisFactMap(synthesis);
+    const presentation = presentationTextMap(synthesis);
+    const sections = spec.sections
+      .map((key) => populatedMercurySection(synthesis, key))
+      .filter(Boolean);
+    const patterns = spec.includeThinkingPatterns
+      ? ((synthesis && synthesis.strongest_patterns) || []).filter((signal) => {
+        const keys = signal.section_keys || [];
+        return keys.some((key) => spec.sections.includes(key));
+      })
+      : [];
+    const tensions = spec.includeTensions
+      ? ((synthesis && synthesis.resolved_tensions) || [])
+      : [];
+    if (!sections.length && !patterns.length && !tensions.length) return "";
+    const pieces = [];
+    patterns.forEach((signal) => {
+      const html = renderCompactSignalRow(signal, facts, presentation);
+      if (html) pieces.push({ type: "pattern", html });
+    });
+    sections.forEach((section) => {
+      (section.preview_fact_ids || []).forEach((id) => {
+        const html = renderQuietMercuryFact(facts.get(id), presentation);
+        if (html) pieces.push({ type: "fact", html });
+      });
+    });
+    if (tensions.length) {
+      pieces.push({
+        type: "tension",
+        html: renderTensionRows(tensions.slice(0, 1), facts, { compact: true }),
+      });
+    }
+    const previewHtml = joinPreviewPieces(pieces, GROUP_PREVIEW_LIMIT);
+    const detailsHtml = [
+      sections.map((section) => `<section class="profile-subsection" data-section-key="${escapeHtml(section.key)}">
+        <h3>${escapeHtml(sectionDisplayTitle(section, audience))}</h3>
+        ${renderSectionBody(section, facts, presentation, { hideMeta: true })}
+      </section>`).join(""),
+      spec.includeTensions && tensions.length
+        ? `<div class="profile-subsections-tensions">${renderTensionRows(tensions, facts, { compact: true })}</div>`
+        : "",
+    ].join("");
+    return renderProfileGroup({
+      key: spec.key,
+      title: spec.title,
+      blurb: spec.blurb,
+      previewHtml,
+      detailsHtml,
+    });
+  }
+
+  function renderProfileThinking(synthesis, audience) {
+    const groups = MERCURY_THINKING_GROUPS
+      .map((spec) => renderThinkingGroup(spec, synthesis, audience))
+      .join("");
+    return groups || `<p class="section-helper">No thinking evidence is available for this profile.</p>`;
+  }
+
+  function renderWorkingGroup(spec, synthesis, person) {
+    const facts = synthesisFactMap(synthesis);
+    const presentation = presentationTextMap(synthesis);
+    const sections = spec.sections
+      .map((key) => populatedMarsSection(synthesis, key))
+      .filter(Boolean);
+    const patterns = spec.includeMarsPatterns
+      ? ((synthesis && synthesis.repeated_signals) || [])
+      : [];
+    const professional = spec.includeProfessional
+      ? populatedMarsSection(synthesis, "professional_associations")
+      : null;
+    if (!sections.length && !patterns.length && !professional) return "";
+    const pieces = [];
+    sections.forEach((section) => {
+      (section.preview_fact_ids || []).forEach((id) => {
+        const html = renderMarsPreviewFactItem(facts.get(id), presentation);
+        if (html) pieces.push({ type: "fact", html });
+      });
+    });
+    patterns.forEach((signal) => {
+      const html = renderCompactSignalRow(signal, facts, presentation);
+      if (html) pieces.push({ type: "pattern", html });
+    });
+    const previewHtml = joinPreviewPieces(pieces, GROUP_PREVIEW_LIMIT);
+    const detailsHtml = [
+      sections.map((section) => `<section class="profile-subsection" data-section-key="${escapeHtml(section.key)}">
+        <h3>${escapeHtml(marsSectionTitle(section, person))}</h3>
+        ${renderMarsSectionBody(section, facts, presentation)}
+      </section>`).join(""),
+      professional
+        ? `<details class="watchouts-block profile-professional">
+            <summary><span class="watchouts-summary-main">${escapeHtml(marsSectionTitle(professional, person))}</span></summary>
+            <p class="section-helper">These are source-described associations and aptitudes, not recommended jobs, verified competencies, or hiring recommendations.</p>
+            <div class="watchouts-body">${renderMarsSectionBody(professional, facts, presentation)}</div>
+          </details>`
+        : "",
+    ].join("");
+    return renderProfileGroup({
+      key: spec.key,
+      title: spec.title,
+      blurb: spec.blurb,
+      previewHtml,
+      detailsHtml,
+    });
+  }
+
+  function renderProfileWorking(marsProfile, error, person) {
+    if (error) {
+      return `<p class="status-line error how-you-work-error" role="status">${escapeHtml(error)}</p>`;
+    }
+    const synthesis = (marsProfile && marsProfile.synthesis) || null;
+    const groups = MARS_WORKING_GROUPS
+      .map((spec) => renderWorkingGroup(spec, synthesis, person))
+      .join("");
+    return groups || `<p class="section-helper">No work-style evidence is available for this profile.</p>`;
+  }
+
+  function renderMercuryCalculatedFactors(profile) {
+    const calc = (profile && profile.calculated) || {};
+    if (!calc.mercury_sign && calc.mercury_house == null && !calc.mercury_motion) return "";
     const motion = String(calc.mercury_motion || "");
     const motionHtml = motion.toLowerCase() === "retrograde"
       ? `<span class="motion-rx">Retrograde</span>`
@@ -1444,25 +1792,116 @@
     const aspectList = (calc.aspects || [])
       .map((aspect) => `<li>${escapeHtml(formatAspectChip(aspect))}</li>`)
       .join("");
-    const factCount = countActiveSourceFacts(profile);
+    return `<details class="methodology-row">
+      <summary>Calculated thinking factors</summary>
+      <p class="self-calc-line">Mercury in ${escapeHtml(calc.mercury_sign || "—")} · House ${escapeHtml(String(calc.mercury_house ?? "—"))} · ${motionHtml}</p>
+      ${aspectList ? `<ul class="self-aspect-list">${aspectList}</ul>` : `<p class="meta">No calculated aspects in orb.</p>`}
+    </details>`;
+  }
+
+  function renderEvidencePatterns(mercurySynthesis, marsSynthesis) {
+    const mercuryHtml = renderStrongestPatterns(mercurySynthesis, "person", "");
+    const marsHtml = renderMarsRecurringPatterns(marsSynthesis);
+    if (!mercuryHtml && !marsHtml) return "";
+    return `${mercuryHtml}${marsHtml}`;
+  }
+
+  function renderProfileEvidence(profile, marsProfile, displayName, person) {
+    const mercurySynthesis = (profile && profile.synthesis) || null;
+    const factCount = profile ? countActiveSourceFacts(profile) : 0;
+    const mercuryCalc = renderMercuryCalculatedFactors(profile);
+    const patterns = renderEvidencePatterns(mercurySynthesis, marsProfile && marsProfile.synthesis);
+    const tensions = renderResolvedTensions(mercurySynthesis, resolveProfileAudience(displayName));
+    const conditional = renderConditionalTensions(mercurySynthesis);
+    const mercuryMethod = profile
+      ? renderDetailsMethodology(profile, mercurySynthesis, displayName, factCount)
+      : "";
+    const marsMethod = marsProfile
+      ? renderMarsDetailsMethodology(marsProfile, marsProfile.synthesis, person)
+      : "";
+    return `<div class="evidence-stack">
+      ${mercuryCalc}
+      ${patterns}
+      ${tensions}
+      ${conditional}
+      ${mercuryMethod}
+      ${marsMethod}
+    </div>`;
+  }
+
+  function profileTabFromHash() {
+    const raw = String(location.hash || "").replace("#", "");
+    return PROFILE_TABS.includes(raw) ? raw : "overview";
+  }
+
+  function applyProfileTab(tab) {
+    const next = PROFILE_TABS.includes(tab) ? tab : "overview";
+    activeProfileTab = next;
+    PROFILE_TABS.forEach((key) => {
+      const panel = selfProfileContent.querySelector(`[data-profile-panel="${key}"]`);
+      const nav = selfProfileContent.querySelector(`.profile-tab-nav [data-profile-tab="${key}"]`);
+      if (panel) panel.hidden = key !== next;
+      if (nav) {
+        nav.classList.toggle("is-active", key === next);
+        nav.setAttribute("aria-selected", key === next ? "true" : "false");
+      }
+    });
+    const hash = `#${next}`;
+    if (location.hash !== hash) history.replaceState(null, "", hash);
+  }
+
+  function bindProfileTabClicks() {
+    selfProfileContent.querySelectorAll("[data-profile-tab]").forEach((btn) => {
+      btn.addEventListener("click", () => applyProfileTab(btn.getAttribute("data-profile-tab")));
+    });
+  }
+
+  function renderProfileTabNav() {
+    const items = [
+      ["overview", "Overview"],
+      ["thinking", "Thinking"],
+      ["working", "Working"],
+      ["evidence", "Evidence"],
+    ].map(([key, label]) => `<button type="button" class="profile-tab${key === "overview" ? " is-active" : ""}" data-profile-tab="${key}" role="tab" aria-selected="${key === "overview" ? "true" : "false"}">${escapeHtml(label)}</button>`).join("");
+    return `<nav class="profile-tab-nav" role="tablist" aria-label="Profile sections">${items}</nav>`;
+  }
+
+  function renderHowYouWorkDimension(profile, error, person) {
+    return renderProfileWorking(profile, error, person);
+  }
+
+  function renderSelfProfile(profile, displayName, marsProfile, marsError) {
+    const synthesis = (profile && profile.synthesis) || null;
+    const audience = resolveProfileAudience(displayName);
+    const person = currentPersonPerspective();
+    const identityName = person.name || (audience === "self" ? "Your profile" : "Profile");
     setBrandTitleForProfile(audience, displayName);
+    activeProfileTab = profileTabFromHash();
 
     selfProfileContent.innerHTML = `
-      <section class="panel self-header">
-        <p class="self-calc-line">Mercury in ${escapeHtml(calc.mercury_sign || "—")} · House ${escapeHtml(String(calc.mercury_house ?? "—"))} · ${motionHtml}</p>
-        ${aspectList ? `<ul class="self-aspect-list">${aspectList}</ul>` : `<p class="meta">No calculated aspects in orb.</p>`}
+      <section class="panel self-header profile-identity">
+        <h2>${escapeHtml(identityName)}</h2>
+        <p class="profile-kicker">Work profile</p>
       </section>
-      <section class="profile-dimension how-you-think" data-dimension="think">
-        <h2 class="dimension-heading">${escapeHtml(howThinksHeading(person))}</h2>
-        ${renderStrongestPatterns(synthesis, audience, displayName)}
-        ${renderSynthesisSections(synthesis, audience)}
-        ${renderResolvedTensions(synthesis, audience)}
-        ${renderConditionalTensions(synthesis)}
-        ${renderContextWatchOuts(synthesis, audience)}
-        ${renderDetailsMethodology(profile, synthesis, displayName, factCount)}
-      </section>
-      ${renderHowYouWorkDimension(marsProfile, marsError, person)}
+      ${renderProfileTabNav()}
+      <div class="profile-tab-panels">
+        <div class="profile-tab-panel" data-profile-panel="overview" role="tabpanel">${renderProfileOverview(profile, marsProfile, person, audience)}</div>
+        <div class="profile-tab-panel how-you-think" data-profile-panel="thinking" data-dimension="think" role="tabpanel" hidden>
+          <h2 class="dimension-heading">${escapeHtml(howThinksHeading(person))}</h2>
+          ${renderProfileThinking(synthesis, audience)}
+        </div>
+        <div class="profile-tab-panel how-you-work" data-profile-panel="working" data-dimension="work" role="tabpanel" hidden>
+          <h2 class="dimension-heading">${escapeHtml(howWorksHeading(person))}</h2>
+          ${renderProfileWorking(marsProfile, marsError, person)}
+        </div>
+        <div class="profile-tab-panel" data-profile-panel="evidence" role="tabpanel" hidden>
+          <h2 class="dimension-heading">Evidence</h2>
+          ${renderProfileEvidence(profile, marsProfile, displayName, person)}
+        </div>
+      </div>
     `;
+    bindProfileTabClicks();
+    applyProfileTab(activeProfileTab);
   }
 
   async function buildMyProfile() {

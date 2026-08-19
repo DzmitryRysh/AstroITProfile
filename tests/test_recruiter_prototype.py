@@ -207,15 +207,30 @@ class RecruiterUxPolishTests(unittest.TestCase):
         self.assertNotIn("patterns-intro", self.js)
         self.assertNotIn("tension-intro", self.js)
 
-        # Tensions before watch-outs; details zone last.
+        # Tensions and watch-outs are grouped; methodology lives in Evidence.
         self_profile_fn = self.js.split("function renderSelfProfile", 1)[1].split(
             "async function buildMyProfile", 1
         )[0]
-        tensions_pos = self_profile_fn.find("renderResolvedTensions")
-        watchouts_pos = self_profile_fn.find("renderContextWatchOuts")
-        details_pos = self_profile_fn.find("renderDetailsMethodology")
-        self.assertGreater(watchouts_pos, tensions_pos)
-        self.assertGreater(details_pos, watchouts_pos)
+        self.assertIn("renderProfileOverview", self_profile_fn)
+        self.assertIn("renderProfileThinking", self_profile_fn)
+        self.assertIn("renderProfileWorking", self_profile_fn)
+        self.assertIn("renderProfileEvidence", self_profile_fn)
+        self.assertNotIn("renderResolvedTensions", self_profile_fn)
+        self.assertNotIn("renderContextWatchOuts", self_profile_fn)
+        self.assertNotIn("renderDetailsMethodology", self_profile_fn)
+
+        evidence_fn = self.js.split("function renderProfileEvidence", 1)[1].split(
+            "function profileTabFromHash", 1
+        )[0]
+        tensions_pos = evidence_fn.find("renderResolvedTensions")
+        details_pos = evidence_fn.find("renderDetailsMethodology")
+        self.assertGreater(tensions_pos, -1)
+        self.assertGreater(details_pos, tensions_pos)
+
+        thinking_groups = self.js.split("const MERCURY_THINKING_GROUPS", 1)[1].split(
+            "const MARS_WORKING_GROUPS", 1
+        )[0]
+        self.assertIn("context_risks", thinking_groups)
 
         # Watch-outs collapsed by default; preview only inside expanded body.
         self.assertIn("function renderContextWatchOuts", self.js)
@@ -632,18 +647,28 @@ class RecruiterMarsHowYouWorkTests(unittest.TestCase):
         self.assertIn("section.fact_count", self.js)
 
     def test_how_you_work_hierarchy_is_takeaway_first(self):
-        work_fn = self.js.split("function renderHowYouWorkDimension", 1)[1].split(
-            "function renderSelfProfile", 1
+        overview_fn = self.js.split("function renderProfileOverview", 1)[1].split(
+            "function renderThinkingGroup", 1
         )[0]
-        glance = work_fn.find("renderMarsWorkGlance")
-        recurring = work_fn.find("renderMarsRecurringPatterns")
-        primary = work_fn.find("renderMarsPrimarySections")
-        secondary = work_fn.find("renderMarsSecondarySections")
-        methodology = work_fn.find("renderMarsDetailsMethodology")
-        self.assertLess(glance, recurring)
-        self.assertLess(recurring, primary)
-        self.assertLess(primary, secondary)
-        self.assertLess(secondary, methodology)
+        working_fn = self.js.split("function renderProfileWorking", 1)[1].split(
+            "function renderMercuryCalculatedFactors", 1
+        )[0]
+        evidence_fn = self.js.split("function renderProfileEvidence", 1)[1].split(
+            "function profileTabFromHash", 1
+        )[0]
+        glance = overview_fn.find("renderMarsWorkGlance")
+        mars_repeat = overview_fn.find("repeated_signals")
+        self.assertGreater(glance, -1)
+        self.assertGreater(mars_repeat, glance)
+        self.assertIn("cardsOnly: true", overview_fn)
+        self.assertIn("renderWorkingGroup", working_fn)
+        self.assertIn("renderMarsDetailsMethodology", evidence_fn)
+        groups = self.js.split("const MARS_WORKING_GROUPS", 1)[1].split(
+            "function mercurySectionByKey", 1
+        )[0]
+        self.assertLess(groups.find('key: "execution"'), groups.find('key: "friction_pressure"'))
+        self.assertLess(groups.find('key: "friction_pressure"'), groups.find('key: "collaboration_conflict"'))
+        self.assertLess(groups.find('key: "collaboration_conflict"'), groups.find('key: "growth_support"'))
         self.assertIn("Work style at a glance", self.js)
         self.assertIn(">Recurring patterns<", self.js)
         self.assertNotIn("Recurring work patterns", self.js)
@@ -738,10 +763,10 @@ class RecruiterMarsHowYouWorkTests(unittest.TestCase):
         )[0]
         self.assertNotIn("Avdey", helper)
         self.assertNotIn("toLowerCase() === \"avdey\"", self.js.lower())
-        work_fn = self.js.split("function renderHowYouWorkDimension", 1)[1].split(
-            "function renderSelfProfile", 1
+        work_fn = self.js.split("function renderProfileWorking", 1)[1].split(
+            "function renderMercuryCalculatedFactors", 1
         )[0]
-        self.assertIn("howWorksHeading(person)", work_fn)
+        self.assertIn("renderWorkingGroup", work_fn)
         self.assertNotIn('dimension-heading">How you work', work_fn)
         glance_fn = self.js.split("function renderMarsWorkGlance", 1)[1].split(
             "function renderMarsRecurringPatterns", 1
@@ -753,7 +778,7 @@ class RecruiterMarsHowYouWorkTests(unittest.TestCase):
         )[0]
         self.assertIn("how-you-think", think_wrap)
         self.assertIn("howThinksHeading(person)", think_wrap)
-        self.assertIn("howWorksHeading", self.js)
+        self.assertIn("howWorksHeading", think_wrap)
         primary_mars = self.js.split("function renderMarsWorkGlance", 1)[1].split(
             "function renderMarsDetailsMethodology", 1
         )[0].lower()
@@ -768,6 +793,208 @@ class RecruiterMarsHowYouWorkTests(unittest.TestCase):
         self.assertIn("renderSelfProfile(mercury, displayName, mars, null)", build)
         self.assertIn("how-you-work-error", self.js)
         self.assertIn(".profile-dimension.how-you-work", self.css)
+        self.assertIn(".profile-tab-nav", self.css)
+        self.assertIn(".overview-grid", self.css)
+
+
+class RecruiterProfileArchitectureTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.js = RECRUITER_JS.read_text(encoding="utf-8")
+        cls.css = RECRUITER_CSS.read_text(encoding="utf-8")
+
+    def _fn(self, start, end):
+        return self.js.split(start, 1)[1].split(end, 1)[0]
+
+    def test_overview_is_default_tab(self):
+        self.assertIn('let activeProfileTab = "overview"', self.js)
+        self.assertIn('const PROFILE_TABS = ["overview", "thinking", "working", "evidence"]', self.js)
+        nav = self._fn("function renderProfileTabNav", "function renderHowYouWorkDimension")
+        self.assertIn('key === "overview" ? " is-active"', nav)
+        self.assertIn('aria-selected="${key === "overview" ? "true" : "false"}"', nav)
+        self_fn = self._fn("function renderSelfProfile", "async function buildMyProfile")
+        overview_tag = self_fn.split('data-profile-panel="overview"', 1)[1].split(">", 1)[0]
+        thinking_tag = self_fn.split('data-profile-panel="thinking"', 1)[1].split(">", 1)[0]
+        working_tag = self_fn.split('data-profile-panel="working"', 1)[1].split(">", 1)[0]
+        evidence_tag = self_fn.split('data-profile-panel="evidence"', 1)[1].split(">", 1)[0]
+        self.assertNotIn("hidden", overview_tag)
+        self.assertIn("hidden", thinking_tag)
+        self.assertIn("hidden", working_tag)
+        self.assertIn("hidden", evidence_tag)
+        self.assertIn("profileTabFromHash", self_fn)
+        hash_fn = self._fn("function profileTabFromHash", "function applyProfileTab")
+        self.assertIn('PROFILE_TABS.includes(raw) ? raw : "overview"', hash_fn)
+
+    def test_overview_is_not_a_full_evidence_dump(self):
+        overview = self._fn("function renderProfileOverview", "function renderThinkingGroup")
+        self.assertNotIn("renderSynthesisSections", overview)
+        self.assertNotIn("renderMarsPrimarySections", overview)
+        self.assertNotIn("renderMarsSecondarySections", overview)
+        self.assertNotIn("renderDetailsMethodology", overview)
+        self.assertNotIn("renderMarsDetailsMethodology", overview)
+        self.assertNotIn("renderStrongestPatterns", overview)
+        self.assertNotIn("renderMarsRecurringPatterns", overview)
+        self.assertNotIn("Why this appears", overview)
+        self.assertNotIn("source-backed observations across", overview)
+        self.assertNotIn("Supported by", overview)
+        self.assertNotIn("section-evidence-meta", overview)
+        self_fn = self._fn("function renderSelfProfile", "async function buildMyProfile")
+        self.assertNotIn("renderSynthesisSections", self_fn)
+        self.assertNotIn("renderMarsPrimarySections", self_fn)
+        self.assertNotIn("renderDetailsMethodology", self_fn)
+
+    def test_overview_contains_thinks_and_works_summaries(self):
+        overview = self._fn("function renderProfileOverview", "function renderThinkingGroup")
+        self.assertIn("howThinksHeading(person)", overview)
+        self.assertIn("howWorksHeading(person)", overview)
+        self.assertIn("renderMercuryOverviewTakeaways", overview)
+        self.assertIn("renderMarsWorkGlance", overview)
+        self.assertIn("Explore thinking", overview)
+        self.assertIn("Explore work style", overview)
+        self.assertIn('data-overview-dimension="think"', overview)
+        self.assertIn('data-overview-dimension="work"', overview)
+        takeaways = self._fn("function renderMercuryOverviewTakeaways", "function renderOverviewKeyPatterns")
+        self.assertIn("OVERVIEW_MERCURY_TAKEAWAY_LIMIT", takeaways)
+        self.assertIn("const OVERVIEW_MERCURY_TAKEAWAY_LIMIT = 4", self.js)
+        self.assertIn("const OVERVIEW_MERCURY_PATTERN_LIMIT = 3", self.js)
+        self.assertIn("const OVERVIEW_MARS_PATTERN_LIMIT = 2", self.js)
+
+    def test_thinking_groups_mercury_into_four_blocks(self):
+        groups = self._fn("const MERCURY_THINKING_GROUPS", "const MARS_WORKING_GROUPS")
+        self.assertIn("thinking_problem_solving", groups)
+        self.assertIn("communication_influence", groups)
+        self.assertIn("learning_adaptation", groups)
+        self.assertIn("tensions_context", groups)
+        self.assertIn('"thinking","memory_focus"', groups.replace(" ", ""))
+        self.assertIn("communication", groups)
+        self.assertIn("work_application", groups)
+        self.assertIn("learning", groups)
+        self.assertIn("context_risks", groups)
+        self.assertIn("Thinking & problem solving", groups)
+        self.assertIn("Communication & influence", groups)
+        self.assertIn("Learning & adaptation", groups)
+        self.assertIn("Tensions & context", groups)
+        thinking = self._fn("function renderProfileThinking", "function renderWorkingGroup")
+        self.assertIn("MERCURY_THINKING_GROUPS", thinking)
+        self.assertIn("renderThinkingGroup", thinking)
+
+    def test_working_groups_mars_into_four_blocks(self):
+        groups = self._fn("const MARS_WORKING_GROUPS", "function mercurySectionByKey")
+        self.assertIn("execution", groups)
+        self.assertIn("friction_pressure", groups)
+        self.assertIn("collaboration_conflict", groups)
+        self.assertIn("growth_support", groups)
+        self.assertIn("how_you_start", groups)
+        self.assertIn("how_you_execute", groups)
+        self.assertIn("work_rhythm", groups)
+        self.assertIn("best_work_conditions", groups)
+        self.assertIn("when_you_get_stuck", groups)
+        self.assertIn("under_pressure", groups)
+        self.assertIn("watchouts", groups)
+        self.assertIn("conflict_style", groups)
+        self.assertIn("compensations", groups)
+        self.assertIn("includeProfessional: true", groups)
+        self.assertNotIn("collaboration_style", groups)
+        working = self._fn("function renderWorkingGroup", "function renderProfileWorking")
+        self.assertIn("profile-professional", working)
+        self.assertIn("watchouts-block", working)
+        self.assertNotIn('class="watchouts-block" open', working)
+        self.assertIn("source-described associations and aptitudes", working)
+
+    def test_evidence_contains_methodology_and_factor_details(self):
+        evidence = self._fn("function renderProfileEvidence", "function profileTabFromHash")
+        self.assertIn("renderMercuryCalculatedFactors", evidence)
+        self.assertIn("renderDetailsMethodology", evidence)
+        self.assertIn("renderMarsDetailsMethodology", evidence)
+        self.assertIn("renderEvidencePatterns", evidence)
+        self.assertIn("renderResolvedTensions", evidence)
+        patterns = self._fn("function renderEvidencePatterns", "function renderProfileEvidence")
+        self.assertIn("renderStrongestPatterns", patterns)
+        self.assertIn("renderMarsRecurringPatterns", patterns)
+        self.assertIn("Why this appears", self.js.split("function renderMarsRecurringPatterns", 1)[1].split(
+            "function renderMarsPrimarySections", 1
+        )[0])
+        calc = self._fn("function renderMercuryCalculatedFactors", "function renderEvidencePatterns")
+        self.assertIn("Calculated thinking factors", calc)
+        self.assertIn("self-calc-line", calc)
+
+    def test_full_recurring_cards_are_not_duplicated_across_tabs(self):
+        overview = self._fn("function renderProfileOverview", "function renderThinkingGroup")
+        thinking = self._fn("function renderThinkingGroup", "function renderProfileThinking")
+        working = self._fn("function renderWorkingGroup", "function renderProfileWorking")
+        evidence = self._fn("function renderEvidencePatterns", "function renderProfileEvidence")
+        self.assertIn("renderCompactSignalRow", overview)
+        self.assertNotIn("renderStrongestPatterns", overview)
+        self.assertNotIn("renderMarsRecurringPatterns", overview)
+        self.assertNotIn("Why this appears", thinking)
+        self.assertNotIn("Why this appears", working)
+        self.assertNotIn("renderStrongestPatterns", thinking)
+        self.assertNotIn("renderMarsRecurringPatterns", working)
+        self.assertIn("renderStrongestPatterns", evidence)
+        self.assertIn("renderMarsRecurringPatterns", evidence)
+
+    def test_preview_counts_are_capped(self):
+        self.assertIn("const GROUP_PREVIEW_LIMIT = 3", self.js)
+        join_fn = self._fn("function joinPreviewPieces", "function renderProfileGroup")
+        self.assertIn(".slice(0, limit)", join_fn)
+        takeaways = self._fn("function renderMercuryOverviewTakeaways", "function renderOverviewKeyPatterns")
+        self.assertIn("patterns.slice(0, OVERVIEW_MERCURY_TAKEAWAY_LIMIT)", takeaways)
+        key_patterns = self._fn("function renderOverviewKeyPatterns", "function renderOverviewTensions")
+        self.assertIn("mercuryAll.slice(0, OVERVIEW_MERCURY_PATTERN_LIMIT)", key_patterns)
+        self.assertIn("marsAll.slice(0, OVERVIEW_MARS_PATTERN_LIMIT)", key_patterns)
+        tensions = self._fn("function renderOverviewTensions", "function renderProfileOverview")
+        self.assertIn("tensions.slice(0, 1)", tensions)
+
+    def test_empty_groups_and_subsections_are_omitted(self):
+        thinking = self._fn("function renderThinkingGroup", "function renderProfileThinking")
+        working = self._fn("function renderWorkingGroup", "function renderProfileWorking")
+        group = self._fn("function renderProfileGroup", "function renderMercuryOverviewTakeaways")
+        self.assertIn("if (!sections.length && !patterns.length && !tensions.length) return \"\"", thinking)
+        self.assertIn("if (!sections.length && !patterns.length && !professional) return \"\"", working)
+        self.assertIn("if (!preview && !details) return \"\"", group)
+        self.assertIn("populatedMercurySection", thinking)
+        self.assertIn("populatedMarsSection", working)
+        populated_m = self._fn("function populatedMercurySection", "function populatedMarsSection")
+        populated_w = self._fn("function populatedMarsSection", "function signalTakeaway")
+        self.assertIn("section.resolved_fact_count", populated_m)
+        self.assertIn("section.fact_count", populated_w)
+        self.assertNotIn("No data means", self.js)
+        self.assertNotIn("typical personality", self.js.lower())
+
+    def test_person_pronouns_and_unknown_gender_fallback_remain(self):
+        helper = self._fn("function buildPersonPerspective", "function fillPersonTemplate")
+        self.assertIn("PERSON_PRONOUN_FORMS.they", helper)
+        self.assertIn("PERSON_PRONOUN_FORMS.female", helper)
+        self.assertIn("PERSON_PRONOUN_FORMS.male", helper)
+        self.assertNotIn("Avdey", helper)
+        overview = self._fn("function renderProfileOverview", "function renderThinkingGroup")
+        self_fn = self._fn("function renderSelfProfile", "async function buildMyProfile")
+        self.assertIn("howThinksHeading(person)", overview)
+        self.assertIn("howWorksHeading(person)", overview)
+        self.assertNotIn("How you think", overview)
+        self.assertNotIn("you/your", self_fn.lower())
+        self.assertIn('sex: "male"', self.js)
+        self.assertIn("id=\"self-sex\"", RECRUITER_INDEX.read_text(encoding="utf-8"))
+
+    def test_no_score_rank_or_hiring_language_in_architecture(self):
+        blob = f"{self.js}\n{self.css}".lower()
+        self.assertNotIn("fit score", blob)
+        self.assertNotIn("candidate ranking", blob)
+        self.assertNotIn("hire/reject", blob)
+        self.assertNotIn("job-fit", blob)
+        self.assertNotIn("best role for this person", blob)
+        self.assertNotIn("think -> do", blob)
+        self.assertNotIn("think→do", blob)
+
+    def test_tab_switch_does_not_refetch(self):
+        apply_fn = self._fn("function applyProfileTab", "function bindProfileTabClicks")
+        self.assertIn("panel.hidden", apply_fn)
+        self.assertNotIn("apiPost", apply_fn)
+        self.assertNotIn("mercury-source-profile", apply_fn)
+        self.assertNotIn("mars-source-profile", apply_fn)
+        bind_fn = self._fn("function bindProfileTabClicks", "function renderProfileTabNav")
+        self.assertNotIn("apiPost", bind_fn)
+        self.assertNotIn("buildMyProfile", bind_fn)
 
 
 if __name__ == "__main__":
