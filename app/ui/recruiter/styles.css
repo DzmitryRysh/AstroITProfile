@@ -1453,12 +1453,49 @@ details.more-details > summary::-webkit-details-marker {
   margin-top: 0.9rem;
 }
 
-.overview-dimension .work-glance {
+.overview-dimension .work-glance,
+.overview-dimension .think-glance {
   grid-template-columns: 1fr;
 }
 
-.overview-mars-repeat {
+.overview-mars-repeat,
+.overview-mercury-recurring {
   margin-top: 0.75rem;
+}
+
+.overview-recurring-label {
+  margin: 0 0 0.45rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.think-glance {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.think-glance-card {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.think-glance-card h3 {
+  margin: 0;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.think-glance-card p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.4;
 }
 
 .thinking-to-execution {

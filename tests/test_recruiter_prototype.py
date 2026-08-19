@@ -855,8 +855,12 @@ class RecruiterProfileArchitectureTests(unittest.TestCase):
         self.assertIn('data-overview-dimension="think"', overview)
         self.assertIn('data-overview-dimension="work"', overview)
         takeaways = self._fn("function renderMercuryOverviewTakeaways", "function renderOverviewTensions")
-        self.assertIn("OVERVIEW_MERCURY_TAKEAWAY_LIMIT", takeaways)
-        self.assertIn("const OVERVIEW_MERCURY_TAKEAWAY_LIMIT = 4", self.js)
+        self.assertIn("renderMercuryThinkGlance", takeaways)
+        recurring = self._fn("function renderMercuryOverviewRecurringPatterns", "function renderMercuryOverviewTakeaways")
+        self.assertIn("OVERVIEW_MERCURY_RECURRING_LIMIT", recurring)
+        self.assertIn("Recurring patterns", recurring)
+        glance_fn = self._fn("function renderMercuryThinkGlance", "function renderMercuryOverviewRecurringPatterns")
+        self.assertIn("thinking_at_a_glance", glance_fn)
         self.assertNotIn("const OVERVIEW_MERCURY_PATTERN_LIMIT", self.js)
         self.assertNotIn("renderOverviewKeyPatterns", overview)
         self.assertIn("renderThinkingToExecutionOverview", overview)
@@ -944,7 +948,8 @@ class RecruiterProfileArchitectureTests(unittest.TestCase):
         join_fn = self._fn("function joinPreviewPieces", "function renderProfileGroup")
         self.assertIn(".slice(0, limit)", join_fn)
         takeaways = self._fn("function renderMercuryOverviewTakeaways", "function renderOverviewTensions")
-        self.assertIn("patterns.slice(0, OVERVIEW_MERCURY_TAKEAWAY_LIMIT)", takeaways)
+        recurring = self._fn("function renderMercuryOverviewRecurringPatterns", "function renderMercuryOverviewTakeaways")
+        self.assertIn("patterns.slice(0, OVERVIEW_MERCURY_RECURRING_LIMIT)", recurring)
         tensions = self._fn("function renderOverviewTensions", "function renderProfileOverview")
         self.assertIn("tensions.slice(0, 1)", tensions)
 
@@ -1059,7 +1064,9 @@ class RecruiterProfileArchitectureTests(unittest.TestCase):
         self.assertNotIn("verified skill", presentation.lower())
         self.assertNotIn("hiring", presentation.lower())
         takeaways = self._fn("function renderMercuryOverviewTakeaways", "function renderOverviewTensions")
-        self.assertIn("renderOverviewMercuryTakeawayRow", takeaways)
+        self.assertIn("renderMercuryThinkGlance", takeaways)
+        recurring = self._fn("function renderMercuryOverviewRecurringPatterns", "function renderMercuryOverviewTakeaways")
+        self.assertIn("renderOverviewMercuryTakeawayRow", recurring)
         row = self._fn("function renderOverviewMercuryTakeawayRow", "function renderQuietMercuryFact")
         self.assertIn('data-signal="${escapeHtml(signal.signal)}"', row)
         compact = self._fn("function renderCompactSignalRow", "function overviewMercurySignalLabel")
@@ -1068,15 +1075,17 @@ class RecruiterProfileArchitectureTests(unittest.TestCase):
 
     def test_overview_does_not_imply_verified_technical_skill(self):
         overview = self._fn("function renderMercuryOverviewTakeaways", "function renderOverviewTensions")
+        glance = self._fn("function renderMercuryThinkGlance", "function renderMercuryOverviewRecurringPatterns")
         presentation = self._fn(
             "const OVERVIEW_MERCURY_SIGNAL_PRESENTATION",
             "const MERCURY_THINKING_GROUPS",
         )
         self.assertIn("Technical aptitude signal", presentation)
         self.assertNotIn("Technical Ability", overview)
+        self.assertNotIn("Technical Ability", glance)
         self.assertNotIn("Technical talent", presentation)
-        self.assertNotIn("validated technical", f"{overview}\n{presentation}".lower())
-        self.assertNotIn("verified competency", f"{overview}\n{presentation}".lower())
+        self.assertNotIn("validated technical", f"{overview}\n{glance}\n{presentation}".lower())
+        self.assertNotIn("verified competency", f"{overview}\n{glance}\n{presentation}".lower())
         self.assertIn("technical_ability", self.js)
 
 

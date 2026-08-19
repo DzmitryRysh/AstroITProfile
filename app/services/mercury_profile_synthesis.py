@@ -444,7 +444,24 @@ def serialize_mercury_profile_synthesis(
     synthesis: MercuryProfileSynthesis,
 ) -> MercuryProfileSynthesisResponse:
     """Convert internal synthesis dataclasses to the API response schema."""
+    from app.schemas.mercury_source_profile import MercuryGlanceCard as MercuryGlanceCardSchema
+    from app.services.mercury_think_glance import build_mercury_think_glance
+
+    glance = build_mercury_think_glance(synthesis)
     return MercuryProfileSynthesisResponse(
+        thinking_at_a_glance=[
+            MercuryGlanceCardSchema(
+                key=card.key,
+                title=card.title,
+                text=card.text,
+                source=card.source,  # type: ignore[arg-type]
+                fact_ids=list(card.fact_ids),
+                tags=list(card.tags),
+                repeated_signals=list(card.repeated_signals),
+                display_template=card.display_template,
+            )
+            for card in glance
+        ],
         strongest_patterns=[
             SynthesisStrongestPatternSchema(
                 signal=item.signal,

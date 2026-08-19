@@ -1424,6 +1424,7 @@
 
   const PROFILE_TABS = ["overview", "thinking", "working", "evidence"];
   const OVERVIEW_MERCURY_TAKEAWAY_LIMIT = 4;
+  const OVERVIEW_MERCURY_RECURRING_LIMIT = 3;
   const GROUP_PREVIEW_LIMIT = 3;
   // Overview-only recruiter labels. Canonical signal ids / tags are unchanged.
   const OVERVIEW_MERCURY_SIGNAL_PRESENTATION = {
@@ -1616,27 +1617,72 @@
     </section>`;
   }
 
-  function renderMercuryOverviewTakeaways(synthesis, audience) {
+  function mercuryGlanceTitle(card) {
+    if (!card) return "";
+    if (card.key === "thinking_style") return "Thinking style";
+    if (card.key === "communication_style") return "Communication style";
+    if (card.key === "learning_style") return "Learning style";
+    if (card.key === "watchout") return "Watchout";
+    return card.title || "";
+  }
+
+  function mercuryGlanceText(card, person) {
+    if (!card) return "";
+    if (card.display_template) return fillPersonTemplate(card.display_template, person);
+    return contextualizeNeutralSentence(card.text, person);
+  }
+
+  function renderMercuryThinkGlance(synthesis, person, options) {
+    const cards = (synthesis && synthesis.thinking_at_a_glance) || [];
+    if (!cards.length) return "";
+    const items = cards.map((card) => `<article class="think-glance-card" data-glance-key="${escapeHtml(card.key)}">
+      <h3>${escapeHtml(mercuryGlanceTitle(card))}</h3>
+      <p>${escapeHtml(mercuryGlanceText(card, person))}</p>
+    </article>`).join("");
+    if (options && options.cardsOnly) {
+      return `<div class="think-glance">${items}</div>`;
+    }
+    return `<section class="panel think-style-glance level-1">
+      <div class="panel-head"><h2>Thinking at a glance</h2></div>
+      <div class="think-glance">${items}</div>
+    </section>`;
+  }
+
+  function renderMercuryOverviewRecurringPatterns(synthesis, audience) {
     const patterns = (synthesis && synthesis.strongest_patterns) || [];
+    if (!patterns.length) return "";
     const facts = synthesisFactMap(synthesis);
     const presentation = presentationTextMap(synthesis);
-    const rows = patterns.slice(0, OVERVIEW_MERCURY_TAKEAWAY_LIMIT)
+    const rows = patterns.slice(0, OVERVIEW_MERCURY_RECURRING_LIMIT)
       .map((signal) => renderOverviewMercuryTakeawayRow(signal, facts, presentation))
-      .filter(Boolean);
-    if (rows.length) {
-      return `<div class="overview-takeaways result-list-group">${rows.join("")}</div>`;
+      .filter(Boolean)
+      .join("");
+    if (!rows) return "";
+    return `<div class="overview-mercury-recurring">
+      <p class="overview-recurring-label">Recurring patterns</p>
+      <div class="result-list-group">${rows}</div>
+    </div>`;
+  }
+
+  function renderMercuryOverviewTakeaways(synthesis, audience, person) {
+    const glance = renderMercuryThinkGlance(synthesis, person, { cardsOnly: true });
+    const recurring = renderMercuryOverviewRecurringPatterns(synthesis, audience);
+    if (!glance && !recurring) {
+      const thinking = populatedMercurySection(synthesis, "thinking");
+      if (!thinking) return `<p class="section-helper">${escapeHtml(recurringPatternsEmptyCopy(audience))}</p>`;
+      const facts = synthesisFactMap(synthesis);
+      const presentation = presentationTextMap(synthesis);
+      const fallback = collectPreviewFacts(
+        [thinking],
+        facts,
+        presentation,
+        OVERVIEW_MERCURY_TAKEAWAY_LIMIT,
+        renderQuietMercuryFact,
+      );
+      if (!fallback.length) return "";
+      return `<ul class="fact-list">${fallback.join("")}</ul>`;
     }
-    const thinking = populatedMercurySection(synthesis, "thinking");
-    if (!thinking) return `<p class="section-helper">${escapeHtml(recurringPatternsEmptyCopy(audience))}</p>`;
-    const fallback = collectPreviewFacts(
-      [thinking],
-      facts,
-      presentation,
-      OVERVIEW_MERCURY_TAKEAWAY_LIMIT,
-      renderQuietMercuryFact,
-    );
-    if (!fallback.length) return "";
-    return `<ul class="fact-list">${fallback.join("")}</ul>`;
+    return `${glance}${recurring}`;
   }
 
   function renderOverviewTensions(synthesis) {
@@ -1707,7 +1753,7 @@
   function renderProfileOverview(profile, marsProfile, person, audience, bridge) {
     const mercurySynthesis = (profile && profile.synthesis) || null;
     const marsSynthesis = (marsProfile && marsProfile.synthesis) || null;
-    const thinks = renderMercuryOverviewTakeaways(mercurySynthesis, audience);
+    const thinks = renderMercuryOverviewTakeaways(mercurySynthesis, audience, person);
     const worksGlance = renderMarsWorkGlance(marsSynthesis, person, { cardsOnly: true });
     const marsFacts = synthesisFactMap(marsSynthesis);
     const marsPresentation = presentationTextMap(marsSynthesis);

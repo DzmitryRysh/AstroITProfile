@@ -106,9 +106,23 @@ class SynthesisTraceability(BaseModel):
     unclassified_fact_count: int
 
 
+class MercuryGlanceCard(BaseModel):
+    """Presentation-only takeaway. Does not add source meaning."""
+
+    key: str
+    title: str
+    text: str
+    source: Literal["template", "observation"]
+    fact_ids: list[str] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=list)
+    repeated_signals: list[str] = Field(default_factory=list)
+    display_template: str = ""
+
+
 class MercuryProfileSynthesisResponse(BaseModel):
     """API-facing synthesis presentation index (additive to source profile)."""
 
+    thinking_at_a_glance: list[MercuryGlanceCard] = Field(default_factory=list)
     strongest_patterns: list[SynthesisStrongestPattern] = Field(default_factory=list)
     resolved_tensions: list[SynthesisTension] = Field(default_factory=list)
     conditional_tensions: list[SynthesisTension] = Field(default_factory=list)
