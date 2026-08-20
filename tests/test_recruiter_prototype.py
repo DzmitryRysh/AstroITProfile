@@ -1102,7 +1102,11 @@ class RecruiterThinkingToExecutionUiTests(unittest.TestCase):
         overview = self._fn("function renderThinkingToExecutionOverview", "function renderThinkingToExecutionEvidence")
         evidence = self._fn("function renderThinkingToExecutionEvidence", "function renderProfileOverview")
         self.assertIn("From thinking to execution", overview)
-        self.assertIn(".slice(0, 3)", overview)
+        self.assertIn("overviewBridgePatterns", overview)
+        self.assertIn("overview_pattern_ids", self.js)
+        self.assertIn("function overviewBridgePatterns", self.js)
+        self.assertIn(".slice(0, 2)", self.js)
+        self.assertNotIn("((bridge && bridge.patterns) || []).slice(0, 3)", self.js)
         self.assertIn("bridge-takeaway", overview)
         self.assertNotIn("Why this connection appears", overview)
         self.assertNotIn("mercury:", overview)
@@ -1119,6 +1123,15 @@ class RecruiterThinkingToExecutionUiTests(unittest.TestCase):
         self.assertIn(".thinking-to-execution", self.css)
         apply_fn = self._fn("function applyProfileTab", "function bindProfileTabClicks")
         self.assertNotIn("thinking-to-execution", apply_fn)
+
+    def test_tension_labels_use_recruiter_safe_bounded_wording(self):
+        self.assertIn('superficiality: "Intellectual superficiality risk"', self.js)
+        self.assertIn('analytical_thinking: "Analytical thinking"', self.js)
+        tension_fn = self._fn("function renderTensionRows", "function renderResolvedTensions")
+        self.assertIn("tensionTagLabel(pair.tag_a)", tension_fn)
+        self.assertIn("tensionTagLabel(pair.tag_b)", tension_fn)
+        self.assertNotIn("titleCaseSignal(pair.tag_a)", tension_fn)
+        self.assertNotIn("Superficiality ↔ Analytical Thinking", self.js)
 
     def test_no_score_or_think_do_product_language(self):
         blob = f"{self.js}\n{self.css}".lower()

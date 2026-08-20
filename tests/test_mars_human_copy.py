@@ -278,7 +278,9 @@ class MarsHumanCopySynthesisIntegrationTests(unittest.TestCase):
             synthesis, "mars_square_moon_l9_cluster_b_heavy_work_overwork"
         )
         self.assertIn("one possible expression", mood_a.lower())
-        self.assertIn("another possible expression", overwork_b.lower())
+        self.assertIn("take on too much", overwork_b.lower())
+        self.assertIn("overwork", overwork_b.lower())
+        self.assertNotIn("another possible expression", overwork_b.lower())
 
         conflict = self._display(synthesis, "mars_h6_workplace_conflict_pushes_line")
         self.assertIn("workplace conflict", conflict.lower())

@@ -532,7 +532,7 @@ HUMAN_COPY_OVERRIDES: dict[str, str] = {
     **_tense(
         "moon",
         "cluster_b_heavy_work_overwork",
-        "Another possible expression is heavy work or overwork.",
+        "Under pressure, there may be a tendency to take on too much or push into overwork.",
     ),
     **_tense(
         "moon",

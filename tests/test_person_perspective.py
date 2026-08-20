@@ -107,7 +107,7 @@ class PersonPerspectiveTests(unittest.TestCase):
         )
         self.assertEqual(
             pressure,
-            "Under pressure, he may take on too much or push himself beyond a sustainable workload.",
+            "Under pressure, he may take on too much or push himself into overwork.",
         )
         self.assertEqual(render_mars_glance_title(cards["what_may_slow_you_down"], person), "What may slow him down")
         self.assertNotIn("you", execution.lower())

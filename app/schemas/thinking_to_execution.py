@@ -31,4 +31,11 @@ class CrossProfilePattern(BaseModel):
 
 
 class ThinkingToExecutionSynthesis(BaseModel):
+    """All evidence-backed bridges, plus Overview selection ids.
+
+    ``patterns`` keeps every valid bridge for Evidence.
+    ``overview_pattern_ids`` is a concise Overview subset (max 2).
+    """
+
     patterns: list[CrossProfilePattern] = Field(default_factory=list)
+    overview_pattern_ids: list[str] = Field(default_factory=list)

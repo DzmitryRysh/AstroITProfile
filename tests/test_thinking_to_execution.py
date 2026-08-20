@@ -145,12 +145,41 @@ class ThinkingToExecutionProfileTests(unittest.TestCase):
                 "analysis_to_practical_execution",
             ],
         )
+        self.assertEqual(
+            result.overview_pattern_ids,
+            [
+                "analysis_to_deliberate_execution",
+                "analysis_slower_commitment",
+            ],
+        )
+        self.assertNotIn(
+            "analysis_to_practical_execution",
+            result.overview_pattern_ids,
+        )
         self.assertNotIn("technical_ability", [item.mercury_semantic for item in result.patterns])
+
+    def test_overview_prefers_kind_diversity_and_caps_at_two(self):
+        result = _bridge({"name": "Avdey", "sex": "male"}, AVDEY)
+        self.assertEqual(len(result.overview_pattern_ids), 2)
+        self.assertLessEqual(len(result.overview_pattern_ids), tte.OVERVIEW_BRIDGE_LIMIT)
+        overview = [
+            item
+            for item in result.patterns
+            if item.id in result.overview_pattern_ids
+        ]
+        kinds = {item.kind for item in overview}
+        self.assertEqual(kinds, {"reinforcement", "friction"})
+        self.assertEqual(len(result.patterns), 3)
+        self.assertIn("analysis_to_practical_execution", [item.id for item in result.patterns])
 
     def test_vlad_gets_only_evidence_backed_pattern(self):
         result = _bridge({"name": "Vlad", "sex": "male"}, VLAD)
         self.assertEqual(
             [item.id for item in result.patterns],
+            ["analysis_to_deliberate_execution"],
+        )
+        self.assertEqual(
+            result.overview_pattern_ids,
             ["analysis_to_deliberate_execution"],
         )
 
@@ -160,6 +189,13 @@ class ThinkingToExecutionProfileTests(unittest.TestCase):
         self.assertEqual(
             ids,
             ["analysis_slower_commitment", "fast_processing_slower_commitment"],
+        )
+        self.assertEqual(
+            result.overview_pattern_ids,
+            [
+                "analysis_slower_commitment",
+                "fast_processing_slower_commitment",
+            ],
         )
         self.assertNotIn("analysis_to_deliberate_execution", ids)
         self.assertNotIn("fast_processing_to_fast_action", ids)

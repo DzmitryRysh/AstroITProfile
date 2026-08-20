@@ -29,7 +29,7 @@ from app.services.mercury_human_copy_catalog import (
 from app.services.person_perspective import PersonPerspective, fill_person_template
 
 EXCLUDED_MARS_SCOPES = frozenset({"SOURCE_ONLY", "PERSONAL_MARS"})
-OVERVIEW_BRIDGE_LIMIT = 3
+OVERVIEW_BRIDGE_LIMIT = 2
 PRESENTATION_READY_STATUSES = frozenset(
     {
         MERCURY_APPROVED_OVERRIDE,
@@ -168,6 +168,32 @@ def _unique_sorted(values: list[str]) -> tuple[str, ...]:
     return tuple(sorted(set(values)))
 
 
+def select_overview_pattern_ids(
+    patterns: list[CrossProfilePattern] | tuple[CrossProfilePattern, ...],
+) -> list[str]:
+    """Pick a concise Overview subset without inventing bridges.
+
+    Rules:
+    - max OVERVIEW_BRIDGE_LIMIT (2)
+    - prefer 1 reinforcement + 1 friction when both kinds exist
+    - if 3+ bridges share the same Mercury tag, do not surface all of them
+      (Overview stays capped; remaining bridges remain in Evidence via patterns)
+    """
+    items = list(patterns)
+    if not items:
+        return []
+    if len(items) <= OVERVIEW_BRIDGE_LIMIT:
+        return [item.id for item in items]
+
+    reinforcements = [item for item in items if item.kind == "reinforcement"]
+    frictions = [item for item in items if item.kind == "friction"]
+    if reinforcements and frictions:
+        selected = [reinforcements[0], frictions[0]]
+    else:
+        selected = items[:OVERVIEW_BRIDGE_LIMIT]
+    return [item.id for item in selected[:OVERVIEW_BRIDGE_LIMIT]]
+
+
 def build_thinking_to_execution(
     mercury_profile: MercurySourceProfileResponse,
     mars_profile: MarsSourceProfile,
@@ -212,6 +238,7 @@ def build_thinking_to_execution(
                 ),
             )
         )
-        if len(patterns) >= OVERVIEW_BRIDGE_LIMIT:
-            break
-    return ThinkingToExecutionSynthesis(patterns=patterns)
+    return ThinkingToExecutionSynthesis(
+        patterns=patterns,
+        overview_pattern_ids=select_overview_pattern_ids(patterns),
+    )

@@ -79,7 +79,7 @@ PRESSURE_TEMPLATES: tuple[MarsGlanceTemplate, ...] = (
         text="Under pressure, effort may become overloaded.",
         display_template=(
             "Under pressure, {they} may take on too much or push {themself} "
-            "beyond a sustainable workload."
+            "into overwork."
         ),
     ),
 )

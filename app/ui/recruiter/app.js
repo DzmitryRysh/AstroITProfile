@@ -395,6 +395,14 @@
     memory: "Memory",
   };
 
+  // Recruiter-facing tension labels. Tags stay unchanged; labels only.
+  // Bounded by approved human-copy meaning (e.g. Leo risk of intellectual
+  // superficiality), not accusatory trait naming.
+  const TENSION_TAG_LABELS = {
+    superficiality: "Intellectual superficiality risk",
+    analytical_thinking: "Analytical thinking",
+  };
+
   const CATEGORY_ORDER = [
     "thinking",
     "communication",
@@ -442,6 +450,11 @@
       .filter(Boolean)
       .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
       .join(" ");
+  }
+
+  function tensionTagLabel(tag) {
+    if (TENSION_TAG_LABELS[tag]) return TENSION_TAG_LABELS[tag];
+    return titleCaseSignal(tag);
   }
 
   function categoryLabel(category) {
@@ -875,11 +888,11 @@
       return `<div class="contrast-row">
         <div class="contrast-pair">
           <div class="contrast-side">
-            <h4>${escapeHtml(titleCaseSignal(pair.tag_a))}</h4>
+            <h4>${escapeHtml(tensionTagLabel(pair.tag_a))}</h4>
           </div>
           <div class="contrast-arrow" aria-hidden="true">↕</div>
           <div class="contrast-side">
-            <h4>${escapeHtml(titleCaseSignal(pair.tag_b))}</h4>
+            <h4>${escapeHtml(tensionTagLabel(pair.tag_b))}</h4>
           </div>
         </div>
         ${sources}
@@ -1703,8 +1716,18 @@
     return "";
   }
 
+  function overviewBridgePatterns(bridge) {
+    const all = (bridge && bridge.patterns) || [];
+    const ids = (bridge && bridge.overview_pattern_ids) || [];
+    if (ids.length) {
+      const byId = new Map(all.map((pattern) => [pattern.id, pattern]));
+      return ids.map((id) => byId.get(id)).filter(Boolean).slice(0, 2);
+    }
+    return all.slice(0, 2);
+  }
+
   function renderThinkingToExecutionOverview(bridge) {
-    const patterns = ((bridge && bridge.patterns) || []).slice(0, 3);
+    const patterns = overviewBridgePatterns(bridge);
     if (!patterns.length) return "";
     const rows = patterns.map((pattern) => {
       const kind = bridgeKindLabel(pattern.kind);
