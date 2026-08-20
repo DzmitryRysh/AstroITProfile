@@ -7,6 +7,7 @@ not replace the baseline glance.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 from app.schemas.mercury_source_profile import SourceFact
@@ -30,6 +31,16 @@ GLANCE_WATCHOUT = "watchout"
 MAX_GLANCE_CARDS = 4
 LAYER_ORDER = FACTOR_TYPE_ORDER
 WATCHOUT_CATEGORIES = frozenset({"risk", "environment", "mobility"})
+
+_CATEGORY_PREFIXES: tuple[str, ...] = (
+    "thinks in ",
+    "communicates in ",
+    "learns well through ",
+    "learns through ",
+    "tends to ",
+    "may ",
+    "can ",
+)
 
 
 @dataclass(frozen=True)
@@ -58,6 +69,16 @@ def _is_presentation_ready(fact_id: str) -> bool:
 
 def _human_text(fact: SourceFact, presentation: dict[str, str]) -> str:
     return presentation.get(fact.id, fact.text)
+
+
+def _semantic_fingerprint(text: str) -> str:
+    """Normalize takeaway text so category-specific phrasing can be deduped."""
+    normalized = text.strip().lower().rstrip(".")
+    for prefix in _CATEGORY_PREFIXES:
+        if normalized.startswith(prefix):
+            normalized = normalized[len(prefix) :]
+            break
+    return re.sub(r"\s+", " ", normalized)
 
 
 def _is_eligible(fact: SourceFact) -> bool:
@@ -91,6 +112,33 @@ def _related_repeats(fact: SourceFact, synthesis: MercuryProfileSynthesis) -> tu
     )
 
 
+def _ordered_candidates(
+    eligible: list[SourceFact],
+    *,
+    prefer_sign: bool,
+    watchout: bool,
+) -> list[SourceFact]:
+    pool = eligible
+    if watchout:
+        risk_first = [fact for fact in eligible if fact.polarity == "risk"]
+        if risk_first:
+            pool = sorted(
+                risk_first,
+                key=lambda item: (_factor_type_rank(item.factor_type), item.id),
+            )
+        else:
+            pool = eligible
+
+    if prefer_sign:
+        ordered: list[SourceFact] = []
+        for layer in LAYER_ORDER:
+            for fact in pool:
+                if fact.factor_type == layer:
+                    ordered.append(fact)
+        return ordered
+    return list(pool)
+
+
 def _pick_fact(
     facts: list[SourceFact],
     used: set[str],
@@ -98,6 +146,8 @@ def _pick_fact(
     prefer_sign: bool = False,
     exclude_risk: bool = False,
     watchout: bool = False,
+    used_fingerprints: set[str] | None = None,
+    presentation: dict[str, str] | None = None,
 ) -> SourceFact | None:
     eligible = [
         fact
@@ -109,20 +159,15 @@ def _pick_fact(
     if not eligible:
         return None
 
-    if watchout:
-        risk_first = [fact for fact in eligible if fact.polarity == "risk"]
-        if risk_first:
-            risk_first.sort(key=lambda item: (_factor_type_rank(item.factor_type), item.id))
-            return risk_first[0]
-
-    if prefer_sign:
-        for layer in LAYER_ORDER:
-            for fact in eligible:
-                if fact.factor_type == layer:
-                    return fact
-        return None
-
-    for fact in eligible:
+    for fact in _ordered_candidates(
+        eligible,
+        prefer_sign=prefer_sign,
+        watchout=watchout,
+    ):
+        if used_fingerprints is not None and presentation is not None:
+            fingerprint = _semantic_fingerprint(_human_text(fact, presentation))
+            if fingerprint in used_fingerprints:
+                continue
         return fact
     return None
 
@@ -152,6 +197,7 @@ def build_mercury_think_glance(
     """Build up to four glance cards from existing Mercury synthesis evidence."""
     presentation = dict(synthesis.presentation_text_by_fact_id)
     used: set[str] = set()
+    used_fingerprints: set[str] = set()
     cards: list[MercuryGlanceCard] = []
 
     thinking = _section_facts_ordered(synthesis, "thinking")
@@ -169,10 +215,18 @@ def build_mercury_think_glance(
         (GLANCE_LEARNING, "Learning style", learning, True, True),
     )
     for key, title, pool, prefer_sign, exclude_risk in picks:
-        fact = _pick_fact(pool, used, prefer_sign=prefer_sign, exclude_risk=exclude_risk)
+        fact = _pick_fact(
+            pool,
+            used,
+            prefer_sign=prefer_sign,
+            exclude_risk=exclude_risk,
+            used_fingerprints=used_fingerprints,
+            presentation=presentation,
+        )
         if fact is None:
             continue
         used.add(fact.id)
+        used_fingerprints.add(_semantic_fingerprint(_human_text(fact, presentation)))
         cards.append(
             _observation_card(
                 key=key,
@@ -183,7 +237,12 @@ def build_mercury_think_glance(
             )
         )
 
-    watchout_fact = _pick_fact(watchout, used, prefer_sign=True, watchout=True)
+    watchout_fact = _pick_fact(
+        watchout,
+        used,
+        prefer_sign=True,
+        watchout=True,
+    )
     if watchout_fact is not None:
         used.add(watchout_fact.id)
         cards.append(

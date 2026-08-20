@@ -1066,7 +1066,13 @@ class RecruiterProfileArchitectureTests(unittest.TestCase):
         takeaways = self._fn("function renderMercuryOverviewTakeaways", "function renderOverviewTensions")
         self.assertIn("renderMercuryThinkGlance", takeaways)
         recurring = self._fn("function renderMercuryOverviewRecurringPatterns", "function renderMercuryOverviewTakeaways")
-        self.assertIn("renderOverviewMercuryTakeawayRow", recurring)
+        self.assertIn("renderOverviewMercuryRecurringChip", recurring)
+        self.assertIn("overview-recurring-chips", recurring)
+        self.assertNotIn("renderOverviewMercuryTakeawayRow", recurring)
+        chip = self._fn("function renderOverviewMercuryRecurringChip", "function renderMercuryOverviewRecurringPatterns")
+        self.assertIn('data-signal="${escapeHtml(signal.signal)}"', chip)
+        self.assertIn("overviewMercurySignalLabel(signal)", chip)
+        self.assertNotIn("signal-takeaway", chip)
         row = self._fn("function renderOverviewMercuryTakeawayRow", "function renderQuietMercuryFact")
         self.assertIn('data-signal="${escapeHtml(signal.signal)}"', row)
         compact = self._fn("function renderCompactSignalRow", "function overviewMercurySignalLabel")
@@ -1125,13 +1131,23 @@ class RecruiterThinkingToExecutionUiTests(unittest.TestCase):
         self.assertNotIn("thinking-to-execution", apply_fn)
 
     def test_tension_labels_use_recruiter_safe_bounded_wording(self):
-        self.assertIn('superficiality: "Intellectual superficiality risk"', self.js)
+        self.assertIn('superficiality: "Surface-level thinking risk"', self.js)
         self.assertIn('analytical_thinking: "Analytical thinking"', self.js)
         tension_fn = self._fn("function renderTensionRows", "function renderResolvedTensions")
         self.assertIn("tensionTagLabel(pair.tag_a)", tension_fn)
         self.assertIn("tensionTagLabel(pair.tag_b)", tension_fn)
         self.assertNotIn("titleCaseSignal(pair.tag_a)", tension_fn)
         self.assertNotIn("Superficiality ↔ Analytical Thinking", self.js)
+        self.assertNotIn("Intellectual superficiality risk", self.js)
+
+    def test_overview_mercury_watchout_uses_bounded_presentation(self):
+        takeaways = self._fn("function renderMercuryOverviewTakeaways", "function renderOverviewTensions")
+        glance = self._fn("function renderMercuryThinkGlance", "function renderMercuryOverviewRecurringPatterns")
+        self.assertIn("OVERVIEW_MERCURY_GLANCE_PRESENTATION", self.js)
+        self.assertIn("prepared phrasing creates an appearance of competence", self.js)
+        self.assertIn("overviewOnly", glance)
+        self.assertIn("appearance_of_competence", self.js)
+        self.assertNotIn("instead of real professionalism", takeaways)
 
     def test_no_score_or_think_do_product_language(self):
         blob = f"{self.js}\n{self.css}".lower()

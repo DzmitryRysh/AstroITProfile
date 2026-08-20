@@ -399,7 +399,7 @@
   // Bounded by approved human-copy meaning (e.g. Leo risk of intellectual
   // superficiality), not accusatory trait naming.
   const TENSION_TAG_LABELS = {
-    superficiality: "Intellectual superficiality risk",
+    superficiality: "Surface-level thinking risk",
     analytical_thinking: "Analytical thinking",
   };
 
@@ -1455,6 +1455,13 @@
       label: "Sales-related aptitude signal",
     },
   };
+  // Overview-only glance wording. Canonical card text remains in Thinking/Evidence.
+  const OVERVIEW_MERCURY_GLANCE_PRESENTATION = {
+    watchout: {
+      appearance_of_competence:
+        "There may be a risk that prepared phrasing creates an appearance of competence.",
+    },
+  };
   const MERCURY_THINKING_GROUPS = [
     {
       key: "thinking_problem_solving",
@@ -1639,8 +1646,16 @@
     return card.title || "";
   }
 
-  function mercuryGlanceText(card, person) {
+  function mercuryGlanceText(card, person, options) {
     if (!card) return "";
+    const overviewOnly = options && options.overviewOnly;
+    if (overviewOnly && card.key === "watchout") {
+      const tags = card.tags || [];
+      for (const tag of tags) {
+        const bounded = OVERVIEW_MERCURY_GLANCE_PRESENTATION.watchout[tag];
+        if (bounded) return contextualizeNeutralSentence(bounded, person);
+      }
+    }
     if (card.display_template) return fillPersonTemplate(card.display_template, person);
     return contextualizeNeutralSentence(card.text, person);
   }
@@ -1648,9 +1663,10 @@
   function renderMercuryThinkGlance(synthesis, person, options) {
     const cards = (synthesis && synthesis.thinking_at_a_glance) || [];
     if (!cards.length) return "";
+    const overviewOnly = options && options.cardsOnly;
     const items = cards.map((card) => `<article class="think-glance-card" data-glance-key="${escapeHtml(card.key)}">
       <h3>${escapeHtml(mercuryGlanceTitle(card))}</h3>
-      <p>${escapeHtml(mercuryGlanceText(card, person))}</p>
+      <p>${escapeHtml(mercuryGlanceText(card, person, { overviewOnly }))}</p>
     </article>`).join("");
     if (options && options.cardsOnly) {
       return `<div class="think-glance">${items}</div>`;
@@ -1661,19 +1677,22 @@
     </section>`;
   }
 
+  function renderOverviewMercuryRecurringChip(signal) {
+    if (!signal) return "";
+    return `<span class="overview-recurring-chip" data-signal="${escapeHtml(signal.signal)}">${escapeHtml(overviewMercurySignalLabel(signal))}</span>`;
+  }
+
   function renderMercuryOverviewRecurringPatterns(synthesis, audience) {
     const patterns = (synthesis && synthesis.strongest_patterns) || [];
     if (!patterns.length) return "";
-    const facts = synthesisFactMap(synthesis);
-    const presentation = presentationTextMap(synthesis);
-    const rows = patterns.slice(0, OVERVIEW_MERCURY_RECURRING_LIMIT)
-      .map((signal) => renderOverviewMercuryTakeawayRow(signal, facts, presentation))
+    const chips = patterns.slice(0, OVERVIEW_MERCURY_RECURRING_LIMIT)
+      .map((signal) => renderOverviewMercuryRecurringChip(signal))
       .filter(Boolean)
       .join("");
-    if (!rows) return "";
+    if (!chips) return "";
     return `<div class="overview-mercury-recurring">
       <p class="overview-recurring-label">Recurring patterns</p>
-      <div class="result-list-group">${rows}</div>
+      <div class="overview-recurring-chips">${chips}</div>
     </div>`;
   }
 

@@ -25,6 +25,7 @@ from app.services.mercury_think_glance import (
     GLANCE_WATCHOUT,
     MAX_GLANCE_CARDS,
     build_mercury_think_glance,
+    render_mercury_glance_text,
 )
 from app.services.person_perspective import build_person_perspective
 
@@ -143,6 +144,23 @@ class MercuryThinkGlanceTests(unittest.TestCase):
         self.assertEqual(fact.factor_type, "sign")
         repeats = {item.signal for item in synthesis.strongest_patterns}
         self.assertTrue({"analytical_thinking", "technical_ability", "debate"}.issubset(repeats))
+
+    def test_avdey_glance_avoids_duplicate_monologue_takeaways(self):
+        synthesis = _synthesis(**AVDEY)
+        cards = {card.key: card for card in build_mercury_think_glance(synthesis)}
+        self.assertEqual(cards[GLANCE_THINKING].fact_ids, ("leo_l7_monologue_thinking",))
+        self.assertEqual(
+            cards[GLANCE_COMMUNICATION].fact_ids,
+            ("leo_l7_tracks_audience_effect",),
+        )
+        person = build_person_perspective(name="Avdey", sex="male")
+        rendered = {
+            card.key: render_mercury_glance_text(card, person).lower()
+            for card in cards.values()
+        }
+        monologue_hits = sum("monologue" in text for text in rendered.values())
+        self.assertEqual(monologue_hits, 1)
+        self.assertNotIn("monologue", rendered[GLANCE_COMMUNICATION])
 
     def test_vlad_keeps_core_style_before_repeats(self):
         synthesis = _synthesis(**VLAD)
