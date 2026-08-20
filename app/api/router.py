@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.api.routes.candidate_compare import router as candidate_compare_router
 from app.api.routes.candidate_team_impact import router as candidate_team_impact_router
+from app.api.routes.contribution_profile import router as contribution_profile_router
 from app.api.routes.health import router as health_router
 from app.api.routes.mars_source_profile import router as mars_source_profile_router
 from app.api.routes.mercury_source_profile import router as mercury_source_profile_router
@@ -19,6 +20,7 @@ api_router.include_router(mercury_work_profile_router)
 api_router.include_router(mercury_source_profile_router)
 api_router.include_router(mars_source_profile_router)
 api_router.include_router(thinking_to_execution_router)
+api_router.include_router(contribution_profile_router)
 api_router.include_router(candidate_compare_router)
 api_router.include_router(team_map_router)
 api_router.include_router(team_gap_router)
