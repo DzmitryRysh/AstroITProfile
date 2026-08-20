@@ -658,10 +658,12 @@ class RecruiterMarsHowYouWorkTests(unittest.TestCase):
             "function profileTabFromHash", 1
         )[0]
         glance = overview_fn.find("renderMarsWorkGlance")
-        mars_repeat = overview_fn.find("repeated_signals")
+        mars_repeat = overview_fn.find("renderMarsOverviewRecurringPatterns")
         self.assertGreater(glance, -1)
         self.assertGreater(mars_repeat, glance)
         self.assertIn("cardsOnly: true", overview_fn)
+        self.assertIn("renderMarsOverviewRecurringPatterns", overview_fn)
+        self.assertNotIn("renderCompactSignalRow", overview_fn)
         self.assertIn("renderWorkingGroup", working_fn)
         self.assertIn("renderMarsDetailsMethodology", evidence_fn)
         groups = self.js.split("const MARS_WORKING_GROUPS", 1)[1].split(
@@ -672,7 +674,7 @@ class RecruiterMarsHowYouWorkTests(unittest.TestCase):
         self.assertLess(groups.find('key: "collaboration_conflict"'), groups.find('key: "growth_support"'))
         self.assertIn("Work style at a glance", self.js)
         self.assertIn(">Recurring patterns<", self.js)
-        self.assertNotIn("Recurring work patterns", self.js)
+        self.assertIn("Recurring work pattern", self.js)
         self.assertIn("What helps ${person.object} work better", self.js)
 
     def test_mars_primary_surface_avoids_system_counts_and_risk_badges(self):
@@ -868,6 +870,7 @@ class RecruiterProfileArchitectureTests(unittest.TestCase):
             overview.find("renderThinkingToExecutionOverview"),
             overview.find("renderOverviewTensions"),
         )
+        self.assertIn("renderMarsOverviewRecurringPatterns", overview)
 
     def test_thinking_groups_mercury_into_four_blocks(self):
         groups = self._fn("const MERCURY_THINKING_GROUPS", "const MARS_WORKING_GROUPS")
@@ -933,7 +936,8 @@ class RecruiterProfileArchitectureTests(unittest.TestCase):
         thinking = self._fn("function renderThinkingGroup", "function renderProfileThinking")
         working = self._fn("function renderWorkingGroup", "function renderProfileWorking")
         evidence = self._fn("function renderEvidencePatterns", "function renderProfileEvidence")
-        self.assertIn("renderCompactSignalRow", overview)
+        self.assertIn("renderMarsOverviewRecurringPatterns", overview)
+        self.assertNotIn("renderCompactSignalRow", overview)
         self.assertNotIn("renderStrongestPatterns", overview)
         self.assertNotIn("renderMarsRecurringPatterns", overview)
         self.assertNotIn("Why this appears", thinking)
@@ -942,6 +946,40 @@ class RecruiterProfileArchitectureTests(unittest.TestCase):
         self.assertNotIn("renderMarsRecurringPatterns", working)
         self.assertIn("renderStrongestPatterns", evidence)
         self.assertIn("renderMarsRecurringPatterns", evidence)
+
+    def test_overview_mars_recurring_patterns_are_compact_chips(self):
+        overview = self._fn("function renderProfileOverview", "function renderThinkingGroup")
+        mars_recurring = self._fn(
+            "function renderMarsOverviewRecurringPatterns",
+            "function renderProfileOverview",
+        )
+        chip = self._fn(
+            "function renderOverviewMarsRecurringChip",
+            "function renderMarsOverviewRecurringPatterns",
+        )
+        self.assertIn("renderMarsOverviewRecurringPatterns", overview)
+        self.assertIn("OVERVIEW_MARS_RECURRING_LIMIT", mars_recurring)
+        self.assertIn("patterns.slice(0, OVERVIEW_MARS_RECURRING_LIMIT)", mars_recurring)
+        self.assertIn("Recurring work pattern", mars_recurring)
+        self.assertIn("overview-recurring-chips", mars_recurring)
+        self.assertIn("overview-recurring-chip", chip)
+        self.assertIn('data-signal="${escapeHtml(signal.signal)}"', chip)
+        self.assertNotIn("signal-takeaway", chip)
+        self.assertNotIn("signal-takeaway", mars_recurring)
+        self.assertNotIn("Duties may create constant overload", overview)
+        self.assertNotIn("little breathing room", overview)
+        working = self._fn("function renderWorkingGroup", "function renderProfileWorking")
+        evidence_patterns = self.js.split("function renderMarsRecurringPatterns", 1)[1].split(
+            "function renderMarsPrimarySections", 1
+        )[0]
+        self.assertIn("renderCompactSignalRow", working)
+        self.assertIn("signal-takeaway", evidence_patterns)
+        mercury_recurring = self._fn(
+            "function renderMercuryOverviewRecurringPatterns",
+            "function renderMercuryOverviewTakeaways",
+        )
+        self.assertIn("overview-recurring-chips", mercury_recurring)
+        self.assertIn("Recurring patterns", mercury_recurring)
 
     def test_preview_counts_are_capped(self):
         self.assertIn("const GROUP_PREVIEW_LIMIT = 3", self.js)

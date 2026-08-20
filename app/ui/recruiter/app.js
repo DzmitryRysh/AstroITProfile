@@ -1438,6 +1438,7 @@
   const PROFILE_TABS = ["overview", "thinking", "working", "evidence"];
   const OVERVIEW_MERCURY_TAKEAWAY_LIMIT = 4;
   const OVERVIEW_MERCURY_RECURRING_LIMIT = 3;
+  const OVERVIEW_MARS_RECURRING_LIMIT = 3;
   const GROUP_PREVIEW_LIMIT = 3;
   // Overview-only recruiter labels. Canonical signal ids / tags are unchanged.
   const OVERVIEW_MERCURY_SIGNAL_PRESENTATION = {
@@ -1792,17 +1793,33 @@
     </section>`;
   }
 
+  function renderOverviewMarsRecurringChip(signal) {
+    if (!signal) return "";
+    return `<span class="overview-recurring-chip" data-signal="${escapeHtml(signal.signal)}">${escapeHtml(titleCaseSignal(signal.signal))}</span>`;
+  }
+
+  function renderMarsOverviewRecurringPatterns(synthesis) {
+    const patterns = (synthesis && synthesis.repeated_signals) || [];
+    if (!patterns.length) return "";
+    const shown = patterns.slice(0, OVERVIEW_MARS_RECURRING_LIMIT);
+    const chips = shown
+      .map((signal) => renderOverviewMarsRecurringChip(signal))
+      .filter(Boolean)
+      .join("");
+    if (!chips) return "";
+    const label = shown.length === 1 ? "Recurring work pattern" : "Recurring work patterns";
+    return `<div class="overview-mars-repeat">
+      <p class="overview-recurring-label">${escapeHtml(label)}</p>
+      <div class="overview-recurring-chips">${chips}</div>
+    </div>`;
+  }
+
   function renderProfileOverview(profile, marsProfile, person, audience, bridge) {
     const mercurySynthesis = (profile && profile.synthesis) || null;
     const marsSynthesis = (marsProfile && marsProfile.synthesis) || null;
     const thinks = renderMercuryOverviewTakeaways(mercurySynthesis, audience, person);
     const worksGlance = renderMarsWorkGlance(marsSynthesis, person, { cardsOnly: true });
-    const marsFacts = synthesisFactMap(marsSynthesis);
-    const marsPresentation = presentationTextMap(marsSynthesis);
-    const marsRepeat = ((marsSynthesis && marsSynthesis.repeated_signals) || [])[0];
-    const marsRepeatHtml = marsRepeat
-      ? `<div class="overview-mars-repeat">${renderCompactSignalRow(marsRepeat, marsFacts, marsPresentation)}</div>`
-      : "";
+    const marsRepeatHtml = renderMarsOverviewRecurringPatterns(marsSynthesis);
     const worksBody = `${worksGlance}${marsRepeatHtml}`;
     return `<div class="overview-grid">
       <section class="panel overview-dimension" data-overview-dimension="think">
