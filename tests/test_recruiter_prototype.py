@@ -68,6 +68,7 @@ class RecruiterPrototypeRouteTests(unittest.TestCase):
         self.assertIn("/api/v1/mercury-source-profile", paths)
         self.assertIn("/api/v1/mars-source-profile", paths)
         self.assertIn("/api/v1/thinking-to-execution", paths)
+        self.assertIn("/api/v1/contribution-profile", paths)
         self.assertIn("/api/v1/candidate-compare", paths)
         self.assertIn("/api/v1/team-map", paths)
         self.assertIn("/api/v1/team-gap", paths)
