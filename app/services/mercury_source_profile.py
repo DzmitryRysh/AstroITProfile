@@ -64,6 +64,7 @@ def _match_definitions(
     factor_type: str,
     factor_key: str,
     hard_aspected: bool,
+    aspect_orb_deg: float | None = None,
 ) -> list[SourceFact]:
     catalog_key = factor_key
     factor_key_override: str | None = None
@@ -95,8 +96,30 @@ def _match_definitions(
                     )
                 )
             continue
-        if condition == "pluto_strength_unresolved":
+        if condition == "sun_mercury_combustion_orb_lt_5":
+            # Deterministic Bioastrology combustion: conjunction orb strictly < 5°.
+            # Does not change the engine conjunction orb (6°).
+            if aspect_orb_deg is not None and aspect_orb_deg < 5.0:
+                selected.append(
+                    _to_fact(
+                        definition,
+                        activated=True,
+                        factor_key_override=factor_key_override,
+                    )
+                )
+            continue
+        if condition in {
+            "pluto_strength_unresolved",
+            "strength_unresolved",
+            "creative_core_strength_unresolved",
+            "female_chart_context_unresolved",
+            "intellectual_work_context_unresolved",
+            "external_affliction_context_unresolved",
+            "multiple_affliction_context_unresolved",
+        }:
             # Always include when this aspect factor is present; leave unresolved.
+            # No strength / winner / creative-core / gender / intellectual-work /
+            # external-affliction / multiple-affliction resolver is applied.
             selected.append(
                 _to_fact(
                     definition,
@@ -251,6 +274,7 @@ def build_source_profile_from_factors(
                     factor_type="aspect",
                     factor_key=aspect_key,
                     hard_aspected=hard,
+                    aspect_orb_deg=aspect.orb_deg,
                 )
             )
         else:

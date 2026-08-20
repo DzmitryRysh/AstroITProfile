@@ -135,30 +135,23 @@ class AvdeyGoldenCaseTests(unittest.TestCase):
         self.assertIn("aspect:square_Pluto", signal.sources)
         self.assertIn("aspect:trine_Saturn", signal.sources)
 
-    def test_persuasion_leo_and_pluto(self):
-        signal = _signal(self.profile, "persuasion")
-        self.assertIsNotNone(signal)
-        self.assertIn("sign:Leo", signal.sources)
-        self.assertIn("aspect:square_Pluto", signal.sources)
+    def test_persuasion_not_created_by_leo_sales(self):
+        # Sales ability is not persuasion; Avdey has Pluto persuasion only → no repeat.
+        self.assertIsNone(_signal(self.profile, "persuasion"))
+        sales = next(item for item in self.profile.sign_facts if item.id == "leo_sales_ability")
+        self.assertEqual(sales.tags, ["sales"])
+        self.assertNotIn("persuasion", sales.tags)
 
-    def test_nonstandard_thinking_and_learning_split(self):
+    def test_nonstandard_thinking_leo_and_retrograde(self):
         thinking = _signal(self.profile, "nonstandard_thinking")
         self.assertIsNotNone(thinking)
         self.assertIn("sign:Leo", thinking.sources)
         self.assertIn("motion:retrograde", thinking.sources)
         self.assertIn("leo_nonstandard_speech_thinking", thinking.fact_ids)
+        self.assertIn("rx_nonstandard_solutions", thinking.fact_ids)
+        self.assertNotIn("rx_unexpected_conclusions", thinking.fact_ids)
         self.assertNotIn("leo_learns_through_independent_investigation", thinking.fact_ids)
-        self.assertNotIn("pluto_sq_fast_learning_through_criticism", thinking.fact_ids)
-
-        learning = _signal(self.profile, "nonstandard_learning")
-        self.assertIsNotNone(learning)
-        self.assertIn("sign:Leo", learning.sources)
-        self.assertIn("motion:retrograde", learning.sources)
-        self.assertIn("aspect:square_Pluto", learning.sources)
-        self.assertIn("leo_learns_through_independent_investigation", learning.fact_ids)
-        self.assertIn("pluto_sq_fast_learning_through_criticism", learning.fact_ids)
-        self.assertNotIn("leo_nonstandard_speech_thinking", learning.fact_ids)
-
+        self.assertIsNone(_signal(self.profile, "nonstandard_learning"))
         self.assertIsNone(_signal(self.profile, "nonstandard_thinking_learning"))
 
     def test_sales_includes_leo_and_house_1(self):
@@ -318,35 +311,40 @@ class AvdeyGoldenCaseTests(unittest.TestCase):
         }
         self.assertNotIn("bioastrology_mercury_moon_harmonious", refs)
 
-    def test_contrasting_superficiality_and_depth_preserved(self):
+    def test_contrasting_superficiality_preserved(self):
         ids = _ids(self.profile.sign_facts) | _ids(self.profile.aspect_facts)
         self.assertIn("leo_risk_intellectual_superficiality", ids)
         self.assertIn("pluto_sq_identify_vulnerabilities", ids)
         self.assertIn("saturn_tr_analytical_ability", ids)
         pairs = {(item.tag_a, item.tag_b) for item in self.profile.contrasting_signals}
-        self.assertIn(("superficiality", "depth"), pairs)
+        # Depth was removed from broad Pluto conflict tags; analytical contrast remains exact.
+        self.assertIn(("superficiality", "analytical_thinking"), pairs)
+        self.assertNotIn(("superficiality", "depth"), pairs)
 
     def test_coverage_complete_for_engine_factors(self):
         self.assertEqual(self.profile.coverage.status, "complete")
         self.assertEqual(self.profile.coverage.missing_factors, [])
 
-    def test_unsupported_sign_returns_partial_coverage(self):
+    def test_synthetic_unknown_aspect_returns_partial_coverage(self):
+        """After reachable aspect coverage is complete, exercise missing packs via a synthetic unsupported aspect key."""
         factors = MercurySourceFactors(
             birth_time_known=True,
-            mercury_sign="Virgo",
-            mercury_element="earth",
+            mercury_sign="Leo",
+            mercury_element="fire",
             mercury_motion="direct",
-            mercury_house=3,
-            aspects=[MercuryAspect(planet="Mars", type="square", orb_deg=2.0)],
+            mercury_house=1,
+            aspects=[MercuryAspect(planet="SyntheticProbe", type="conjunction", orb_deg=2.0)],
         )
         profile = build_source_profile_from_factors(factors)
         self.assertEqual(profile.coverage.status, "partial")
-        self.assertIn("sign:Virgo", profile.coverage.missing_factors)
-        self.assertIn("house:3", profile.coverage.missing_factors)
-        self.assertIn("aspect:square_Mars", profile.coverage.missing_factors)
+        self.assertNotIn("sign:Leo", profile.coverage.missing_factors)
+        self.assertNotIn("house:1", profile.coverage.missing_factors)
+        self.assertIn("house:1", profile.coverage.covered_factors)
+        self.assertEqual(profile.coverage.missing_factors, ["aspect:conjunction_SyntheticProbe"])
         self.assertNotIn("motion:direct", profile.coverage.missing_factors)
-        self.assertEqual(profile.sign_facts, [])
-        self.assertTrue(any("Virgo" in item for item in profile.limitations))
+        self.assertGreater(len(profile.sign_facts), 0)
+        self.assertGreater(len(profile.house_facts), 0)
+        self.assertTrue(any("conjunction SyntheticProbe" in item for item in profile.limitations))
 
     def test_route_registered(self):
         app = create_app()
@@ -656,10 +654,8 @@ class DzmitryGoldenCaseTests(unittest.TestCase):
         self.assertIn("sign:Sagittarius", teaching.sources)
         self.assertIn("aspect:sextile_Jupiter", teaching.sources)
 
-        nonstandard = _signal(self.profile, "nonstandard_thinking")
-        self.assertIsNotNone(nonstandard)
-        self.assertIn("sign:Sagittarius", nonstandard.sources)
-        self.assertIn("aspect:conjunction_Uranus", nonstandard.sources)
+        # Rebellious/free thinking is not the same atom as nonstandard thinking.
+        self.assertIsNone(_signal(self.profile, "nonstandard_thinking"))
 
         # Fast speech must not create fake fast_thinking with Uranus.
         fast = _signal(self.profile, "fast_thinking")

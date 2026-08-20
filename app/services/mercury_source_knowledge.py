@@ -4,6 +4,90 @@ v2 coverage includes golden cases:
 - Avdey: Leo, House 1, Retrograde, square Pluto, trine Saturn, sextile Moon
 - Vlad: Taurus, House 9, square Moon, trine Mars, sextile Jupiter
 - Dzmitry: Sagittarius, House 10, sextile Mars, sextile Jupiter, conjunction Uranus
+
+Sign Batch A1 dual-source packs (Lesson 7 + Bioastrology):
+- Aries, Gemini, Cancer
+
+Sign Batch A2 dual-source packs (Lesson 7 + Bioastrology):
+- Virgo, Libra, Scorpio
+
+Sign Batch A3 dual-source packs (Lesson 7 + Bioastrology):
+- Capricorn, Aquarius, Pisces
+
+Leo has Lesson 7 + Bioastrology.
+Taurus / Sagittarius have Lesson 7 + Bioastrology (dual-source parity complete).
+
+House 1 has Lesson 7 + Bioastrology (dual-source parity).
+House 2 has Lesson 7 + Bioastrology (dual-source parity).
+House 3 has Lesson 7 + Bioastrology (dual-source parity).
+House 4 has Lesson 7 + Bioastrology (dual-source parity).
+House 5 has Lesson 7 + Bioastrology (dual-source parity).
+House 6 has Lesson 7 + Bioastrology (dual-source parity).
+House 7 has Lesson 7 + Bioastrology (dual-source parity).
+House 9 has Lesson 7 + Bioastrology (dual-source parity).
+House 10 has Lesson 7 + Bioastrology (dual-source parity).
+
+House Batch B1:
+- House 4
+
+House Batch B2:
+- Houses 5, 6, 7
+
+House 10 has Lesson 7 + Bioastrology (dual-source parity).
+
+House Batch B3:
+- House 8, House 11, House 12 (Bioastrology parity)
+
+Aspect Batch C1 (verified Bioastrology harmonious parity):
+- Moon / Jupiter / Saturn harmonious aliases
+- Uranus harmonious (trine/sextile) pack
+
+Aspect Batch C2 (verified Bioastrology square coverage):
+- square_Mars
+- square_Saturn
+
+Aspect Batch C3 (verified Bioastrology Pluto harmonious parity):
+- trine_Pluto / sextile_Pluto (pair-specific "трин/секстиль")
+
+Aspect Batch C4 (verified Bioastrology Jupiter square):
+- square_Jupiter
+
+Aspect Batch C5 (verified Bioastrology Jupiter opposition / conjunction):
+- opposition_Jupiter
+- conjunction_Jupiter
+
+Aspect Batch C6 (verified Bioastrology Saturn opposition / conjunction):
+- opposition_Saturn
+- conjunction_Saturn
+
+Aspect Batch C7 (verified Bioastrology Mars opposition / conjunction):
+- opposition_Mars
+- conjunction_Mars
+
+Aspect Batch C8 (verified Bioastrology Uranus square / opposition):
+- square_Uranus
+- opposition_Uranus
+
+Aspect Batch C9 (verified Bioastrology Moon opposition / conjunction):
+- opposition_Moon
+- conjunction_Moon
+
+Aspect Batch C11 (verified Bioastrology Sun conjunction):
+- conjunction_Sun
+
+Aspect Batch C12 (verified Bioastrology Venus reachable family):
+- sextile_Venus
+- conjunction_Venus
+
+Aspect Batch C13 (verified Bioastrology Neptune reachable family):
+- trine_Neptune / sextile_Neptune (harmonious alias)
+- square_Neptune
+- opposition_Neptune
+- conjunction_Neptune
+
+Aspect Batch C14 (verified Bioastrology Pluto reachable family completion):
+- opposition_Pluto
+- conjunction_Pluto
 """
 
 from __future__ import annotations
@@ -52,128 +136,270 @@ def _f(
 
 
 REF_LEO = "bioastrology_mercury_leo"
+REF_LEO_L7 = "lesson7_mercury_leo"
+REF_LEO_BIO = REF_LEO
 REF_H1 = "bioastrology_mercury_house_1"
+REF_H1_L7 = "lesson7_mercury_house_1"
 REF_RX = "methodology_mercury_retrograde"
 REF_PLUTO_SQ = "bioastrology_mercury_pluto_square"
 REF_SATURN_HARM = "bioastrology_mercury_saturn_harmonious"
 REF_MOON_HARM = "bioastrology_mercury_moon_harmonious"
 REF_TAURUS = "lesson7_mercury_taurus"
+REF_TAURUS_BIO = "bioastrology_mercury_taurus"
 REF_H9 = "lesson7_mercury_house_9"
+REF_H9_BIO = "bioastrology_mercury_house_9"
 REF_MOON_SQ = "lesson7_mercury_moon_square"
 REF_MARS_HARM = "bioastrology_mercury_mars_harmonious"
 REF_JUPITER_HARM = "bioastrology_mercury_jupiter_harmonious"
 REF_SAGITTARIUS = "lesson7_mercury_sagittarius"
+REF_SAGITTARIUS_BIO = "bioastrology_mercury_sagittarius"
 REF_H10 = "lesson7_mercury_house_10"
+REF_H10_BIO = "bioastrology_mercury_house_10"
 REF_URANUS_CONJ = "bioastrology_mercury_uranus_conjunction"
 
+_AFFLICTED_PREFIX = (
+    "Source affliction tendency (activated via project hard_aspected proxy "
+    "for 'при поражении'): "
+)
+
 # ---------------------------------------------------------------------------
-# Mercury in Leo — general
+# Mercury in Leo — Lesson 7
+# ---------------------------------------------------------------------------
+LEO_LESSON7: tuple[SourceFactDef, ...] = (
+    _f("leo_l7_monologue_thinking", "sign", "Leo", "thinking",
+       "Thinks in monologue mode.",
+       "neutral", "monologue_thinking",
+       source_reference=REF_LEO_L7),
+    _f("leo_l7_monologue_communication", "sign", "Leo", "communication",
+       "Communicates in monologue mode.",
+       "neutral", "monologue_communication",
+       source_reference=REF_LEO_L7),
+    _f("leo_l7_tracks_audience_effect", "sign", "Leo", "communication",
+       "Tracks effect on the audience.",
+       "neutral", "audience_effect_tracking",
+       source_reference=REF_LEO_L7),
+    _f("leo_l7_seeks_applause", "sign", "Leo", "communication",
+       "Seeks applause.",
+       "neutral", "applause_seeking",
+       source_reference=REF_LEO_L7),
+    _f("leo_l7_transforms_others_idea_into_own", "sign", "Leo", "thinking",
+       "Can transform another person's idea into one's own.",
+       "risk", "idea_appropriation",
+       source_reference=REF_LEO_L7),
+    _f("leo_l7_persist_in_views_while_knowing_wrong", "sign", "Leo", "thinking",
+       "Can persist in own views even while understanding they are wrong.",
+       "risk", "knowing_wrong_stubbornness",
+       source_reference=REF_LEO_L7),
+    _f("leo_l7_dignified_lordly_speech", "sign", "Leo", "communication",
+       "Dignified / lordly speech style.",
+       "neutral", "lordly_speech_style",
+       source_reference=REF_LEO_L7),
+    _f("leo_l7_verbal_escape_skill", "sign", "Leo", "communication",
+       "Source describes ability to wriggle out of situations verbally.",
+       "neutral", "verbal_escape_skill",
+       source_reference=REF_LEO_L7),
+    _f("leo_l7_lying_source_claim", "sign", "Leo", "risk",
+       "Source explicitly describes lying as a possible communication tendency (source-described tendency, not a person accusation).",
+       "risk", "lying",
+       source_reference=REF_LEO_L7),
+    _f("leo_l7_throwing_dust_in_eyes", "sign", "Leo", "risk",
+       "Source explicitly describes \"throwing dust in eyes\" as a possible communication tendency (source-described tendency, not a person accusation).",
+       "risk", "dust_in_eyes",
+       source_reference=REF_LEO_L7),
+    _f("leo_l7_self_justifying_speech", "sign", "Leo", "communication",
+       "Speech may be used to justify / whiten oneself.",
+       "risk", "self_justifying_speech",
+       source_reference=REF_LEO_L7),
+    _f("leo_l7_prepared_phrases_appearance_of_competence", "sign", "Leo", "risk",
+       "Prepared generic phrases can create an appearance of competence.",
+       "risk", "appearance_of_competence",
+       source_reference=REF_LEO_L7),
+    _f("leo_l7_nonstandardness", "sign", "Leo", "thinking",
+       "Nonstandardness.",
+       "strength", "nonstandard_thinking",
+       source_reference=REF_LEO_L7),
+    _f("leo_l7_creativity", "sign", "Leo", "thinking",
+       "Creativity.",
+       "strength", "creative",
+       source_reference=REF_LEO_L7),
+    _f("leo_l7_dev_distinguish_real_vs_dust", "sign", "Leo", "work_application",
+       "Development focus: distinguish real knowledge from appearance / \"dust in eyes\".",
+       "neutral", "distinguish_real_vs_appearance",
+       source_reference=REF_LEO_L7),
+    _f("leo_l7_dev_hear_others_opinions", "sign", "Leo", "work_application",
+       "Development focus: learn to hear other people's opinions.",
+       "neutral", "hear_others_opinions",
+       source_reference=REF_LEO_L7),
+    _f("leo_l7_dev_move_beyond_monologue", "sign", "Leo", "work_application",
+       "Development focus: move beyond own monologue.",
+       "neutral", "move_beyond_monologue",
+       source_reference=REF_LEO_L7),
+    _f("leo_l7_dev_creative_vision", "sign", "Leo", "work_application",
+       "Development focus: develop creative vision.",
+       "neutral", "creative_vision_development",
+       source_reference=REF_LEO_L7),
+    _f("leo_l7_dev_creativity", "sign", "Leo", "work_application",
+       "Development focus: develop creativity.",
+       "neutral", "creativity_development",
+       source_reference=REF_LEO_L7),
+    _f("leo_l7_learning_performing", "sign", "Leo", "learning",
+       "Performing helps learning.",
+       "neutral", "performance_learning",
+       source_reference=REF_LEO_L7),
+    _f("leo_l7_learning_standing_out", "sign", "Leo", "learning",
+       "Standing out helps learning.",
+       "neutral", "standing_out_learning",
+       source_reference=REF_LEO_L7),
+    _f("leo_l7_learning_bright_presentation", "sign", "Leo", "learning",
+       "Bright presentation of ideas helps learning.",
+       "neutral", "bright_presentation_learning",
+       source_reference=REF_LEO_L7),
+    _f("leo_l7_learning_creative_reformulation", "sign", "Leo", "learning",
+       "Transforming information into one's own creative form helps learning.",
+       "neutral", "creative_reformulation_learning",
+       source_reference=REF_LEO_L7),
+    _f("leo_l7_self_praise_learning_motivation", "sign", "Leo", "learning",
+       "Self-praise / self-encouragement as explicit source wording for learning motivation.",
+       "neutral", "self_praise_learning_motivation",
+       source_reference=REF_LEO_L7),
+    _f("leo_l7_difficulty_opinion_receptivity", "sign", "Leo", "risk",
+       "Difficulty: deafness / poor receptivity to others' opinions.",
+       "risk", "opinion_receptivity_deafness",
+       source_reference=REF_LEO_L7),
+    _f("leo_l7_unwillingness_to_admit_wrong", "sign", "Leo", "risk",
+       "Difficulty: unwillingness to admit being wrong.",
+       "risk", "unwillingness_to_admit_wrong",
+       source_reference=REF_LEO_L7),
+    _f("leo_l7_env_seeks_admiration", "sign", "Leo", "environment",
+       "Seeks admiration.",
+       "neutral", "admiration_seeking",
+       source_reference=REF_LEO_L7),
+    _f("leo_l7_env_seeks_recognition", "sign", "Leo", "environment",
+       "Seeks recognition.",
+       "neutral", "recognition_seeking",
+       source_reference=REF_LEO_L7),
+    _f("leo_l7_env_lordly_sibling_position", "sign", "Leo", "environment",
+       "Takes an \"above\" / lordly position with siblings.",
+       "neutral", "lordly_sibling_position",
+       source_reference=REF_LEO_L7),
+    _f("leo_l7_env_emphasizes_own_views", "sign", "Leo", "environment",
+       "Emphasizes own views/ideas.",
+       "neutral", "emphasize_own_views",
+       source_reference=REF_LEO_L7),
+    _f("leo_l7_env_idea_appropriation", "sign", "Leo", "environment",
+       "Can appropriate other people's ideas.",
+       "risk", "idea_appropriation",
+       source_reference=REF_LEO_L7),
+)
+
+# ---------------------------------------------------------------------------
+# Mercury in Leo — Bioastrology general
 # ---------------------------------------------------------------------------
 LEO_GENERAL: tuple[SourceFactDef, ...] = (
     _f("leo_expressive_visible_thinking", "sign", "Leo", "thinking",
        "Thinking, communication and learning are highly expressive, solar and visible.",
        "neutral", "expressive", "visible_communication",
-       source_reference=REF_LEO),
+       source_reference=REF_LEO_BIO),
     _f("leo_strong_creative_quality", "sign", "Leo", "thinking",
        "Strong creative quality in thinking and expression.",
        "strength", "creative",
-       source_reference=REF_LEO),
+       source_reference=REF_LEO_BIO),
     _f("leo_strong_debate_potential", "sign", "Leo", "communication",
        "Very strong debate potential.",
        "strength", "debate",
-       source_reference=REF_LEO),
+       source_reference=REF_LEO_BIO),
     _f("leo_risk_intellectual_superficiality", "sign", "Leo", "risk",
        "Risk of intellectual superficiality and intellectual primitiveness.",
        "risk", "superficiality", "primitiveness",
-       source_reference=REF_LEO),
+       source_reference=REF_LEO_BIO),
     _f("leo_thinks_from_own_position", "sign", "Leo", "thinking",
        "Tends to think from one's own position rather than from others' frames.",
        "neutral", "self_centered_thinking",
-       source_reference=REF_LEO),
+       source_reference=REF_LEO_BIO),
     _f("leo_may_discount_others_opinions", "sign", "Leo", "communication",
        "May discount other people's opinions.",
        "risk", "stubbornness", "self_centered_thinking",
-       source_reference=REF_LEO),
+       source_reference=REF_LEO_BIO),
     _f("leo_dialogue_difficulty", "sign", "Leo", "communication",
        "This can make real two-way dialogue difficult.",
        "risk", "dialogue_friction",
-       source_reference=REF_LEO),
+       source_reference=REF_LEO_BIO),
     _f("leo_nonstandard_speech_thinking", "sign", "Leo", "communication",
        "Nonstandard speech and thinking.",
        "strength", "nonstandard_thinking",
-       source_reference=REF_LEO),
+       source_reference=REF_LEO_BIO),
     _f("leo_strong_oratory_potential", "sign", "Leo", "communication",
        "Strong oratory potential.",
        "strength", "oratory", "presentation",
-       source_reference=REF_LEO),
+       source_reference=REF_LEO_BIO),
     _f("leo_leadership_communication_potential", "sign", "Leo", "communication",
        "Leadership communication potential.",
        "strength", "presentation", "leadership_communication",
-       source_reference=REF_LEO),
+       source_reference=REF_LEO_BIO),
     _f("leo_pr_ability", "sign", "Leo", "work_application",
        "PR ability.",
        "strength", "presentation",
-       source_reference=REF_LEO),
+       source_reference=REF_LEO_BIO),
     _f("leo_sales_ability", "sign", "Leo", "work_application",
        "Sales ability.",
-       "strength", "sales", "persuasion",
-       source_reference=REF_LEO),
+       "strength", "sales",
+       source_reference=REF_LEO_BIO),
     _f("leo_learns_through_impressions", "sign", "Leo", "learning",
        "Learns well through impressions.",
        "neutral", "learning_style",
-       source_reference=REF_LEO),
+       source_reference=REF_LEO_BIO),
     _f("leo_learns_through_independent_investigation", "sign", "Leo", "learning",
        "Learns through independent investigation and digging into material.",
-       "strength", "independent_learning", "nonstandard_learning",
-       source_reference=REF_LEO),
+       "strength", "independent_learning",
+       source_reference=REF_LEO_BIO),
     _f("leo_wants_to_demonstrate_results", "sign", "Leo", "learning",
        "Wants to later demonstrate intellectual results to others.",
        "neutral", "visible_communication",
-       source_reference=REF_LEO),
+       source_reference=REF_LEO_BIO),
     _f("leo_praise_motivates_learning", "sign", "Leo", "learning",
        "Praise can motivate learning.",
        "neutral", "learning_motivation",
-       source_reference=REF_LEO),
+       source_reference=REF_LEO_BIO),
     _f("leo_playful_competition_motivates_learning", "sign", "Leo", "learning",
        "Game or playful competition can motivate learning.",
        "neutral", "learning_motivation",
-       source_reference=REF_LEO),
+       source_reference=REF_LEO_BIO),
     _f("leo_visible_status_motivates_learning", "sign", "Leo", "learning",
        "Visible status or attractive reward can motivate learning.",
        "neutral", "learning_motivation",
-       source_reference=REF_LEO),
+       source_reference=REF_LEO_BIO),
 )
 
 # Afflicted Mercury in Leo — only when hard_aspected
 LEO_AFFLICTED: tuple[SourceFactDef, ...] = (
     _f("leo_afflicted_putting_on_a_show", "sign", "Leo", "risk",
-       "Putting on a show / throwing dust in people's eyes.",
+       _AFFLICTED_PREFIX + "putting on a show / throwing dust in people's eyes.",
        "risk", "misleading_presentation", "appearance_of_competence",
-       source_reference=REF_LEO, activation_condition="hard_aspected"),
+       source_reference=REF_LEO_BIO, activation_condition="hard_aspected"),
     _f("leo_afflicted_lying_distortion", "sign", "Leo", "risk",
-       "Lying / distortion / misrepresentation.",
+       _AFFLICTED_PREFIX + "lying / distortion / misrepresentation.",
        "risk", "lying_distortion", "misleading_presentation",
-       source_reference=REF_LEO, activation_condition="hard_aspected"),
+       source_reference=REF_LEO_BIO, activation_condition="hard_aspected"),
     _f("leo_afflicted_appearance_of_competence", "sign", "Leo", "risk",
-       "Appearance of competence instead of real professionalism.",
+       _AFFLICTED_PREFIX + "appearance of competence instead of real professionalism.",
        "risk", "appearance_of_competence", "misleading_presentation",
-       source_reference=REF_LEO, activation_condition="hard_aspected"),
+       source_reference=REF_LEO_BIO, activation_condition="hard_aspected"),
     _f("leo_afflicted_superior_manner", "sign", "Leo", "communication",
-       "Superior / lordly communication manner.",
+       _AFFLICTED_PREFIX + "superior / lordly communication manner.",
        "risk", "superior_manner",
-       source_reference=REF_LEO, activation_condition="hard_aspected"),
+       source_reference=REF_LEO_BIO, activation_condition="hard_aspected"),
     _f("leo_afflicted_expecting_admiration", "sign", "Leo", "communication",
-       "Expecting admiration / applause.",
+       _AFFLICTED_PREFIX + "expecting admiration / applause.",
        "risk", "expecting_admiration",
-       source_reference=REF_LEO, activation_condition="hard_aspected"),
+       source_reference=REF_LEO_BIO, activation_condition="hard_aspected"),
     _f("leo_afflicted_extreme_stubbornness", "sign", "Leo", "thinking",
-       "Extreme stubbornness in thinking.",
+       _AFFLICTED_PREFIX + "extreme stubbornness in thinking.",
        "risk", "stubbornness",
-       source_reference=REF_LEO, activation_condition="hard_aspected"),
+       source_reference=REF_LEO_BIO, activation_condition="hard_aspected"),
     _f("leo_afflicted_ego_interferes_with_facts", "sign", "Leo", "thinking",
-       "Ego interfering with objective perception of facts.",
+       _AFFLICTED_PREFIX + "ego interfering with objective perception of facts.",
        "risk", "ego_interference", "stubbornness",
-       source_reference=REF_LEO, activation_condition="hard_aspected"),
+       source_reference=REF_LEO_BIO, activation_condition="hard_aspected"),
 )
 
 # ---------------------------------------------------------------------------
@@ -214,7 +440,7 @@ HOUSE_1: tuple[SourceFactDef, ...] = (
        source_reference=REF_H1),
     _f("h1_talkative_or_writing_tendency", "house", "1", "communication",
        "Increased talkativeness and increased writing tendency.",
-       "neutral", "talkative", "writing",
+       "neutral", "talkative", "writing_tendency",
        source_reference=REF_H1),
     _f("h1_special_relevance_siblings", "house", "1", "environment",
        "Special relevance of siblings.",
@@ -222,7 +448,7 @@ HOUSE_1: tuple[SourceFactDef, ...] = (
        source_reference=REF_H1),
     _f("h1_special_relevance_car_driving", "house", "1", "mobility",
        "Special relevance of car / driving.",
-       "neutral", "driving", "mobility",
+       "neutral", "driving_relevance", "mobility",
        source_reference=REF_H1),
     _f("h1_eventfulness_books", "house", "1", "environment",
        "Increased eventfulness connected with books.",
@@ -251,6 +477,121 @@ HOUSE_1: tuple[SourceFactDef, ...] = (
 )
 
 # ---------------------------------------------------------------------------
+# Mercury in House 1 — Lesson 7 (dual-source parity; Bio HOUSE_1 is frozen)
+# ---------------------------------------------------------------------------
+HOUSE_1_LESSON7: tuple[SourceFactDef, ...] = (
+    _f("h1_l7_very_high_communicativeness", "house", "1", "communication",
+       "Very high communicativeness.",
+       "strength",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_quick_situational_adjustment", "house", "1", "thinking",
+       "Quickly adjusts or restructures according to the situation.",
+       "strength",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_appears_younger_than_age_vs_peers", "house", "1", "communication",
+       "Appears younger than one's age, especially compared with peers.",
+       "neutral",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_active_curiosity", "house", "1", "thinking",
+       "Active curiosity.",
+       "strength",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_initiative_in_contacts", "house", "1", "communication",
+       "Initiative in contacts.",
+       "strength",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_talkativeness", "house", "1", "communication",
+       "Talkativeness.",
+       "neutral", "talkative",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_liveliness", "house", "1", "communication",
+       "Liveliness.",
+       "neutral",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_bodily_mobility", "house", "1", "source_specific",
+       "Bodily mobility.",
+       "neutral",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_quick_wittedness", "house", "1", "thinking",
+       "Quick-wittedness or mental resourcefulness.",
+       "strength",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_precise_movements", "house", "1", "source_specific",
+       "Movements are precise.",
+       "neutral",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_fast_movements", "house", "1", "source_specific",
+       "Movements are fast.",
+       "neutral",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_expressive_gesticulation", "house", "1", "communication",
+       "Good or expressive gesticulation.",
+       "neutral",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_teaching_association", "house", "1", "source_specific",
+       "Favorable association with teaching.",
+       "strength",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_commerce_association", "house", "1", "source_specific",
+       "Favorable association with commerce.",
+       "strength",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_accounting_association", "house", "1", "source_specific",
+       "Favorable association with accounting.",
+       "strength",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_secretary_association", "house", "1", "source_specific",
+       "Favorable association with working in the role of secretary.",
+       "strength",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_scientist_association", "house", "1", "source_specific",
+       "Favorable association with working in the role of scientist.",
+       "strength",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_mathematician_association", "house", "1", "source_specific",
+       "Favorable association with working in the role of mathematician.",
+       "strength",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_impression_of_fussiness", "house", "1", "risk",
+       "May give an impression of fussiness.",
+       "risk",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_nervousness", "house", "1", "risk",
+       "Nervousness.",
+       "risk",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_restlessness", "house", "1", "risk",
+       "Restlessness.",
+       "risk",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_undirected_activity", "house", "1", "risk",
+       "Activity may lack direction.",
+       "risk",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_starts_but_does_not_complete_tasks", "house", "1", "risk",
+       "May take on tasks but fail to bring them to completion.",
+       "risk",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_logic_displaces_intuition", "house", "1", "thinking",
+       "Logic may displace intuition.",
+       "risk",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_excessive_talkativeness", "house", "1", "risk",
+       "Excessive talkativeness.",
+       "risk",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_two_facedness", "house", "1", "risk",
+       "Two-facedness or duplicity.",
+       "risk",
+       source_reference=REF_H1_L7),
+    _f("h1_l7_youthfulness_leads_to_lack_of_respect", "house", "1", "risk",
+       "Youthful appearance or quality may lead to others not taking the person "
+       "seriously.",
+       "risk",
+       source_reference=REF_H1_L7),
+)
+
+# ---------------------------------------------------------------------------
 # Retrograde Mercury
 # ---------------------------------------------------------------------------
 RETROGRADE: tuple[SourceFactDef, ...] = (
@@ -276,7 +617,7 @@ RETROGRADE: tuple[SourceFactDef, ...] = (
        source_reference=REF_RX),
     _f("rx_unexpected_conclusions", "motion", "retrograde", "thinking",
        "Can arrive at unexpected conclusions.",
-       "strength", "nonstandard_thinking",
+       "strength", "unexpected_conclusions",
        source_reference=REF_RX),
     _f("rx_tendency_to_relearn", "motion", "retrograde", "learning",
        "Tendency to relearn.",
@@ -284,7 +625,7 @@ RETROGRADE: tuple[SourceFactDef, ...] = (
        source_reference=REF_RX),
     _f("rx_tendency_to_rewrite", "motion", "retrograde", "learning",
        "Tendency to rewrite.",
-       "neutral", "relearning", "writing",
+       "neutral", "relearning", "rewriting",
        source_reference=REF_RX),
     _f("rx_revisit_previously_learned", "motion", "retrograde", "learning",
        "Tendency to revisit previously learned material.",
@@ -292,7 +633,7 @@ RETROGRADE: tuple[SourceFactDef, ...] = (
        source_reference=REF_RX),
     _f("rx_written_easier_than_spontaneous", "motion", "retrograde", "communication",
        "Written expression may sometimes be easier than immediate spontaneous speaking.",
-       "neutral", "writing",
+       "neutral", "written_expression",
        source_reference=REF_RX),
 )
 
@@ -302,7 +643,7 @@ RETROGRADE: tuple[SourceFactDef, ...] = (
 PLUTO_SQUARE: tuple[SourceFactDef, ...] = (
     _f("pluto_sq_core_conflict", "aspect", "square_Pluto", "thinking",
        "Mercury thinking/communication/learning is in strong conflict with Pluto intensity, power, destruction and depth.",
-       "risk", "conflict", "depth",
+       "risk", "conflict",
        source_reference=REF_PLUTO_SQ),
     # Unresolved strength branches — both returned; neither selected.
     _f("pluto_sq_branch_mercury_stronger_primitive_thinking", "aspect", "square_Pluto", "thinking",
@@ -327,17 +668,17 @@ PLUTO_SQUARE: tuple[SourceFactDef, ...] = (
        activation_condition="pluto_strength_unresolved", unresolved=True),
     _f("pluto_sq_branch_pluto_stronger_super_will", "aspect", "square_Pluto", "thinking",
        "When Pluto dominates this square: very strong will / super-will.",
-       "conditional", "depth",
+       "conditional", "super_will",
        source_reference=REF_PLUTO_SQ,
        activation_condition="pluto_strength_unresolved", unresolved=True),
     _f("pluto_sq_branch_pluto_stronger_energetic_depth", "aspect", "square_Pluto", "thinking",
        "When Pluto dominates this square: extreme energetic depth.",
-       "conditional", "depth",
+       "conditional", "energetic_depth",
        source_reference=REF_PLUTO_SQ,
        activation_condition="pluto_strength_unresolved", unresolved=True),
     _f("pluto_sq_branch_pluto_stronger_penetrates_mercury", "aspect", "square_Pluto", "thinking",
        "When Pluto dominates this square: Pluto intensity penetrates Mercury thinking / learning very deeply.",
-       "conditional", "depth",
+       "conditional", "intensity_penetration",
        source_reference=REF_PLUTO_SQ,
        activation_condition="pluto_strength_unresolved", unresolved=True),
     _f("pluto_sq_conflictual_communication", "aspect", "square_Pluto", "communication",
@@ -346,7 +687,7 @@ PLUTO_SQUARE: tuple[SourceFactDef, ...] = (
        source_reference=REF_PLUTO_SQ),
     _f("pluto_sq_aggressive_driving_accident_risk", "aspect", "square_Pluto", "mobility",
        "Aggressive-driving / accident risk signal.",
-       "risk", "driving",
+       "risk", "driving_accident_risk",
        source_reference=REF_PLUTO_SQ),
     _f("pluto_sq_neighbors_siblings_problems", "aspect", "square_Pluto", "environment",
        "Problems involving neighbors or siblings.",
@@ -358,7 +699,7 @@ PLUTO_SQUARE: tuple[SourceFactDef, ...] = (
        source_reference=REF_PLUTO_SQ),
     _f("pluto_sq_dangerous_curiosity", "aspect", "square_Pluto", "thinking",
        "Dangerous curiosity.",
-       "risk", "curiosity", "depth",
+       "risk", "dangerous_curiosity",
        source_reference=REF_PLUTO_SQ),
     _f("pluto_sq_pessimistic_fatalistic_tone", "aspect", "square_Pluto", "communication",
        "Pessimistic / fatalistic tone.",
@@ -394,11 +735,11 @@ PLUTO_SQUARE: tuple[SourceFactDef, ...] = (
        source_reference=REF_PLUTO_SQ),
     _f("pluto_sq_powerful_words", "aspect", "square_Pluto", "communication",
        "Powerful words.",
-       "strength", "persuasion", "sharp_speech",
+       "strength", "powerful_words", "sharp_speech",
        source_reference=REF_PLUTO_SQ),
     _f("pluto_sq_speak_uncomfortable_truth", "aspect", "square_Pluto", "communication",
        "Ability to speak uncomfortable truth directly.",
-       "strength", "insight",
+       "strength", "uncomfortable_truth_speech",
        source_reference=REF_PLUTO_SQ),
     _f("pluto_sq_debate_ability", "aspect", "square_Pluto", "communication",
        "Debate ability.",
@@ -414,11 +755,11 @@ PLUTO_SQUARE: tuple[SourceFactDef, ...] = (
        source_reference=REF_PLUTO_SQ),
     _f("pluto_sq_diagnose_problems", "aspect", "square_Pluto", "work_application",
        "Ability to diagnose problems.",
-       "strength", "analytical_thinking", "vulnerability_detection",
+       "strength", "vulnerability_detection",
        source_reference=REF_PLUTO_SQ),
     _f("pluto_sq_identify_vulnerabilities", "aspect", "square_Pluto", "work_application",
        "Ability to identify vulnerabilities.",
-       "strength", "vulnerability_detection", "insight",
+       "strength", "vulnerability_detection",
        source_reference=REF_PLUTO_SQ),
     _f("pluto_sq_analytical_ability", "aspect", "square_Pluto", "thinking",
        "Analytical ability.",
@@ -430,15 +771,15 @@ PLUTO_SQUARE: tuple[SourceFactDef, ...] = (
        source_reference=REF_PLUTO_SQ),
     _f("pluto_sq_penetrate_hack_systems", "aspect", "square_Pluto", "work_application",
        "Ability to penetrate / \"hack\" systems.",
-       "strength", "vulnerability_detection", "technical_ability", "insight",
+       "strength", "vulnerability_detection", "system_penetration",
        source_reference=REF_PLUTO_SQ),
     _f("pluto_sq_understand_weaknesses_in_reasoning", "aspect", "square_Pluto", "thinking",
        "Ability to understand weaknesses in another person's reasoning.",
-       "strength", "vulnerability_detection", "analytical_thinking",
+       "strength", "vulnerability_detection",
        source_reference=REF_PLUTO_SQ),
     _f("pluto_sq_fast_learning_through_criticism", "aspect", "square_Pluto", "learning",
        "Fast learning through criticism of existing concepts / systems.",
-       "strength", "nonstandard_learning", "analytical_thinking", "independent_learning",
+       "strength", "criticism_based_learning",
        source_reference=REF_PLUTO_SQ),
 )
 
@@ -472,7 +813,7 @@ SATURN_TRINE: tuple[SourceFactDef, ...] = (
        source_reference=REF_SATURN_HARM),
     _f("saturn_tr_strong_sticky_memory", "aspect", "trine_Saturn", "memory",
        "Strong / sticky memory.",
-       "strength", "memory",
+       "strength", "strong_memory",
        source_reference=REF_SATURN_HARM),
     _f("saturn_tr_long_mental_focus", "aspect", "trine_Saturn", "focus",
        "Ability to maintain mental focus for a long time.",
@@ -504,7 +845,7 @@ SATURN_TRINE: tuple[SourceFactDef, ...] = (
        source_reference=REF_SATURN_HARM),
     _f("saturn_tr_strong_logic", "aspect", "trine_Saturn", "thinking",
        "Strong logic.",
-       "strength", "analytical_thinking",
+       "strength", "logic",
        source_reference=REF_SATURN_HARM),
     _f("saturn_tr_strong_argumentation", "aspect", "trine_Saturn", "communication",
        "Strong argumentation.",
@@ -512,7 +853,7 @@ SATURN_TRINE: tuple[SourceFactDef, ...] = (
        source_reference=REF_SATURN_HARM),
     _f("saturn_tr_driving_skill", "aspect", "trine_Saturn", "mobility",
        "Driving skill / ability to absorb rules and understand traffic flow.",
-       "strength", "driving",
+       "strength", "driving_ability",
        source_reference=REF_SATURN_HARM),
 )
 
@@ -522,7 +863,7 @@ SATURN_TRINE: tuple[SourceFactDef, ...] = (
 MOON_SEXTILE: tuple[SourceFactDef, ...] = (
     _f("moon_sx_rational_mind_more_alive", "aspect", "sextile_Moon", "thinking",
        "Rational mind becomes more alive.",
-       "strength", "insight",
+       "strength", "mental_aliveness",
        source_reference=REF_MOON_HARM),
     _f("moon_sx_increased_insight", "aspect", "sextile_Moon", "thinking",
        "Increased insight.",
@@ -534,11 +875,11 @@ MOON_SEXTILE: tuple[SourceFactDef, ...] = (
        source_reference=REF_MOON_HARM),
     _f("moon_sx_intuition", "aspect", "sextile_Moon", "thinking",
        "Intuition.",
-       "strength", "insight", "read_between_lines",
+       "strength", "intuition",
        source_reference=REF_MOON_HARM),
     _f("moon_sx_read_between_lines", "aspect", "sextile_Moon", "thinking",
        "Ability to read between the lines.",
-       "strength", "read_between_lines", "insight",
+       "strength", "read_between_lines",
        source_reference=REF_MOON_HARM),
     _f("moon_sx_inspiration_muse", "aspect", "sextile_Moon", "thinking",
        "Connection to inspiration / muse.",
@@ -546,7 +887,7 @@ MOON_SEXTILE: tuple[SourceFactDef, ...] = (
        source_reference=REF_MOON_HARM),
     _f("moon_sx_emotional_background_processed", "aspect", "sextile_Moon", "thinking",
        "Emotional background becomes more mobile and mentally processed.",
-       "neutral", "insight",
+       "neutral", "emotional_mental_processing",
        source_reference=REF_MOON_HARM),
     _f("moon_sx_relevance_of_trips", "aspect", "sextile_Moon", "mobility",
        "Increased relevance of trips.",
@@ -554,7 +895,7 @@ MOON_SEXTILE: tuple[SourceFactDef, ...] = (
        source_reference=REF_MOON_HARM),
     _f("moon_sx_blogs", "aspect", "sextile_Moon", "communication",
        "Blogs.",
-       "neutral", "writing", "social_networks",
+       "neutral", "blogging", "social_networks",
        source_reference=REF_MOON_HARM),
     _f("moon_sx_books", "aspect", "sextile_Moon", "learning",
        "Books.",
@@ -566,7 +907,7 @@ MOON_SEXTILE: tuple[SourceFactDef, ...] = (
        source_reference=REF_MOON_HARM),
     _f("moon_sx_continuous_learning", "aspect", "sextile_Moon", "learning",
        "Continuous learning.",
-       "strength", "independent_learning",
+       "strength", "continuous_learning",
        source_reference=REF_MOON_HARM),
     _f("moon_sx_writing_ability", "aspect", "sextile_Moon", "communication",
        "Writing ability.",
@@ -574,11 +915,11 @@ MOON_SEXTILE: tuple[SourceFactDef, ...] = (
        source_reference=REF_MOON_HARM),
     _f("moon_sx_poetic_ability", "aspect", "sextile_Moon", "communication",
        "Poetic ability.",
-       "strength", "writing", "creative",
+       "strength", "poetic_ability", "creative",
        source_reference=REF_MOON_HARM),
     _f("moon_sx_strong_sticky_memory", "aspect", "sextile_Moon", "memory",
        "Strong / sticky memory.",
-       "strength", "memory",
+       "strength", "strong_memory",
        source_reference=REF_MOON_HARM),
     _f("moon_sx_softer_melodic_speech", "aspect", "sextile_Moon", "communication",
        "Softer / melodic spoken language.",
@@ -644,7 +985,7 @@ TAURUS_GENERAL: tuple[SourceFactDef, ...] = (
        source_reference=REF_TAURUS),
     _f("taurus_thinks_before_speaking", "sign", "Taurus", "communication",
        "Tends to think before speaking.",
-       "strength", "deliberate_processing", "structured_communication",
+       "strength", "deliberate_processing",
        source_reference=REF_TAURUS),
     _f("taurus_conversation_needs_practical_purpose", "sign", "Taurus", "communication",
        "Conversation should have a practical / result-oriented purpose.",
@@ -652,7 +993,7 @@ TAURUS_GENERAL: tuple[SourceFactDef, ...] = (
        source_reference=REF_TAURUS),
     _f("taurus_calm_authoritative_communication", "sign", "Taurus", "communication",
        "Calm / authoritative communication style.",
-       "strength", "structured_communication",
+       "strength", "calm_authoritative_communication",
        source_reference=REF_TAURUS),
     _f("taurus_learning_needs_time_without_pressure", "sign", "Taurus", "learning",
        "Needs enough time to process; pressure interferes with this learning style.",
@@ -686,6 +1027,75 @@ TAURUS_GENERAL: tuple[SourceFactDef, ...] = (
        "Difficulty rapidly changing mental direction.",
        "risk", "deliberate_processing",
        source_reference=REF_TAURUS),
+)
+
+# ---------------------------------------------------------------------------
+# Mercury in Taurus — Bioastrology
+# ---------------------------------------------------------------------------
+TAURUS_BIOASTROLOGY: tuple[SourceFactDef, ...] = (
+    _f("taurus_bio_productive_thinking_communication_learning", "sign", "Taurus", "thinking",
+       "Thinking, communication and learning are productive.",
+       "strength", "productive",
+       source_reference=REF_TAURUS_BIO),
+    _f("taurus_bio_unhurried_thinking_communication_learning", "sign", "Taurus", "thinking",
+       "Thinking, communication and learning are unhurried.",
+       "strength", "unhurried",
+       source_reference=REF_TAURUS_BIO),
+    _f("taurus_bio_strong_attention", "sign", "Taurus", "focus",
+       "Increased / strong attention.",
+       "strength", "strong_attention",
+       source_reference=REF_TAURUS_BIO),
+    _f("taurus_bio_vocal_artistic_aptitude", "sign", "Taurus", "work_application",
+       "Vocal-artistic aptitude (source-described tendency).",
+       "strength", "vocal_artistic_aptitude",
+       source_reference=REF_TAURUS_BIO),
+    _f("taurus_bio_beautiful_handwriting", "sign", "Taurus", "communication",
+       "Beautiful handwriting.",
+       "neutral", "beautiful_handwriting",
+       source_reference=REF_TAURUS_BIO),
+    _f("taurus_bio_beautiful_voice", "sign", "Taurus", "communication",
+       "Beautiful voice.",
+       "neutral", "beautiful_voice",
+       source_reference=REF_TAURUS_BIO),
+    _f("taurus_bio_beautiful_speech", "sign", "Taurus", "communication",
+       "Beautiful speech.",
+       "neutral", "beautiful_speech",
+       source_reference=REF_TAURUS_BIO),
+    _f("taurus_bio_slowness_dispute_disadvantage", "sign", "Taurus", "communication",
+       "May lose disputes because of slowness.",
+       "risk", "slowness_dispute_disadvantage",
+       source_reference=REF_TAURUS_BIO),
+    _f("taurus_bio_practice_based_learning", "sign", "Taurus", "learning",
+       "Learns best through practical activity.",
+       "strength", "practice_based_learning",
+       source_reference=REF_TAURUS_BIO),
+    _f("taurus_bio_visual_scheme_learning", "sign", "Taurus", "learning",
+       "Learns best through visual schemes / diagrams.",
+       "strength", "visual_scheme_learning",
+       source_reference=REF_TAURUS_BIO),
+    _f("taurus_bio_aesthetic_learning_motivation", "sign", "Taurus", "learning",
+       "Learning motivation: activity/material being beautiful or aesthetically attractive.",
+       "neutral", "aesthetic_learning_motivation",
+       source_reference=REF_TAURUS_BIO),
+    _f("taurus_bio_money_learning_motivation", "sign", "Taurus", "learning",
+       "Learning motivation: money.",
+       "neutral", "money_learning_motivation",
+       source_reference=REF_TAURUS_BIO),
+)
+
+TAURUS_AFFLICTED: tuple[SourceFactDef, ...] = (
+    _f("taurus_bio_afflicted_weak_abstract_thinking", "sign", "Taurus", "risk",
+       _AFFLICTED_PREFIX + "absence / severe weakness of abstract thinking.",
+       "risk", "weak_abstract_thinking",
+       source_reference=REF_TAURUS_BIO, activation_condition="hard_aspected"),
+    _f("taurus_bio_afflicted_cognitive_sluggishness", "sign", "Taurus", "risk",
+       _AFFLICTED_PREFIX + "cognitive sluggishness.",
+       "risk", "cognitive_sluggishness",
+       source_reference=REF_TAURUS_BIO, activation_condition="hard_aspected"),
+    _f("taurus_bio_afflicted_reduced_muted_intuition", "sign", "Taurus", "risk",
+       _AFFLICTED_PREFIX + "reduced / muted intuition.",
+       "risk", "reduced_muted_intuition",
+       source_reference=REF_TAURUS_BIO, activation_condition="hard_aspected"),
 )
 
 # ---------------------------------------------------------------------------
@@ -730,11 +1140,11 @@ HOUSE_9: tuple[SourceFactDef, ...] = (
        source_reference=REF_H9),
     _f("h9_casual_communication_less_natural", "house", "9", "communication",
        "Casual / simple communication may be less natural; communication can become formal or etiquette-conscious.",
-       "risk", "structured_communication",
+       "risk", "formal_etiquette_communication",
        source_reference=REF_H9),
     _f("h9_need_to_monitor_speech", "house", "9", "communication",
        "May feel a need to monitor speech.",
-       "risk", "structured_communication",
+       "risk", "speech_monitoring",
        source_reference=REF_H9),
     _f("h9_selective_communication", "house", "9", "communication",
        "Selective communication / preference for selected circles.",
@@ -756,6 +1166,67 @@ HOUSE_9: tuple[SourceFactDef, ...] = (
        "Possible feeling of being intellectually / socially out of place in a higher-status environment.",
        "risk", "status_environment_mismatch",
        source_reference=REF_H9),
+)
+
+# ---------------------------------------------------------------------------
+# Mercury in House 9 — Bioastrology (dual-source parity; HOUSE_9 L7 is frozen)
+# ---------------------------------------------------------------------------
+HOUSE_9_BIO: tuple[SourceFactDef, ...] = (
+    _f("h9_bio_communication_learning_realized_through_travel", "house", "9",
+       "source_specific",
+       "Communication and learning may be realized through travel.",
+       "neutral",
+       source_reference=REF_H9_BIO),
+    _f("h9_bio_communication_learning_realized_through_philosophical_concepts",
+       "house", "9", "source_specific",
+       "Communication and learning may be realized through philosophical concepts.",
+       "neutral",
+       source_reference=REF_H9_BIO),
+    _f("h9_bio_communication_learning_realized_through_scientific_theories",
+       "house", "9", "source_specific",
+       "Communication and learning may be realized through scientific theories.",
+       "neutral",
+       source_reference=REF_H9_BIO),
+    _f("h9_bio_not_heard_in_ordinary_situations", "house", "9", "source_specific",
+       "In ordinary everyday situations, the person may seem not to be heard.",
+       "risk",
+       source_reference=REF_H9_BIO),
+    _f("h9_bio_strong_intellect", "house", "9", "thinking",
+       "May support strong intellect.",
+       "strength",
+       source_reference=REF_H9_BIO),
+    _f("h9_bio_increased_courses", "house", "9", "learning",
+       "There may be an increased presence of courses in the person's learning path.",
+       "neutral",
+       source_reference=REF_H9_BIO),
+    _f("h9_bio_increased_trainings", "house", "9", "learning",
+       "There may be an increased presence of trainings in the person's learning path.",
+       "neutral",
+       source_reference=REF_H9_BIO),
+    _f("h9_bio_increased_university_contexts", "house", "9", "learning",
+       "There may be an increased presence of university study contexts.",
+       "neutral",
+       source_reference=REF_H9_BIO),
+    _f("h9_bio_learning_through_direct_teacher_dialogue", "house", "9", "learning",
+       "Learning may occur through direct dialogue with a teacher.",
+       "strength",
+       source_reference=REF_H9_BIO),
+    _f("h9_bio_foreign_languages", "house", "9", "learning",
+       "Favorable association with foreign languages.",
+       "strength", "foreign_languages",
+       source_reference=REF_H9_BIO),
+    _f("h9_bio_teacher_talent", "house", "9", "learning",
+       "May support talent as a teacher.",
+       "strength", "teaching",
+       source_reference=REF_H9_BIO),
+    _f("h9_bio_trainer_talent", "house", "9", "learning",
+       "May support talent as a trainer.",
+       "strength",
+       source_reference=REF_H9_BIO),
+    _f("h9_bio_mentor_talent", "house", "9", "learning",
+       "May support talent as a mentor.",
+       "strength",
+       source_reference=REF_H9_BIO),
 )
 
 # ---------------------------------------------------------------------------
@@ -798,7 +1269,7 @@ MOON_SQUARE: tuple[SourceFactDef, ...] = (
 MARS_TRINE: tuple[SourceFactDef, ...] = (
     _f("mars_tr_word_connects_with_action", "aspect", "trine_Mars", "work_application",
        "Word connects easily and quickly with action.",
-       "strength", "thought_to_action", "fast_thinking",
+       "strength", "thought_to_action",
        source_reference=REF_MARS_HARM),
     _f("mars_tr_thinking_faster", "aspect", "trine_Mars", "thinking",
        "Thinking becomes faster.",
@@ -806,7 +1277,7 @@ MARS_TRINE: tuple[SourceFactDef, ...] = (
        source_reference=REF_MARS_HARM),
     _f("mars_tr_thinking_sharper", "aspect", "trine_Mars", "thinking",
        "Thinking becomes sharper.",
-       "strength", "fast_thinking",
+       "strength", "sharper_thinking",
        source_reference=REF_MARS_HARM),
     _f("mars_tr_thinking_more_analytical", "aspect", "trine_Mars", "thinking",
        "Thinking becomes more analytical.",
@@ -834,7 +1305,7 @@ MARS_TRINE: tuple[SourceFactDef, ...] = (
        source_reference=REF_MARS_HARM),
     _f("mars_tr_speak_learn_act_simultaneously", "aspect", "trine_Mars", "work_application",
        "Easier to speak, learn and act simultaneously.",
-       "strength", "multitasking", "thought_to_action", "fast_thinking",
+       "strength", "multitasking", "thought_to_action",
        source_reference=REF_MARS_HARM),
 )
 
@@ -918,7 +1389,7 @@ SAGITTARIUS_GENERAL: tuple[SourceFactDef, ...] = (
        source_reference=REF_SAGITTARIUS),
     _f("sag_speaks_like_preacher_agitator_philosopher", "sign", "Sagittarius", "communication",
        "Speaks like a preacher / agitator / philosopher.",
-       "neutral", "teaching", "authority_through_speech",
+       "neutral", "preaching", "authority_through_speech",
        source_reference=REF_SAGITTARIUS),
     _f("sag_speech_maintains_authority", "sign", "Sagittarius", "communication",
        "Speech is used to maintain authority.",
@@ -942,7 +1413,7 @@ SAGITTARIUS_GENERAL: tuple[SourceFactDef, ...] = (
        source_reference=REF_SAGITTARIUS),
     _f("sag_learning_pass_knowledge_to_others", "sign", "Sagittarius", "learning",
        "Passing learned knowledge to other people supports learning.",
-       "strength", "teaching", "goal_motivated_learning",
+       "strength", "knowledge_transmission", "goal_motivated_learning",
        source_reference=REF_SAGITTARIUS),
     _f("sag_learning_university_textbooks", "sign", "Sagittarius", "learning",
        "University-level textbooks support learning.",
@@ -974,7 +1445,7 @@ SAGITTARIUS_GENERAL: tuple[SourceFactDef, ...] = (
        source_reference=REF_SAGITTARIUS),
     _f("sag_seeks_socially_significant_fashionable", "sign", "Sagittarius", "environment",
        "Seeks socially significant / fashionable people or themes in the environment.",
-       "neutral", "prestige_orientation",
+       "neutral", "fashionable_environment_preference",
        source_reference=REF_SAGITTARIUS),
     _f("sag_teacher_like_with_siblings", "sign", "Sagittarius", "environment",
        "Teacher-like position with siblings.",
@@ -982,12 +1453,158 @@ SAGITTARIUS_GENERAL: tuple[SourceFactDef, ...] = (
        source_reference=REF_SAGITTARIUS),
     _f("sag_lecturing_labeling_siblings", "sign", "Sagittarius", "environment",
        "Lecturing / labeling siblings.",
-       "risk", "teaching", "authority_through_speech",
+       "risk", "sibling_lecturing", "authority_through_speech",
        source_reference=REF_SAGITTARIUS),
     _f("sag_tells_others_about_achievements", "sign", "Sagittarius", "communication",
        "Likes telling others about own achievements / exploits.",
        "neutral", "authority_through_speech",
        source_reference=REF_SAGITTARIUS),
+)
+
+# ---------------------------------------------------------------------------
+# Mercury in Sagittarius — Bioastrology
+# ---------------------------------------------------------------------------
+SAGITTARIUS_BIOASTROLOGY: tuple[SourceFactDef, ...] = (
+    _f("sag_bio_major_exile", "sign", "Sagittarius", "source_specific",
+       "Source calls the placement a major exile (source status statement; not a skill score).",
+       "neutral", "major_exile",
+       source_reference=REF_SAGITTARIUS_BIO),
+    _f("sag_bio_impartiality_disrupted", "sign", "Sagittarius", "source_specific",
+       "Mercury impartiality is disrupted (source framework statement).",
+       "risk", "impartiality_disrupted",
+       source_reference=REF_SAGITTARIUS_BIO),
+    _f("sag_bio_learnability_disrupted", "sign", "Sagittarius", "source_specific",
+       "Mercury learnability is disrupted (source framework statement).",
+       "risk", "learnability_disrupted",
+       source_reference=REF_SAGITTARIUS_BIO),
+    _f("sag_bio_teacher_instructor_quality", "sign", "Sagittarius", "work_application",
+       "Teacher / instructor quality (source-described tendency).",
+       "strength", "teacher_instructor_quality",
+       source_reference=REF_SAGITTARIUS_BIO),
+    _f("sag_bio_humanities_aptitude", "sign", "Sagittarius", "work_application",
+       "Humanities aptitude (source-described tendency).",
+       "strength", "humanities_aptitude",
+       source_reference=REF_SAGITTARIUS_BIO),
+    _f("sag_bio_pr_aptitude", "sign", "Sagittarius", "work_application",
+       "PR aptitude (source-described tendency).",
+       "strength", "pr_aptitude",
+       source_reference=REF_SAGITTARIUS_BIO),
+    _f("sag_bio_expert_aptitude", "sign", "Sagittarius", "work_application",
+       "Expert aptitude (source-described tendency).",
+       "strength", "expert_aptitude",
+       source_reference=REF_SAGITTARIUS_BIO),
+    _f("sag_bio_prolific_writing_tendency", "sign", "Sagittarius", "communication",
+       "Prolific writing tendency (source-described tendency).",
+       "strength", "prolific_writing_tendency",
+       source_reference=REF_SAGITTARIUS_BIO),
+    _f("sag_bio_imagination", "sign", "Sagittarius", "thinking",
+       "Imagination (source-described tendency).",
+       "strength", "imagination",
+       source_reference=REF_SAGITTARIUS_BIO),
+    _f("sag_bio_foreign_language_aptitude", "sign", "Sagittarius", "learning",
+       "Foreign-language aptitude (source-described tendency).",
+       "strength", "foreign_languages",
+       source_reference=REF_SAGITTARIUS_BIO),
+    _f("sag_bio_occupation_associations", "sign", "Sagittarius", "source_specific",
+       "Source-described occupation associations include scientists, experts, writers, "
+       "politicians, and propaganda-oriented journalists; not career assignments.",
+       "neutral", "occupation_associations",
+       source_reference=REF_SAGITTARIUS_BIO),
+    _f("sag_bio_large_scale_thinking", "sign", "Sagittarius", "thinking",
+       "Thoughts are large-scale.",
+       "strength", "large_scale_thinking",
+       source_reference=REF_SAGITTARIUS_BIO),
+    _f("sag_bio_global_thinking", "sign", "Sagittarius", "thinking",
+       "Thoughts are global.",
+       "strength", "global_thinking",
+       source_reference=REF_SAGITTARIUS_BIO),
+    _f("sag_bio_categorical_thinking", "sign", "Sagittarius", "thinking",
+       "Thoughts are categorical.",
+       "strength", "categorical_thinking",
+       source_reference=REF_SAGITTARIUS_BIO),
+    _f("sag_bio_thinking_connected_with_opinions_more_than_facts", "sign", "Sagittarius", "thinking",
+       "Thinking is connected more with opinions than facts.",
+       "risk", "opinion_over_facts_thinking",
+       source_reference=REF_SAGITTARIUS_BIO),
+    _f("sag_bio_thinking_connected_with_image_of_facts", "sign", "Sagittarius", "thinking",
+       "Thinking is connected with the image/representation of facts rather than raw factual material.",
+       "risk", "image_of_facts_thinking",
+       source_reference=REF_SAGITTARIUS_BIO),
+    _f("sag_bio_monologue_learning", "sign", "Sagittarius", "learning",
+       "Learns well through monologue.",
+       "strength", "monologue_learning",
+       source_reference=REF_SAGITTARIUS_BIO),
+    _f("sag_bio_learning_through_teaching", "sign", "Sagittarius", "learning",
+       "Learns while instructing / teaching other people.",
+       "strength", "learning_through_teaching",
+       source_reference=REF_SAGITTARIUS_BIO),
+    _f("sag_bio_independent_research_learning", "sign", "Sagittarius", "learning",
+       "Learns through independent research.",
+       "strength", "independent_research",
+       source_reference=REF_SAGITTARIUS_BIO),
+    _f("sag_bio_central_idea_grasping", "sign", "Sagittarius", "learning",
+       "Grasping the central idea is especially important.",
+       "neutral", "central_idea_grasping",
+       source_reference=REF_SAGITTARIUS_BIO),
+    _f("sag_bio_fitting_facts_under_philosophy_ideology", "sign", "Sagittarius", "learning",
+       "May fit / pull facts underneath a philosophy or ideology.",
+       "risk", "fitting_facts_under_philosophy_ideology",
+       source_reference=REF_SAGITTARIUS_BIO),
+    _f("sag_bio_authority_learning_motivation", "sign", "Sagittarius", "learning",
+       "Learning motivation: authority.",
+       "neutral", "authority_learning_motivation",
+       source_reference=REF_SAGITTARIUS_BIO),
+    _f("sag_bio_status_display_learning_motivation", "sign", "Sagittarius", "learning",
+       "Learning motivation: possibility to show off / display status.",
+       "neutral", "status_display_learning_motivation",
+       source_reference=REF_SAGITTARIUS_BIO),
+    _f("sag_bio_fashion_learning_motivation", "sign", "Sagittarius", "learning",
+       "Learning motivation: possibility to become fashionable.",
+       "neutral", "fashion_learning_motivation",
+       source_reference=REF_SAGITTARIUS_BIO),
+    _f("sag_bio_universal_wisdom_learning_motivation", "sign", "Sagittarius", "learning",
+       "Learning motivation: feeling of touching universal / higher wisdom.",
+       "neutral", "universal_wisdom_learning_motivation",
+       source_reference=REF_SAGITTARIUS_BIO),
+)
+
+SAGITTARIUS_AFFLICTED: tuple[SourceFactDef, ...] = (
+    _f("sag_bio_afflicted_coarse_rude_communication", "sign", "Sagittarius", "communication",
+       _AFFLICTED_PREFIX + "coarse / rude communication.",
+       "risk", "coarse_rude_communication",
+       source_reference=REF_SAGITTARIUS_BIO, activation_condition="hard_aspected"),
+    _f("sag_bio_afflicted_labeling", "sign", "Sagittarius", "communication",
+       _AFFLICTED_PREFIX + "labeling.",
+       "risk", "labeling",
+       source_reference=REF_SAGITTARIUS_BIO, activation_condition="hard_aspected"),
+    _f("sag_bio_afflicted_illusions", "sign", "Sagittarius", "risk",
+       _AFFLICTED_PREFIX + "illusions.",
+       "risk", "illusions",
+       source_reference=REF_SAGITTARIUS_BIO, activation_condition="hard_aspected"),
+    _f("sag_bio_afflicted_accuracy_problems", "sign", "Sagittarius", "risk",
+       _AFFLICTED_PREFIX + "accuracy problems.",
+       "risk", "accuracy_problems",
+       source_reference=REF_SAGITTARIUS_BIO, activation_condition="hard_aspected"),
+    _f("sag_bio_afflicted_memory_problems", "sign", "Sagittarius", "risk",
+       _AFFLICTED_PREFIX + "memory problems.",
+       "risk", "memory_problems",
+       source_reference=REF_SAGITTARIUS_BIO, activation_condition="hard_aspected"),
+    _f("sag_bio_afflicted_strange_religion_drift", "sign", "Sagittarius", "risk",
+       _AFFLICTED_PREFIX + "drift toward strange religions.",
+       "risk", "strange_religion_drift",
+       source_reference=REF_SAGITTARIUS_BIO, activation_condition="hard_aspected"),
+    _f("sag_bio_afflicted_dubious_philosophy_drift", "sign", "Sagittarius", "risk",
+       _AFFLICTED_PREFIX + "drift toward dubious / murky philosophies.",
+       "risk", "dubious_philosophy_drift",
+       source_reference=REF_SAGITTARIUS_BIO, activation_condition="hard_aspected"),
+    _f("sag_bio_afflicted_practice_detachment", "sign", "Sagittarius", "risk",
+       _AFFLICTED_PREFIX + "those religious / philosophical frameworks may detach thinking from practice.",
+       "risk", "practice_detachment",
+       source_reference=REF_SAGITTARIUS_BIO, activation_condition="hard_aspected"),
+    _f("sag_bio_afflicted_common_sense_detachment", "sign", "Sagittarius", "risk",
+       _AFFLICTED_PREFIX + "may detach thinking from common sense.",
+       "risk", "common_sense_detachment",
+       source_reference=REF_SAGITTARIUS_BIO, activation_condition="hard_aspected"),
 )
 
 # ---------------------------------------------------------------------------
@@ -1024,7 +1641,7 @@ HOUSE_10: tuple[SourceFactDef, ...] = (
        source_reference=REF_H10),
     _f("h10_many_connections_reduced_independence", "house", "10", "environment",
        "Many connections but reduced independence.",
-       "risk", "prestige_orientation",
+       "risk", "reduced_independence",
        source_reference=REF_H10),
     _f("h10_frequent_change_of_work", "house", "10", "work_application",
        "Frequent change of work activity.",
@@ -1049,12 +1666,93 @@ HOUSE_10: tuple[SourceFactDef, ...] = (
 )
 
 # ---------------------------------------------------------------------------
+# Mercury in House 10 — Bioastrology (dual-source parity; HOUSE_10 L7 is frozen)
+# ---------------------------------------------------------------------------
+HOUSE_10_BIO: tuple[SourceFactDef, ...] = (
+    _f("h10_bio_communication_learning_strengthened_overall", "house", "10",
+       "source_specific",
+       "Communication and learning functions may be strengthened overall.",
+       "strength",
+       source_reference=REF_H10_BIO),
+    _f("h10_bio_communication_learning_demanded_in_career", "house", "10",
+       "work_application",
+       "Communication and learning may be especially demanded in career contexts.",
+       "neutral",
+       source_reference=REF_H10_BIO),
+    _f("h10_bio_communication_learning_demanded_in_business", "house", "10",
+       "work_application",
+       "Communication and learning may be especially demanded in business contexts.",
+       "neutral",
+       source_reference=REF_H10_BIO),
+    _f("h10_bio_intellectual_transport_profession", "house", "10", "work_application",
+       "Favorable association with intellectual and transport-related professions.",
+       "strength", "intellectual_work", "transport_profession",
+       source_reference=REF_H10_BIO),
+    _f("h10_bio_consultant_qualities", "house", "10", "work_application",
+       "May support qualities associated with consulting.",
+       "strength", "consulting",
+       source_reference=REF_H10_BIO),
+    _f("h10_bio_sales_qualities", "house", "10", "work_application",
+       "May support qualities associated with sales.",
+       "strength", "sales",
+       source_reference=REF_H10_BIO),
+    _f("h10_bio_scientist_role", "house", "10", "work_application",
+       "May support qualities associated with a scientist role.",
+       "strength",
+       source_reference=REF_H10_BIO),
+    _f("h10_bio_politician_role", "house", "10", "work_application",
+       "May support qualities associated with a politician role.",
+       "strength",
+       source_reference=REF_H10_BIO),
+    _f("h10_bio_intellect_becomes_grounded", "house", "10", "thinking",
+       "Over time, circumstances may make the intellect more grounded and down-to-earth.",
+       "neutral",
+       source_reference=REF_H10_BIO),
+    _f("h10_bio_intellect_becomes_conservative", "house", "10", "thinking",
+       "Over time, circumstances may make the intellect more conservative.",
+       "neutral",
+       source_reference=REF_H10_BIO),
+    _f("h10_bio_intellect_becomes_socially_conditioned", "house", "10", "thinking",
+       "Over time, circumstances may make the intellect more socially conditioned.",
+       "neutral",
+       source_reference=REF_H10_BIO),
+    _f("h10_bio_parallel_work_business_directions", "house", "10", "work_application",
+       "There may be several parallel directions in work or business.",
+       "neutral",
+       source_reference=REF_H10_BIO),
+    _f("h10_bio_work_with_siblings", "house", "10", "work_application",
+       "Work may involve siblings.",
+       "neutral",
+       source_reference=REF_H10_BIO),
+    _f("h10_bio_work_with_younger_people", "house", "10", "work_application",
+       "Work may involve younger people.",
+       "neutral",
+       source_reference=REF_H10_BIO),
+    _f("h10_bio_popularity_fame", "house", "10", "source_specific",
+       "Favorable association with popularity and public recognition.",
+       "strength",
+       source_reference=REF_H10_BIO),
+    _f("h10_bio_afflicted_seen_as_student", "house", "10", "source_specific",
+       "When Mercury is afflicted, the source describes a social perception of the "
+       "person only in a student role (afflicted-Mercury dependency; no house-affliction "
+       "resolver is applied; not hard_aspected).",
+       "conditional",
+       source_reference=REF_H10_BIO, unresolved=True),
+    _f("h10_bio_afflicted_seen_as_servant", "house", "10", "source_specific",
+       "When Mercury is afflicted, the source describes a social perception of the "
+       "person only in a servant role (afflicted-Mercury dependency; no house-affliction "
+       "resolver is applied; not hard_aspected).",
+       "conditional",
+       source_reference=REF_H10_BIO, unresolved=True),
+)
+
+# ---------------------------------------------------------------------------
 # Mercury conjunction Uranus (Dzmitry) — conjunction-specific pack
 # ---------------------------------------------------------------------------
 URANUS_CONJUNCTION: tuple[SourceFactDef, ...] = (
     _f("uranus_cj_function_overridden_by_rebellious_superconsciousness", "aspect", "conjunction_Uranus", "thinking",
        "Communication and learning function is strongly overridden / transformed by rebellious technical \"super-consciousness\".",
-       "neutral", "rebellious_free_thinking", "technical_ability",
+       "neutral", "rebellious_free_thinking",
        source_reference=REF_URANUS_CONJ),
     _f("uranus_cj_resembles_square_when_uranus_stronger", "aspect", "conjunction_Uranus", "source_specific",
        "Source relationship: this configuration resembles the Mercury–Uranus square when Uranus is stronger (reference only; square pack is not auto-activated).",
@@ -1078,7 +1776,7 @@ URANUS_CONJUNCTION: tuple[SourceFactDef, ...] = (
        source_reference=REF_URANUS_CONJ),
     _f("uranus_cj_rebellious_free_thinking", "aspect", "conjunction_Uranus", "thinking",
        "Rebellious / free thinking.",
-       "strength", "rebellious_free_thinking", "nonstandard_thinking",
+       "strength", "rebellious_free_thinking",
        source_reference=REF_URANUS_CONJ),
     _f("uranus_cj_spontaneous_creativity", "aspect", "conjunction_Uranus", "thinking",
        "Spontaneous creativity.",
@@ -1130,7 +1828,7 @@ URANUS_CONJUNCTION: tuple[SourceFactDef, ...] = (
        source_reference=REF_URANUS_CONJ),
     _f("uranus_cj_accident_driving_risk", "aspect", "conjunction_Uranus", "mobility",
        "Increased accident / driving risk source signal.",
-       "risk", "driving",
+       "risk", "driving_accident_risk",
        source_reference=REF_URANUS_CONJ),
     _f("uranus_cj_interest_psychology", "aspect", "conjunction_Uranus", "learning",
        "Interest / ability in psychology.",
@@ -1178,7 +1876,7 @@ URANUS_CONJUNCTION: tuple[SourceFactDef, ...] = (
        source_reference=REF_URANUS_CONJ),
     _f("uranus_cj_comp_mathematics", "aspect", "conjunction_Uranus", "compensation",
        "Source compensation idea: mathematics.",
-       "neutral", "compensation", "technical_ability",
+       "neutral", "compensation",
        source_reference=REF_URANUS_CONJ),
     _f("uranus_cj_comp_forecasting", "aspect", "conjunction_Uranus", "compensation",
        "Source compensation idea: forecasting.",
@@ -1190,7 +1888,7 @@ URANUS_CONJUNCTION: tuple[SourceFactDef, ...] = (
        source_reference=REF_URANUS_CONJ),
     _f("uranus_cj_comp_super_memory_practices", "aspect", "conjunction_Uranus", "compensation",
        "Source compensation idea: super-memory practices (source wording).",
-       "neutral", "compensation", "memory",
+       "neutral", "compensation",
        source_reference=REF_URANUS_CONJ),
     _f("uranus_cj_comp_discussion_with_friends", "aspect", "conjunction_Uranus", "compensation",
        "Source compensation idea: discussion with friends.",
@@ -1207,40 +1905,232 @@ URANUS_CONJUNCTION: tuple[SourceFactDef, ...] = (
 )
 
 # Aspect keys that reuse another pack's catalog definitions (shared source semantics).
+# Mars alias plus C1/C3 source-justified harmonious aliases
+# (pair-specific Bioastrology "трин/секстиль", not general astrology).
 ASPECT_PACK_ALIASES: dict[str, str] = {
     "sextile_Mars": "trine_Mars",
+    "trine_Moon": "sextile_Moon",
+    "trine_Jupiter": "sextile_Jupiter",
+    "sextile_Saturn": "trine_Saturn",
+    "sextile_Uranus": "trine_Uranus",
+    "sextile_Pluto": "trine_Pluto",
+    "sextile_Neptune": "trine_Neptune",
 }
 
-SUPPORTED_SIGN_KEYS = {"Leo", "Taurus", "Sagittarius"}
-SUPPORTED_HOUSE_KEYS = {"1", "9", "10"}
+SUPPORTED_SIGN_KEYS = {
+    "Aries",
+    "Taurus",
+    "Gemini",
+    "Cancer",
+    "Leo",
+    "Virgo",
+    "Libra",
+    "Scorpio",
+    "Sagittarius",
+    "Capricorn",
+    "Aquarius",
+    "Pisces",
+}
+SUPPORTED_HOUSE_KEYS = {
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "11",
+    "12",
+}
 SUPPORTED_MOTION_KEYS = {"retrograde"}
 SUPPORTED_ASPECT_KEYS = {
     "square_Pluto",
+    "trine_Pluto",
+    "sextile_Pluto",
+    "opposition_Pluto",
+    "conjunction_Pluto",
     "trine_Saturn",
+    "sextile_Saturn",
+    "square_Saturn",
+    "opposition_Saturn",
+    "conjunction_Saturn",
     "sextile_Moon",
+    "trine_Moon",
     "square_Moon",
+    "opposition_Moon",
+    "conjunction_Moon",
+    "conjunction_Sun",
+    "sextile_Venus",
+    "conjunction_Venus",
+    "trine_Neptune",
+    "sextile_Neptune",
+    "square_Neptune",
+    "opposition_Neptune",
+    "conjunction_Neptune",
     "trine_Mars",
     "sextile_Mars",
+    "square_Mars",
+    "opposition_Mars",
+    "conjunction_Mars",
     "sextile_Jupiter",
+    "trine_Jupiter",
+    "square_Jupiter",
+    "opposition_Jupiter",
+    "conjunction_Jupiter",
     "conjunction_Uranus",
+    "trine_Uranus",
+    "sextile_Uranus",
+    "square_Uranus",
+    "opposition_Uranus",
 }
 
+# Late import: A1/A2/A3/B1 packs avoid circular imports via local SourceFactDef/_f.
+from app.services.mercury_source_knowledge_a1_signs import (  # noqa: E402
+    A1_SIGN_PACKS,
+    ARIES_ALL,
+    CANCER_ALL,
+    GEMINI_ALL,
+)
+from app.services.mercury_source_knowledge_a2_signs import (  # noqa: E402
+    A2_SIGN_PACKS,
+    LIBRA_ALL,
+    SCORPIO_ALL,
+    VIRGO_ALL,
+)
+from app.services.mercury_source_knowledge_a3_signs import (  # noqa: E402
+    A3_SIGN_PACKS,
+    AQUARIUS_ALL,
+    CAPRICORN_ALL,
+    PISCES_ALL,
+)
+from app.services.mercury_source_knowledge_b1_houses import (  # noqa: E402
+    B1_HOUSE_PACKS,
+    HOUSE_2,
+    HOUSE_3,
+    HOUSE_4,
+)
+from app.services.mercury_source_knowledge_b2_houses import (  # noqa: E402
+    B2_HOUSE_PACKS,
+    HOUSE_5,
+    HOUSE_6,
+    HOUSE_7,
+)
+from app.services.mercury_source_knowledge_b3_houses import (  # noqa: E402
+    B3_HOUSE_PACKS,
+    HOUSE_8,
+    HOUSE_11,
+    HOUSE_12,
+)
+from app.services.mercury_source_knowledge_c1_aspects import (  # noqa: E402
+    C1_ASPECT_PACKS,
+    URANUS_HARMONIOUS,
+)
+from app.services.mercury_source_knowledge_c2_aspects import (  # noqa: E402
+    C2_ASPECT_PACKS,
+    MARS_SQUARE,
+    SATURN_SQUARE,
+)
+from app.services.mercury_source_knowledge_c3_aspects import (  # noqa: E402
+    C3_ASPECT_PACKS,
+    PLUTO_HARMONIOUS,
+)
+from app.services.mercury_source_knowledge_c4_aspects import (  # noqa: E402
+    C4_ASPECT_PACKS,
+    JUPITER_SQUARE,
+)
+from app.services.mercury_source_knowledge_c5_aspects import (  # noqa: E402
+    C5_ASPECT_PACKS,
+    JUPITER_CONJUNCTION,
+    JUPITER_OPPOSITION,
+)
+from app.services.mercury_source_knowledge_c6_aspects import (  # noqa: E402
+    C6_ASPECT_PACKS,
+    SATURN_CONJUNCTION,
+    SATURN_OPPOSITION,
+)
+from app.services.mercury_source_knowledge_c7_aspects import (  # noqa: E402
+    C7_ASPECT_PACKS,
+    MARS_CONJUNCTION,
+    MARS_OPPOSITION,
+)
+from app.services.mercury_source_knowledge_c8_aspects import (  # noqa: E402
+    C8_ASPECT_PACKS,
+    URANUS_OPPOSITION,
+    URANUS_SQUARE,
+)
+from app.services.mercury_source_knowledge_c9_aspects import (  # noqa: E402
+    C9_ASPECT_PACKS,
+    MOON_CONJUNCTION,
+    MOON_OPPOSITION,
+)
+from app.services.mercury_source_knowledge_c11_aspects import (  # noqa: E402
+    C11_ASPECT_PACKS,
+    SUN_CONJUNCTION,
+)
+from app.services.mercury_source_knowledge_c12_aspects import (  # noqa: E402
+    C12_ASPECT_PACKS,
+    VENUS_CONJUNCTION,
+    VENUS_SEXTILE,
+)
+from app.services.mercury_source_knowledge_c13_aspects import (  # noqa: E402
+    C13_ASPECT_PACKS,
+    NEPTUNE_CONJUNCTION,
+    NEPTUNE_HARMONIOUS,
+    NEPTUNE_OPPOSITION,
+    NEPTUNE_SQUARE,
+)
+from app.services.mercury_source_knowledge_c14_aspects import (  # noqa: E402
+    C14_ASPECT_PACKS,
+    PLUTO_CONJUNCTION,
+    PLUTO_OPPOSITION,
+)
+
 ALL_SOURCE_FACTS: tuple[SourceFactDef, ...] = (
-    LEO_GENERAL
+    LEO_LESSON7
+    + LEO_GENERAL
     + LEO_AFFLICTED
     + HOUSE_1
+    + HOUSE_1_LESSON7
     + RETROGRADE
     + PLUTO_SQUARE
     + SATURN_TRINE
     + MOON_SEXTILE
     + TAURUS_GENERAL
+    + TAURUS_BIOASTROLOGY
+    + TAURUS_AFFLICTED
     + HOUSE_9
+    + HOUSE_9_BIO
     + MOON_SQUARE
     + MARS_TRINE
     + JUPITER_SEXTILE
     + SAGITTARIUS_GENERAL
+    + SAGITTARIUS_BIOASTROLOGY
+    + SAGITTARIUS_AFFLICTED
     + HOUSE_10
+    + HOUSE_10_BIO
     + URANUS_CONJUNCTION
+    + A1_SIGN_PACKS
+    + A2_SIGN_PACKS
+    + A3_SIGN_PACKS
+    + B1_HOUSE_PACKS
+    + B2_HOUSE_PACKS
+    + B3_HOUSE_PACKS
+    + C1_ASPECT_PACKS
+    + C2_ASPECT_PACKS
+    + C3_ASPECT_PACKS
+    + C4_ASPECT_PACKS
+    + C5_ASPECT_PACKS
+    + C6_ASPECT_PACKS
+    + C7_ASPECT_PACKS
+    + C8_ASPECT_PACKS
+    + C9_ASPECT_PACKS
+    + C11_ASPECT_PACKS
+    + C12_ASPECT_PACKS
+    + C13_ASPECT_PACKS
+    + C14_ASPECT_PACKS
 )
 
 # Repeated-signal definitions: SAME tag across distinct provenance keys only.
@@ -1248,7 +2138,7 @@ ALL_SOURCE_FACTS: tuple[SourceFactDef, ...] = (
 REPEATED_SIGNAL_SPECS: tuple[dict, ...] = (
     {
         "signal": "strong_memory",
-        "tag": "memory",
+        "tag": "strong_memory",
         "min_factor_keys": 2,
     },
     {
@@ -1289,11 +2179,6 @@ REPEATED_SIGNAL_SPECS: tuple[dict, ...] = (
     {
         "signal": "nonstandard_thinking",
         "tag": "nonstandard_thinking",
-        "min_factor_keys": 2,
-    },
-    {
-        "signal": "nonstandard_learning",
-        "tag": "nonstandard_learning",
         "min_factor_keys": 2,
     },
     {

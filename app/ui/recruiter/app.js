@@ -27,7 +27,26 @@
   const workspacesStatus = document.getElementById("workspaces-status");
   const workspaceSaveStatus = document.getElementById("workspace-save-status");
   const DEFAULT_BRAND_TITLE = "Team Intelligence";
-  const SELF_BRAND_TITLE = "Your Mercury Profile";
+  const SELF_BRAND_TITLE = "Your Work Profile";
+
+  /** Presentation-only: named entry → person profile; empty name → self. */
+  const PERSON_SECTION_TITLES = {
+    thinking: "Thinking style",
+    communication: "Communication style",
+    learning: "Learning style",
+    memory_focus: "Memory & focus",
+    work_application: "Work-related patterns",
+    context_risks: "Context & watch-outs",
+  };
+
+  const SELF_SECTION_TITLES = {
+    thinking: "How you think",
+    communication: "How you communicate",
+    learning: "How you learn",
+    memory_focus: "Memory & focus",
+    work_application: "How it can show up in work",
+    context_risks: "Context & watch-outs",
+  };
 
   let memberSeq = 1;
   let candidateSeq = 1;
@@ -36,6 +55,7 @@
   let impactByCandidateId = {};
   let analyzed = false;
   let activeWorkspaceId = null;
+  let activeProfileTab = "overview";
 
   const DEMO = {
     teamName: "AI Platform Team",
@@ -148,6 +168,166 @@
     brandTitle.textContent = mode === "self" ? SELF_BRAND_TITLE : DEFAULT_BRAND_TITLE;
   }
 
+  function resolveProfileAudience(displayName) {
+    return String(displayName || "").trim() ? "person" : "self";
+  }
+
+  const PERSON_PRONOUN_FORMS = {
+    male: { subject: "he", object: "him", possessive: "his", independent: "his", reflexive: "himself", pluralVerb: false },
+    female: { subject: "she", object: "her", possessive: "her", independent: "hers", reflexive: "herself", pluralVerb: false },
+    they: { subject: "they", object: "them", possessive: "their", independent: "theirs", reflexive: "themselves", pluralVerb: true },
+    you: { subject: "you", object: "you", possessive: "your", independent: "yours", reflexive: "yourself", pluralVerb: true },
+  };
+
+  function normalizePersonSex(value) {
+    const token = String(value || "").trim().toLowerCase();
+    if (["male", "m", "he", "him", "he/him"].includes(token)) return "male";
+    if (["female", "f", "she", "her", "she/her"].includes(token)) return "female";
+    if (["neutral", "they", "them", "they/them", "nonbinary", "non-binary"].includes(token)) return "neutral";
+    return "unknown";
+  }
+
+  function buildPersonPerspective({ name, sex, perspective } = {}) {
+    const trimmed = String(name || "").trim();
+    const resolvedPerspective = perspective || (trimmed ? "third_person" : "self");
+    const resolvedSex = normalizePersonSex(sex);
+    let forms = PERSON_PRONOUN_FORMS.they;
+    if (resolvedPerspective === "self") forms = PERSON_PRONOUN_FORMS.you;
+    else if (resolvedSex === "male") forms = PERSON_PRONOUN_FORMS.male;
+    else if (resolvedSex === "female") forms = PERSON_PRONOUN_FORMS.female;
+    const subjectCap = forms.subject.charAt(0).toUpperCase() + forms.subject.slice(1);
+    const possessiveCap = forms.possessive.charAt(0).toUpperCase() + forms.possessive.slice(1);
+    return {
+      name: trimmed,
+      perspective: resolvedPerspective,
+      sex: resolvedSex,
+      subject: forms.subject,
+      object: forms.object,
+      possessive: forms.possessive,
+      independent: forms.independent,
+      reflexive: forms.reflexive,
+      subjectCap,
+      possessiveCap,
+      pluralVerb: forms.pluralVerb,
+    };
+  }
+
+  function fillPersonTemplate(template, person) {
+    if (!template || !person) return template || "";
+    const name = person.name || person.subjectCap;
+    return String(template)
+      .replaceAll("{name}", name)
+      .replaceAll("{They}", person.subjectCap)
+      .replaceAll("{they}", person.subject)
+      .replaceAll("{them}", person.object)
+      .replaceAll("{their}", person.possessive)
+      .replaceAll("{theirs}", person.independent)
+      .replaceAll("{themself}", person.reflexive);
+  }
+
+  function contextualizeNeutralSentence(text, person) {
+    const stripped = String(text || "").trim();
+    if (!person) return stripped;
+    if (stripped.toLowerCase().startsWith("may ")) {
+      let rest = stripped.slice(4);
+      if (rest) rest = rest.charAt(0).toLowerCase() + rest.slice(1);
+      return `${person.subjectCap} may ${rest}`;
+    }
+    return stripped;
+  }
+
+  function presentVerb(person, base, singular) {
+    return person && person.pluralVerb ? base : singular;
+  }
+
+  function howThinksHeading(person) {
+    if (!person || person.perspective === "self" || !person.name) return "How you think";
+    return `How ${person.name} thinks`;
+  }
+
+  function howWorksHeading(person) {
+    if (!person || person.perspective === "self" || !person.name) return "How you work";
+    return `How ${person.name} works`;
+  }
+
+  function currentPersonPerspective() {
+    const nameEl = document.getElementById("self-name");
+    const sexEl = document.getElementById("self-sex");
+    const name = nameEl ? String(nameEl.value || "").trim() : "";
+    const sex = sexEl ? sexEl.value : "";
+    return buildPersonPerspective({
+      name,
+      sex,
+      perspective: name ? "third_person" : "self",
+    });
+  }
+
+  function possessiveLabel(name) {
+    const trimmed = String(name || "").trim();
+    if (!trimmed) return "";
+    return /s$/i.test(trimmed) ? `${trimmed}'` : `${trimmed}'s`;
+  }
+
+  function profileHeaderTitle(audience, displayName) {
+    if (audience === "person") {
+      const name = String(displayName || "").trim();
+      return name ? `${possessiveLabel(name)} Work Profile` : "Work Profile";
+    }
+    return SELF_BRAND_TITLE;
+  }
+
+  function setBrandTitleForProfile(audience, displayName) {
+    if (!brandTitle) return;
+    brandTitle.textContent = profileHeaderTitle(audience, displayName);
+  }
+
+  function sectionDisplayTitle(section, audience) {
+    const map = audience === "person" ? PERSON_SECTION_TITLES : SELF_SECTION_TITLES;
+    if (section && section.key && map[section.key]) return map[section.key];
+    return (section && section.title) || "";
+  }
+
+  function humanFactorLabelFromSource(sourceKey) {
+    const [type, ...rest] = String(sourceKey || "").split(":");
+    const key = rest.join(":");
+    if (type && key) return factorCardTitle(type, key);
+    return provenanceLabel(sourceKey);
+  }
+
+  function recurringPatternsExplanation(audience, displayName, count) {
+    const n = Number(count) || 0;
+    const themeWord = n === 1 ? "recurring theme" : "recurring themes";
+    let subjectTail;
+    if (audience === "person") {
+      const name = String(displayName || "").trim();
+      if (name) {
+        subjectTail = `${possessiveLabel(name)} profile`;
+      } else {
+        subjectTail = "this profile";
+      }
+    } else {
+      subjectTail = "your profile";
+    }
+    return `We found ${n} ${themeWord} supported independently by at least two parts of ${subjectTail}:`;
+  }
+
+  function recurringPatternsEmptyCopy(audience) {
+    const subject = audience === "person"
+      ? "This profile is more distributed across individual themes."
+      : "Your profile is more distributed across individual themes.";
+    return `No repeated pattern stands out across multiple Mercury factors. ${subject}`;
+  }
+
+  function tensionsHeading(audience) {
+    return audience === "person" ? "Tensions in this profile" : "Tensions in your profile";
+  }
+
+  function tensionsExplanation(count) {
+    const n = Number(count) || 0;
+    const tensionWord = n === 1 ? "tension" : "tensions";
+    return `Different parts of this profile can pull in different directions. AstroIT keeps both signals instead of choosing a winner. We found ${n} ${tensionWord}:`;
+  }
+
   function showWorkspaceShell() {
     emptyState.hidden = true;
     if (selfProfile) selfProfile.hidden = true;
@@ -181,18 +361,21 @@
       birth_date: "1986-07-14",
       birth_time: "07:10",
       birth_place: "Simferopol, Ukraine",
+      sex: "male",
     },
     vlad: {
       display_name: "Vlad",
       birth_date: "1986-05-16",
       birth_time: "15:00",
       birth_place: "Dnipro, Ukraine",
+      sex: "male",
     },
     dzmitry: {
       display_name: "Dzmitry",
       birth_date: "1985-11-12",
       birth_time: "14:15",
       birth_place: "Zhodino, Belarus",
+      sex: "male",
     },
   };
 
@@ -205,11 +388,19 @@
     work_application: "Work / Application",
     environment: "Environment / Mobility",
     mobility: "Environment / Mobility",
-    compensation: "Compensation",
-    secondary_gain: "Secondary Gain",
-    source_specific: "Source-Specific",
+    compensation: "Compensation (source material / detail)",
+    secondary_gain: "Secondary Gain (source material / detail)",
+    source_specific: "Source-Specific Claims",
     focus: "Focus",
     memory: "Memory",
+  };
+
+  // Recruiter-facing tension labels. Tags stay unchanged; labels only.
+  // Bounded by approved human-copy meaning (e.g. Leo risk of intellectual
+  // superficiality), not accusatory trait naming.
+  const TENSION_TAG_LABELS = {
+    superficiality: "Surface-level thinking risk",
+    analytical_thinking: "Analytical thinking",
   };
 
   const CATEGORY_ORDER = [
@@ -248,6 +439,8 @@
     document.getElementById("self-birth-date").value = demo.birth_date;
     document.getElementById("self-birth-time").value = demo.birth_time;
     document.getElementById("self-birth-place").value = demo.birth_place;
+    const sexEl = document.getElementById("self-sex");
+    if (sexEl) sexEl.value = demo.sex || "";
     setStatus(selfSetupStatus, `Filled ${demo.display_name}. Click Build My Profile to call the API.`);
   }
 
@@ -257,6 +450,11 @@
       .filter(Boolean)
       .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
       .join(" ");
+  }
+
+  function tensionTagLabel(tag) {
+    if (TENSION_TAG_LABELS[tag]) return TENSION_TAG_LABELS[tag];
+    return titleCaseSignal(tag);
   }
 
   function categoryLabel(category) {
@@ -280,6 +478,7 @@
     if (factorType === "house") return `Mercury in House ${factorKey}`;
     if (factorType === "motion") {
       if (String(factorKey).toLowerCase() === "retrograde") return "Retrograde Mercury";
+      if (String(factorKey).toLowerCase() === "direct") return "Direct Mercury";
       return `Mercury ${titleCaseSignal(factorKey)}`;
     }
     if (factorType === "aspect") {
@@ -407,7 +606,10 @@
 
   function renderFactGroups(facts) {
     const sourceSpecific = facts.filter((f) => f.category === "source_specific");
-    const regular = facts.filter((f) => f.category !== "source_specific");
+    const compensation = facts.filter((f) => f.category === "compensation");
+    const regular = facts.filter(
+      (f) => f.category !== "source_specific" && f.category !== "compensation"
+    );
     const byCategory = new Map();
     regular.forEach((fact) => {
       const key = fact.category || "other";
@@ -429,6 +631,17 @@
       </div>`;
     }).join("");
 
+    let compensationBlock = "";
+    if (compensation.length) {
+      compensationBlock = `<details class="source-specific-block compensation-detail-block">
+        <summary>Compensation (source material / detail) <span class="factor-summary-meta">${compensation.length}</span></summary>
+        <div class="source-specific-body">
+          <p class="source-specific-note">Source material from the framework — not treated as an automatically active personality trait.</p>
+          <ul class="fact-list">${compensation.map(renderFactItem).join("")}</ul>
+        </div>
+      </details>`;
+    }
+
     let sourceBlock = "";
     if (sourceSpecific.length) {
       sourceBlock = `<details class="source-specific-block">
@@ -440,36 +653,313 @@
       </details>`;
     }
 
-    return `${groups}${sourceBlock}`;
+    return `${groups}${compensationBlock}${sourceBlock}`;
   }
 
-  function renderRepeatedSignals(signals) {
-    if (!signals || !signals.length) {
-      return `<section class="panel"><div class="panel-head"><h2>What repeats in your profile</h2></div><p class="meta">No repeated signals for this profile.</p></section>`;
+  function synthesisFactMap(synthesis) {
+    const map = new Map();
+    const byId = (synthesis && synthesis.facts_by_id) || {};
+    Object.keys(byId).forEach((id) => map.set(id, byId[id]));
+    return map;
+  }
+
+  function presentationTextMap(synthesis) {
+    return (synthesis && synthesis.presentation_text_by_fact_id) || {};
+  }
+
+  function humanFactText(fact, presentationMap) {
+    if (!fact) return "";
+    const map = presentationMap || {};
+    if (fact.id && map[fact.id]) return map[fact.id];
+    return fact.text;
+  }
+
+  function renderPreviewFactItem(fact, presentationMap) {
+    if (!fact) return "";
+    const isRisk = fact.polarity === "risk";
+    const marker = isRisk
+      ? `<span class="risk-mark" title="Possible difficulty">Risk</span>`
+      : `<span class="fact-bullet" aria-hidden="true">•</span>`;
+    const provenance = compactProvenanceLabel(`${fact.factor_type}:${fact.factor_key}`);
+    const text = humanFactText(fact, presentationMap);
+    return `<li class="fact-item${isRisk ? " fact-risk" : ""}">${marker}<span class="fact-text">${escapeHtml(text)}<span class="fact-provenance">${escapeHtml(provenance)}</span></span></li>`;
+  }
+
+  function renderStrongestPatterns(synthesis, audience, displayName) {
+    const patterns = (synthesis && synthesis.strongest_patterns) || [];
+    if (!patterns.length) {
+      return `<section class="panel synthesis-patterns level-1">
+        <div class="panel-head"><h2>Key recurring patterns</h2></div>
+        <p class="section-helper patterns-empty">${escapeHtml(recurringPatternsEmptyCopy(audience))}</p>
+      </section>`;
     }
-    const rows = signals.map((signal) => {
-      const factors = (signal.sources || []).map(compactProvenanceLabel).join(" · ");
-      const why = (signal.sources || []).map((src) => escapeHtml(src)).join("<br />");
-      const factIds = (signal.fact_ids || []).map((id) => escapeHtml(id)).join(", ");
+    const intro = `<p class="section-helper">${escapeHtml(recurringPatternsExplanation(audience, displayName, patterns.length))}</p>`;
+    const rows = patterns.map((signal) => {
+      const count = Number(signal.source_count) || (signal.sources || []).length || 0;
+      const supportLabel = count === 1
+        ? "Supported by 1 profile factor"
+        : `Supported by ${count} profile factors`;
+      const whyItems = (signal.sources || [])
+        .map((src) => `<li>${escapeHtml(humanFactorLabelFromSource(src))}</li>`)
+        .join("");
       return `<article class="signal-row">
         <div class="signal-row-main">
           <strong class="signal-label">${escapeHtml(titleCaseSignal(signal.signal))}</strong>
-          <span class="signal-meta">${escapeHtml(String(signal.source_count))} contributing factors</span>
-          <span class="signal-factors">${escapeHtml(factors)}</span>
+          <span class="signal-meta">${escapeHtml(supportLabel)}</span>
         </div>
         <details class="signal-why">
-          <summary>Why?</summary>
+          <summary>Why this appears</summary>
           <div class="signal-why-body">
-            <p class="meta">${why}</p>
-            ${factIds ? `<p class="meta">Fact IDs: ${factIds}</p>` : ""}
+            <p class="signal-why-label">Supported by:</p>
+            <ul class="signal-why-list">${whyItems}</ul>
           </div>
         </details>
       </article>`;
     }).join("");
-    return `<section class="panel">
-      <div class="panel-head"><h2>What repeats in your profile</h2></div>
-      <div class="signal-list">${rows}</div>
+    return `<section class="panel synthesis-patterns level-1">
+      <div class="panel-head"><h2>Key recurring patterns</h2></div>
+      ${intro}
+      <div class="result-list-group">${rows}</div>
     </section>`;
+  }
+
+  function renderGroupedFactItem(fact, presentationMap) {
+    if (!fact) return "";
+    const isRisk = fact.polarity === "risk";
+    const marker = isRisk
+      ? `<span class="risk-mark" title="Possible difficulty">Risk</span>`
+      : `<span class="fact-bullet" aria-hidden="true">•</span>`;
+    // Factor heading already establishes provenance — do not repeat it on every row.
+    const text = humanFactText(fact, presentationMap);
+    return `<li class="fact-item${isRisk ? " fact-risk" : ""}">${marker}<span class="fact-text">${escapeHtml(text)}</span></li>`;
+  }
+
+  function factorTypeRank(factorType) {
+    const order = { sign: 0, house: 1, motion: 2, aspect: 3 };
+    return Object.prototype.hasOwnProperty.call(order, factorType) ? order[factorType] : 99;
+  }
+
+  function groupSectionFactsByFactor(section, facts) {
+    const groups = new Map();
+    const firstIndex = new Map();
+    (section.resolved_fact_ids || []).forEach((id, index) => {
+      const fact = facts.get(id);
+      if (!fact) return;
+      const key = `${fact.factor_type}:${fact.factor_key}`;
+      if (!groups.has(key)) {
+        groups.set(key, {
+          factor_type: fact.factor_type,
+          factor_key: fact.factor_key,
+          facts: [],
+        });
+        firstIndex.set(key, index);
+      }
+      groups.get(key).facts.push(fact);
+    });
+    return [...groups.keys()]
+      .sort((a, b) => {
+        const groupA = groups.get(a);
+        const groupB = groups.get(b);
+        const rankDiff = factorTypeRank(groupA.factor_type) - factorTypeRank(groupB.factor_type);
+        if (rankDiff !== 0) return rankDiff;
+        return firstIndex.get(a) - firstIndex.get(b);
+      })
+      .map((key) => groups.get(key));
+  }
+
+  function renderSectionFactorExplore(section, facts, presentationMap) {
+    const groups = groupSectionFactsByFactor(section, facts);
+    if (!groups.length) return "";
+    const rows = groups.map((group) => {
+      const label = factorCardTitle(group.factor_type, group.factor_key);
+      const n = group.facts.length;
+      const countLabel = n === 1 ? "1 observation" : `${n} observations`;
+      const items = group.facts
+        .map((fact) => renderGroupedFactItem(fact, presentationMap))
+        .filter(Boolean)
+        .join("");
+      return `<details class="section-factor-group">
+        <summary>
+          <span class="section-factor-label">${escapeHtml(label)}</span>
+          <span class="section-factor-meta">
+            <span class="factor-summary-meta">${escapeHtml(countLabel)}</span>
+            <span class="section-factor-chevron" aria-hidden="true"></span>
+          </span>
+        </summary>
+        <ul class="fact-list section-factor-facts">${items}</ul>
+      </details>`;
+    }).join("");
+    return `<div class="section-factor-explore">
+      <p class="section-factor-explore-label">Profile factors behind this section</p>
+      ${rows}
+    </div>`;
+  }
+
+  function renderSectionBody(section, facts, presentationMap, options) {
+    const hideMeta = options && options.hideMeta;
+    const previewIds = section.preview_fact_ids || [];
+    const previewItems = previewIds
+      .map((id) => renderPreviewFactItem(facts.get(id), presentationMap))
+      .filter(Boolean)
+      .join("");
+    const total = Number(section.resolved_fact_count) || (section.resolved_fact_ids || []).length;
+    const evidence = `${total} source-backed observations across ${section.factor_count} factor${section.factor_count === 1 ? "" : "s"}`;
+    const hasMore = total > previewIds.length;
+    const exploreLabel = total === 1
+      ? "Explore all 1 observation"
+      : `Explore all ${total} observations`;
+    // Preferred model: when open, CSS hides preview so factor groups can list ALL
+    // section facts without duplicate visible IDs. Collapse control sits after the groups.
+    const explore = hasMore
+      ? `<details class="section-explore">
+          <summary class="section-explore-summary">
+            <span class="explore-all-label">${escapeHtml(exploreLabel)}</span>
+          </summary>
+          ${hideMeta ? "" : `<p class="section-evidence-meta">${escapeHtml(evidence)}</p>`}
+          ${renderSectionFactorExplore(section, facts, presentationMap)}
+          <button type="button" class="section-show-less" onclick="this.closest('details.section-explore').open=false">Show less</button>
+        </details>`
+      : "";
+    return `<div class="section-body">
+      ${hideMeta ? "" : `<p class="section-evidence-meta">${escapeHtml(evidence)}</p>`}
+      <ul class="fact-list section-preview">${previewItems}</ul>
+      ${explore}
+    </div>`;
+  }
+
+  function renderSynthesisSections(synthesis, audience) {
+    if (!synthesis || !synthesis.sections) return "";
+    const facts = synthesisFactMap(synthesis);
+    const presentation = presentationTextMap(synthesis);
+    return (synthesis.sections || []).map((section) => {
+      if (!section.resolved_fact_count) return "";
+      // Watch-outs render separately as a secondary collapsed block.
+      if (section.key === "context_risks") return "";
+      const title = sectionDisplayTitle(section, audience);
+      return `<section class="panel synthesis-section level-1" data-section-key="${escapeHtml(section.key)}">
+        <div class="panel-head"><h2>${escapeHtml(title)}</h2></div>
+        ${renderSectionBody(section, facts, presentation)}
+      </section>`;
+    }).join("");
+  }
+
+  function renderContextWatchOuts(synthesis, audience) {
+    if (!synthesis || !synthesis.sections) return "";
+    const section = (synthesis.sections || []).find((item) => item.key === "context_risks");
+    if (!section || !section.resolved_fact_count) return "";
+    const facts = synthesisFactMap(synthesis);
+    const presentation = presentationTextMap(synthesis);
+    const title = sectionDisplayTitle(section, audience);
+    const countLabel = section.resolved_fact_count === 1
+      ? "1 source-backed observation"
+      : `${section.resolved_fact_count} source-backed observations`;
+    return `<section class="panel synthesis-watchouts level-2" data-section-key="context_risks">
+      <details class="watchouts-block">
+        <summary>
+          <span class="watchouts-summary-main">${escapeHtml(title)}</span>
+          <span class="factor-summary-meta">${escapeHtml(countLabel)}</span>
+        </summary>
+        <div class="watchouts-body">
+          ${renderSectionBody(section, facts, presentation)}
+        </div>
+      </details>
+    </section>`;
+  }
+
+  function renderTensionRows(tensions, factsLookup, options) {
+    const compact = options && options.compact;
+    return (tensions || []).map((pair) => {
+      const keysA = [...new Set((pair.facts_a || []).map((id) => {
+        const fact = factsLookup.get(id);
+        return fact ? `${fact.factor_type}:${fact.factor_key}` : id;
+      }))];
+      const keysB = [...new Set((pair.facts_b || []).map((id) => {
+        const fact = factsLookup.get(id);
+        return fact ? `${fact.factor_type}:${fact.factor_key}` : id;
+      }))];
+      const provA = keysA.map(provenanceLabel).join(" · ");
+      const provB = keysB.map(provenanceLabel).join(" · ");
+      const sources = compact
+        ? ""
+        : `<details class="contrast-sources">
+          <summary>Sources</summary>
+          <p class="meta">${escapeHtml(provA)} · ${escapeHtml(provB)}</p>
+        </details>`;
+      return `<div class="contrast-row">
+        <div class="contrast-pair">
+          <div class="contrast-side">
+            <h4>${escapeHtml(tensionTagLabel(pair.tag_a))}</h4>
+          </div>
+          <div class="contrast-arrow" aria-hidden="true">↕</div>
+          <div class="contrast-side">
+            <h4>${escapeHtml(tensionTagLabel(pair.tag_b))}</h4>
+          </div>
+        </div>
+        ${sources}
+      </div>`;
+    }).join("");
+  }
+
+  function renderResolvedTensions(synthesis, audience) {
+    const tensions = (synthesis && synthesis.resolved_tensions) || [];
+    if (!tensions.length) return "";
+    const facts = synthesisFactMap(synthesis);
+    return `<section class="panel synthesis-tensions level-2">
+      <div class="panel-head"><h2>${escapeHtml(tensionsHeading(audience))}</h2></div>
+      <p class="section-helper">${escapeHtml(tensionsExplanation(tensions.length))}</p>
+      <div class="result-list-group result-list-group-tensions">${renderTensionRows(tensions, facts)}</div>
+    </section>`;
+  }
+
+  function renderConditionalTensions(synthesis) {
+    const tensions = (synthesis && synthesis.conditional_tensions) || [];
+    if (!tensions.length) return "";
+    const facts = synthesisFactMap(synthesis);
+    return `<section class="panel synthesis-conditional-tensions level-2">
+      <div class="panel-head"><h2>Conditional tensions</h2></div>
+      <p class="section-helper">These possibilities depend on source conditions that cannot currently be resolved from the available chart data.</p>
+      ${renderTensionRows(tensions, facts)}
+    </section>`;
+  }
+
+  function renderConditionalSourceNotesRow(synthesis) {
+    const groups = (synthesis && synthesis.conditional_details) || [];
+    if (!groups.length) return "";
+    const facts = synthesisFactMap(synthesis);
+    const body = groups.map((group) => {
+      const label = factorCardTitle(group.factor_type, group.factor_key);
+      const condition = (group.activation_conditions || []).join(" · ") || "Unresolved condition";
+      const items = (group.fact_ids || [])
+        .map((id) => {
+          const fact = facts.get(id);
+          if (!fact) return "";
+          return `<li class="fact-item"><span class="fact-bullet" aria-hidden="true">•</span><span class="fact-text">${escapeHtml(fact.text)}</span></li>`;
+        })
+        .filter(Boolean)
+        .join("");
+      return `<div class="conditional-group">
+        <h4>${escapeHtml(label)}</h4>
+        <p class="condition-unresolved">Condition not resolved · ${escapeHtml(condition)}</p>
+        <ul class="fact-list">${items}</ul>
+      </div>`;
+    }).join("");
+    return `<details class="methodology-row conditional-notes-block">
+      <summary>Conditional source notes <span class="factor-summary-meta">${groups.length}</span></summary>
+      <div class="conditional-notes-body">
+        <p class="section-helper">These source notes depend on conditions that are not resolved from the available chart data. They are not treated as active.</p>
+        ${body}
+      </div>
+    </details>`;
+  }
+
+  function renderProfileNotesRow(profile) {
+    const notes = (profile.limitations || []).filter(Boolean);
+    if (!notes.length) return "";
+    const items = notes.map((note) => `<li>${escapeHtml(note)}</li>`).join("");
+    return `<details class="methodology-row profile-notes-block">
+      <summary>Profile notes <span class="factor-summary-meta">${notes.length}</span></summary>
+      <ul class="profile-notes-list">${items}</ul>
+    </details>`;
   }
 
   function renderSourceLayers(profile) {
@@ -484,16 +974,11 @@
       : `<p class="self-house-note">House not calculated — birth time required.</p>`;
 
     if (!layers.length) {
-      return `<section class="panel">
-        <div class="panel-head"><h2>Source layers</h2></div>
-        ${coverageHtml}
-        ${houseNote}
-        <p class="meta">No calculated Mercury factors to display.</p>
-      </section>`;
+      return `${coverageHtml}${houseNote}<p class="meta">No calculated Mercury factors to display.</p>`;
     }
 
-    const cards = layers.map((layer, index) => {
-      const openAttr = index === 0 ? " open" : "";
+    const cards = layers.map((layer) => {
+      const openAttr = "";
       const title = factorCardTitle(layer.factor_type, layer.factor_key);
       if (!layer.supported) {
         return `<details class="factor-card factor-unsupported"${openAttr}>
@@ -517,12 +1002,17 @@
       </details>`;
     }).join("");
 
-    return `<section class="panel">
-      <div class="panel-head"><h2>Source layers</h2></div>
-      ${coverageHtml}
-      ${houseNote}
-      ${cards}
-    </section>`;
+    return `${coverageHtml}${houseNote}${cards}`;
+  }
+
+  function renderSourceEvidenceRow(profile) {
+    return `<details class="methodology-row source-evidence-block">
+      <summary>Explore full source evidence</summary>
+      <div class="source-evidence-body">
+        <p class="section-helper">Full factor-by-factor source evidence and references.</p>
+        ${renderSourceLayers(profile)}
+      </div>
+    </details>`;
   }
 
   function factLookup(profile) {
@@ -537,47 +1027,7 @@
     return map;
   }
 
-  function renderContrasts(profile) {
-    const pairs = profile.contrasting_signals || [];
-    if (!pairs.length) return "";
-    const lookup = factLookup(profile);
-    const rows = pairs.map((pair) => {
-      const keysA = [...new Set((pair.facts_a || []).map((id) => {
-        const fact = lookup.get(id);
-        return fact ? `${fact.factor_type}:${fact.factor_key}` : id;
-      }))];
-      const keysB = [...new Set((pair.facts_b || []).map((id) => {
-        const fact = lookup.get(id);
-        return fact ? `${fact.factor_type}:${fact.factor_key}` : id;
-      }))];
-      const provA = keysA.map(provenanceLabel).join(" · ");
-      const provB = keysB.map(provenanceLabel).join(" · ");
-      const techA = keysA.map((src) => escapeHtml(src)).join(", ");
-      const techB = keysB.map((src) => escapeHtml(src)).join(", ");
-      return `<div class="contrast-row">
-        <div class="contrast-pair">
-          <div class="contrast-side">
-            <h4>${escapeHtml(titleCaseSignal(pair.tag_a))}</h4>
-          </div>
-          <div class="contrast-arrow" aria-hidden="true">↕</div>
-          <div class="contrast-side">
-            <h4>${escapeHtml(titleCaseSignal(pair.tag_b))}</h4>
-          </div>
-        </div>
-        <details class="contrast-sources">
-          <summary>Sources</summary>
-          <p class="meta">${escapeHtml(provA)} · ${escapeHtml(provB)}</p>
-          <p class="meta">${techA} ↔ ${techB}</p>
-        </details>
-      </div>`;
-    }).join("");
-    return `<section class="panel">
-      <div class="panel-head"><h2>Tensions in the profile</h2></div>
-      ${rows}
-    </section>`;
-  }
-
-  function renderTraceability(profile, displayName, factCount) {
+  function renderTraceabilityRow(profile, displayName, factCount) {
     const calc = profile.calculated || {};
     const layers = collectFactsByFactor(profile);
     const lines = [];
@@ -609,17 +1059,904 @@
         lines.push(`    facts: ${(signal.fact_ids || []).join(", ")}`);
       });
     }
-    return `<section class="panel trace-block">
-      <p class="self-tech-meta">${escapeHtml(String(factCount))} active source facts</p>
-      <details class="trace-details">
-        <summary>Why AstroIT shows this</summary>
+    const countPhrase = factCount === 1
+      ? "1 active source fact was used in this profile."
+      : `${factCount} active source facts were used in this profile.`;
+    return `<details class="methodology-row trace-details">
+      <summary>Why AstroIT shows this</summary>
+      <div class="trace-body">
+        <p class="section-helper self-tech-meta">${escapeHtml(countPhrase)}</p>
         <pre class="trace-pre">${escapeHtml(lines.join("\n"))}</pre>
-      </details>
+      </div>
+    </details>`;
+  }
+
+  function renderDetailsMethodology(profile, synthesis, displayName, factCount) {
+    const conditional = renderConditionalSourceNotesRow(synthesis);
+    const notes = renderProfileNotesRow(profile);
+    const evidence = renderSourceEvidenceRow(profile);
+    const why = renderTraceabilityRow(profile, displayName, factCount);
+    if (!conditional && !notes && !evidence && !why) return "";
+    return `<section class="panel details-methodology level-3">
+      <div class="panel-head"><h2>Details &amp; methodology</h2></div>
+      <div class="details-methodology-rows">
+        ${conditional}
+        ${notes}
+        ${evidence}
+        ${why}
+      </div>
     </section>`;
   }
 
-  function renderSelfProfile(profile, displayName) {
-    const calc = profile.calculated || {};
+  const MARS_PRIMARY_SECTION_KEYS = [
+    "how_you_start",
+    "how_you_execute",
+    "work_rhythm",
+    "when_you_get_stuck",
+    "under_pressure",
+    "how_you_handle_obstacles",
+    "conflict_style",
+    "best_work_conditions",
+    "watchouts",
+  ];
+  const MARS_SECONDARY_SECTION_KEYS = [
+    "compensations",
+    "professional_associations",
+  ];
+  const MARS_PRESSURE_TAGS = [
+    "effort_overload",
+    "crisis_execution",
+    "crisis_activation",
+  ];
+
+  function marsSectionTitle(section, person) {
+    const key = section && section.key;
+    if (person) {
+      if (key === "how_you_start") return `How ${person.subject} ${presentVerb(person, "start", "starts")}`;
+      if (key === "how_you_execute") return `How ${person.subject} ${presentVerb(person, "execute", "executes")}`;
+      if (key === "work_rhythm") return `${person.possessiveCap} work rhythm`;
+      if (key === "when_you_get_stuck") return `When ${person.subject} ${presentVerb(person, "get", "gets")} stuck`;
+      if (key === "how_you_handle_obstacles") return `How ${person.subject} ${presentVerb(person, "handle", "handles")} obstacles`;
+      if (key === "compensations") return `What helps ${person.object} work better`;
+    }
+    if (key === "compensations") return "What helps you work better";
+    return (section && section.title) || "";
+  }
+
+  function marsGlanceTitle(card, person) {
+    if (card && card.key === "execution_style") return "Execution style";
+    if (card && card.key === "what_may_slow_you_down") {
+      return person ? `What may slow ${person.object} down` : "What may slow them down";
+    }
+    if (card && card.key === "under_pressure") return "Under pressure";
+    return (card && card.title) || "";
+  }
+
+  function marsGlanceText(card, person) {
+    if (!card) return "";
+    if (card.display_template) return fillPersonTemplate(card.display_template, person);
+    return contextualizeNeutralSentence(card.text, person);
+  }
+
+  function marsShowsWatch(fact) {
+    if (!fact) return false;
+    if (fact.category === "watchout" || fact.category === "stuck_blocker") return true;
+    if (fact.polarity !== "risk") return false;
+    if (fact.category === "conflict" || fact.category === "action_start") return true;
+    const tags = fact.tags || [];
+    return MARS_PRESSURE_TAGS.some((tag) => tags.includes(tag));
+  }
+
+  function renderMarsPreviewFactItem(fact, presentationMap) {
+    if (!fact) return "";
+    const watch = marsShowsWatch(fact);
+    const marker = watch
+      ? `<span class="watch-mark" title="Friction to be aware of">Watch</span>`
+      : `<span class="fact-bullet" aria-hidden="true">•</span>`;
+    const text = humanFactText(fact, presentationMap);
+    return `<li class="fact-item${watch ? " fact-watch" : ""}">${marker}<span class="fact-text">${escapeHtml(text)}</span></li>`;
+  }
+
+  function renderMarsGroupedFactItem(fact, presentationMap) {
+    if (!fact) return "";
+    const watch = marsShowsWatch(fact);
+    const marker = watch
+      ? `<span class="watch-mark" title="Friction to be aware of">Watch</span>`
+      : `<span class="fact-bullet" aria-hidden="true">•</span>`;
+    const text = humanFactText(fact, presentationMap);
+    return `<li class="fact-item${watch ? " fact-watch" : ""}">${marker}<span class="fact-text">${escapeHtml(text)}</span></li>`;
+  }
+
+  function marsFactorCardTitle(factorType, factorKey) {
+    if (factorType === "sign") return `Mars in ${factorKey}`;
+    if (factorType === "house") return `House ${factorKey}`;
+    if (factorType === "motion") {
+      if (String(factorKey).toLowerCase() === "retrograde") return "Retrograde Mars";
+      if (String(factorKey).toLowerCase() === "direct") return "Direct Mars";
+      return `Mars ${titleCaseSignal(factorKey)}`;
+    }
+    if (factorType === "aspect") {
+      const [type, ...rest] = String(factorKey).split("_");
+      const planet = rest.join("_");
+      return `Mars ${aspectPhrase(type, planet)} ${planet}`;
+    }
+    return `${factorType}:${factorKey}`;
+  }
+
+  function marsFactorLabelFromSource(sourceKey) {
+    const [type, ...rest] = String(sourceKey || "").split(":");
+    const key = rest.join(":");
+    if (type && key) return marsFactorCardTitle(type, key);
+    return provenanceLabel(sourceKey);
+  }
+
+  function marsGroupSectionFactsByFactor(section, facts) {
+    const groups = new Map();
+    const firstIndex = new Map();
+    (section.fact_ids || []).forEach((id, index) => {
+      const fact = facts.get(id);
+      if (!fact) return;
+      const key = `${fact.factor_type}:${fact.factor_key}`;
+      if (!groups.has(key)) {
+        groups.set(key, {
+          factor_type: fact.factor_type,
+          factor_key: fact.factor_key,
+          facts: [],
+        });
+        firstIndex.set(key, index);
+      }
+      groups.get(key).facts.push(fact);
+    });
+    return [...groups.keys()]
+      .sort((a, b) => {
+        const groupA = groups.get(a);
+        const groupB = groups.get(b);
+        const rankDiff = factorTypeRank(groupA.factor_type) - factorTypeRank(groupB.factor_type);
+        if (rankDiff !== 0) return rankDiff;
+        return firstIndex.get(a) - firstIndex.get(b);
+      })
+      .map((key) => groups.get(key));
+  }
+
+  function renderMarsSectionFactorExplore(section, facts, presentationMap) {
+    const groups = marsGroupSectionFactsByFactor(section, facts);
+    if (!groups.length) return "";
+    const rows = groups.map((group) => {
+      const label = marsFactorCardTitle(group.factor_type, group.factor_key);
+      const n = group.facts.length;
+      const countLabel = n === 1 ? "1 observation" : `${n} observations`;
+      const items = group.facts
+        .map((fact) => renderMarsGroupedFactItem(fact, presentationMap))
+        .filter(Boolean)
+        .join("");
+      return `<details class="section-factor-group">
+        <summary>
+          <span class="section-factor-label">${escapeHtml(label)}</span>
+          <span class="section-factor-meta">
+            <span class="factor-summary-meta">${escapeHtml(countLabel)}</span>
+            <span class="section-factor-chevron" aria-hidden="true"></span>
+          </span>
+        </summary>
+        <ul class="fact-list section-factor-facts">${items}</ul>
+      </details>`;
+    }).join("");
+    return `<div class="section-factor-explore">
+      <p class="section-factor-explore-label">Profile factors behind this section</p>
+      ${rows}
+    </div>`;
+  }
+
+  function renderMarsSectionBody(section, facts, presentationMap) {
+    const previewIds = section.preview_fact_ids || [];
+    const previewItems = previewIds
+      .map((id) => renderMarsPreviewFactItem(facts.get(id), presentationMap))
+      .filter(Boolean)
+      .join("");
+    const total = Number(section.fact_count) || (section.fact_ids || []).length;
+    const evidence = `${total} source-backed observations across ${section.factor_count} factor${section.factor_count === 1 ? "" : "s"}`;
+    const hasMore = total > previewIds.length;
+    const exploreLabel = `Explore all ${total} observations`;
+    const explore = hasMore
+      ? `<details class="section-explore">
+          <summary class="section-explore-summary">
+            <span class="explore-all-label">${escapeHtml(exploreLabel)}</span>
+          </summary>
+          <p class="section-evidence-meta">${escapeHtml(evidence)}</p>
+          ${renderMarsSectionFactorExplore(section, facts, presentationMap)}
+          <button type="button" class="section-show-less" onclick="this.closest('details.section-explore').open=false">Show less</button>
+        </details>`
+      : "";
+    return `<div class="section-body">
+      <ul class="fact-list section-preview">${previewItems}</ul>
+      ${explore}
+    </div>`;
+  }
+
+  function renderMarsWorkGlance(synthesis, person, options) {
+    const cards = (synthesis && synthesis.work_style_at_a_glance) || [];
+    if (!cards.length) return "";
+    const items = cards.map((card) => `<article class="work-glance-card" data-glance-key="${escapeHtml(card.key)}">
+      <h3>${escapeHtml(marsGlanceTitle(card, person))}</h3>
+      <p>${escapeHtml(marsGlanceText(card, person))}</p>
+    </article>`).join("");
+    if (options && options.cardsOnly) {
+      return `<div class="work-glance">${items}</div>`;
+    }
+    return `<section class="panel work-style-glance level-1">
+      <div class="panel-head"><h2>Work style at a glance</h2></div>
+      <div class="work-glance">${items}</div>
+    </section>`;
+  }
+
+  function renderMarsRecurringPatterns(synthesis) {
+    const patterns = (synthesis && synthesis.repeated_signals) || [];
+    if (!patterns.length) return "";
+    const facts = synthesisFactMap(synthesis);
+    const presentation = presentationTextMap(synthesis);
+    const rows = patterns.map((signal) => {
+      const count = Number(signal.source_count) || (signal.sources || []).length || 0;
+      const supportLabel = count === 1
+        ? "Supported by 1 profile factor"
+        : `Supported by ${count} profile factors`;
+      const firstId = (signal.fact_ids || [])[0];
+      const takeawayFact = firstId ? facts.get(firstId) : null;
+      const takeaway = takeawayFact ? humanFactText(takeawayFact, presentation) : "";
+      const whyItems = (signal.sources || [])
+        .map((src) => `<li>${escapeHtml(marsFactorLabelFromSource(src))}</li>`)
+        .join("");
+      return `<article class="signal-row">
+        <div class="signal-row-main">
+          <strong class="signal-label">${escapeHtml(titleCaseSignal(signal.signal))}</strong>
+          ${takeaway ? `<p class="signal-takeaway">${escapeHtml(takeaway)}</p>` : ""}
+        </div>
+        <details class="signal-why">
+          <summary>Why this appears</summary>
+          <div class="signal-why-body">
+            <p class="signal-why-label">Recurring patterns appear when more than one calculated factor supports the same work signal.</p>
+            <p class="signal-why-label">${escapeHtml(supportLabel)}</p>
+            <ul class="signal-why-list">${whyItems}</ul>
+          </div>
+        </details>
+      </article>`;
+    }).join("");
+    return `<section class="panel synthesis-patterns level-1">
+      <div class="panel-head"><h2>Recurring patterns</h2></div>
+      <div class="result-list-group">${rows}</div>
+    </section>`;
+  }
+
+  function renderMarsPrimarySections(synthesis, person) {
+    if (!synthesis || !synthesis.sections) return "";
+    const facts = synthesisFactMap(synthesis);
+    const presentation = presentationTextMap(synthesis);
+    return MARS_PRIMARY_SECTION_KEYS.map((key) => {
+      const section = (synthesis.sections || []).find((item) => item.key === key);
+      if (!section || !section.fact_count) return "";
+      return `<section class="panel synthesis-section level-1" data-section-key="${escapeHtml(section.key)}">
+        <div class="panel-head"><h2>${escapeHtml(marsSectionTitle(section, person))}</h2></div>
+        ${renderMarsSectionBody(section, facts, presentation)}
+      </section>`;
+    }).join("");
+  }
+
+  function renderMarsSecondarySections(synthesis, person) {
+    if (!synthesis || !synthesis.sections) return "";
+    const facts = synthesisFactMap(synthesis);
+    const presentation = presentationTextMap(synthesis);
+    return MARS_SECONDARY_SECTION_KEYS.map((key) => {
+      const section = (synthesis.sections || []).find((item) => item.key === key);
+      if (!section || !section.fact_count) return "";
+      return `<section class="panel synthesis-watchouts level-2" data-section-key="${escapeHtml(section.key)}">
+        <details class="watchouts-block">
+          <summary>
+            <span class="watchouts-summary-main">${escapeHtml(marsSectionTitle(section, person))}</span>
+          </summary>
+          <div class="watchouts-body">
+            ${renderMarsSectionBody(section, facts, presentation)}
+          </div>
+        </details>
+      </section>`;
+    }).join("");
+  }
+
+  function renderMarsDetailsMethodology(profile, synthesis, person) {
+    const calc = (profile && profile.calculated) || {};
+    const notes = (profile && profile.limitations) || [];
+    const unresolved = (profile && profile.conditional_unresolved) || [];
+    const sections = (synthesis && synthesis.sections) || [];
+    const repeats = (synthesis && synthesis.repeated_signals) || [];
+    const motion = String(calc.mars_motion || "");
+    const motionLabel = motion.toLowerCase() === "retrograde" ? "Retrograde" : titleCaseSignal(motion);
+    const aspectList = (calc.aspects || [])
+      .map((aspect) => `${titleCaseSignal(aspect.type)} ${aspect.planet}`)
+      .join(" · ");
+    const calcLine = `Mars in ${calc.mars_sign || "—"} · House ${calc.mars_house ?? "—"} · ${motionLabel || "—"}`;
+    const populated = sections.filter((section) => section.fact_count);
+    const countItems = populated.map((section) => {
+      const title = marsSectionTitle(section, person);
+      const facts = section.fact_count === 1 ? "1 observation" : `${section.fact_count} observations`;
+      const factors = section.factor_count === 1 ? "1 factor" : `${section.factor_count} factors`;
+      return `<li>${escapeHtml(title)}: ${facts} across ${factors}</li>`;
+    }).join("");
+    const notesHtml = notes.length
+      ? `<details class="methodology-row profile-notes-block">
+          <summary>Profile notes <span class="factor-summary-meta">${notes.length}</span></summary>
+          <ul class="profile-notes-list">${notes.map((note) => `<li>${escapeHtml(note)}</li>`).join("")}</ul>
+        </details>`
+      : "";
+    const unresolvedHtml = unresolved.length
+      ? `<details class="methodology-row conditional-notes-block">
+          <summary>Conditional source notes <span class="factor-summary-meta">${unresolved.length}</span></summary>
+          <p class="section-helper">These source notes depend on conditions that are not resolved from the available chart data. They are not treated as active.</p>
+        </details>`
+      : "";
+    const countsHtml = countItems
+      ? `<details class="methodology-row">
+          <summary>Source-backed observation counts</summary>
+          <ul class="profile-notes-list">${countItems}</ul>
+        </details>`
+      : "";
+    const repeatsHtml = repeats.length
+      ? `<details class="methodology-row">
+          <summary>Recurring patterns</summary>
+          <p class="section-helper">Recurring patterns appear when more than one calculated factor supports the same work signal.</p>
+        </details>`
+      : "";
+    const professional = populated.find((section) => section.key === "professional_associations");
+    const professionalHtml = professional
+      ? `<details class="methodology-row">
+          <summary>Professional associations</summary>
+          <p class="section-helper">These are source-described associations and aptitudes, not recommended jobs, verified competencies, or hiring recommendations.</p>
+        </details>`
+      : "";
+    const compensation = populated.find((section) => section.key === "compensations");
+    const compensationHtml = compensation
+      ? `<details class="methodology-row">
+          <summary>${escapeHtml(marsSectionTitle(compensation, person))}</summary>
+          <p class="section-helper">Source material from the framework — not treated as an automatically active work trait.</p>
+        </details>`
+      : "";
+    const evidenceHtml = `<details class="methodology-row">
+      <summary>Calculated work factors</summary>
+      <p class="self-calc-line">${escapeHtml(calcLine)}</p>
+      ${aspectList ? `<p class="meta">${escapeHtml(aspectList)}</p>` : ""}
+    </details>`;
+    return `<section class="panel details-methodology level-3">
+      <div class="panel-head"><h2>Details &amp; methodology</h2></div>
+      <div class="details-methodology-rows">
+        ${unresolvedHtml}
+        ${notesHtml}
+        ${repeatsHtml}
+        ${countsHtml}
+        ${compensationHtml}
+        ${professionalHtml}
+        ${evidenceHtml}
+      </div>
+    </section>`;
+  }
+
+  const PROFILE_TABS = ["overview", "thinking", "working", "evidence"];
+  const OVERVIEW_MERCURY_TAKEAWAY_LIMIT = 4;
+  const OVERVIEW_MERCURY_RECURRING_LIMIT = 3;
+  const OVERVIEW_MARS_RECURRING_LIMIT = 3;
+  const GROUP_PREVIEW_LIMIT = 3;
+  // Overview-only recruiter labels. Canonical signal ids / tags are unchanged.
+  const OVERVIEW_MERCURY_SIGNAL_PRESENTATION = {
+    technical_ability: {
+      label: "Technical aptitude signal",
+      takeaway: "The profile contains repeated source-described technical aptitude signals.",
+    },
+    debate: {
+      label: "Debate tendency",
+    },
+    argumentation: {
+      label: "Argumentation pattern",
+    },
+    sales: {
+      label: "Sales-related aptitude signal",
+    },
+  };
+  // Overview-only glance wording. Canonical card text remains in Thinking/Evidence.
+  const OVERVIEW_MERCURY_GLANCE_PRESENTATION = {
+    watchout: {
+      appearance_of_competence:
+        "There may be a risk that prepared phrasing creates an appearance of competence.",
+    },
+  };
+  const MERCURY_THINKING_GROUPS = [
+    {
+      key: "thinking_problem_solving",
+      title: "Thinking & problem solving",
+      blurb: "Thinking style, memory, and focus.",
+      sections: ["thinking", "memory_focus"],
+      includeThinkingPatterns: true,
+    },
+    {
+      key: "communication_influence",
+      title: "Communication & influence",
+      blurb: "How ideas are expressed and applied with others.",
+      sections: ["communication", "work_application"],
+    },
+    {
+      key: "learning_adaptation",
+      title: "Learning & adaptation",
+      blurb: "How new material is taken in.",
+      sections: ["learning"],
+    },
+    {
+      key: "tensions_context",
+      title: "Tensions & context",
+      blurb: "Contrasts and situational watch-outs.",
+      sections: ["context_risks"],
+      includeTensions: true,
+    },
+  ];
+  const MARS_WORKING_GROUPS = [
+    {
+      key: "execution",
+      title: "Execution",
+      blurb: "Starting, carrying through, rhythm, and conditions.",
+      sections: ["how_you_start", "how_you_execute", "work_rhythm", "best_work_conditions"],
+    },
+    {
+      key: "friction_pressure",
+      title: "Friction & pressure",
+      blurb: "Where action slows, overloads, or needs caution.",
+      sections: ["when_you_get_stuck", "under_pressure", "how_you_handle_obstacles", "watchouts"],
+    },
+    {
+      key: "collaboration_conflict",
+      title: "Collaboration & conflict",
+      blurb: "How disagreement shows up at work.",
+      sections: ["conflict_style"],
+    },
+    {
+      key: "growth_support",
+      title: "Growth & support",
+      blurb: "What helps, plus source associations.",
+      sections: ["compensations"],
+      includeMarsPatterns: true,
+      includeProfessional: true,
+    },
+  ];
+
+  function mercurySectionByKey(synthesis, key) {
+    return ((synthesis && synthesis.sections) || []).find((item) => item.key === key) || null;
+  }
+
+  function marsSectionByKey(synthesis, key) {
+    return ((synthesis && synthesis.sections) || []).find((item) => item.key === key) || null;
+  }
+
+  function populatedMercurySection(synthesis, key) {
+    const section = mercurySectionByKey(synthesis, key);
+    return section && section.resolved_fact_count ? section : null;
+  }
+
+  function populatedMarsSection(synthesis, key) {
+    const section = marsSectionByKey(synthesis, key);
+    return section && section.fact_count ? section : null;
+  }
+
+  function signalTakeaway(signal, facts, presentation) {
+    const firstId = (signal && signal.fact_ids || [])[0];
+    const fact = firstId ? facts.get(firstId) : null;
+    return fact ? humanFactText(fact, presentation) : "";
+  }
+
+  function renderCompactSignalRow(signal, facts, presentation) {
+    if (!signal) return "";
+    const takeaway = signalTakeaway(signal, facts, presentation);
+    return `<article class="signal-row signal-row-compact">
+      <div class="signal-row-main">
+        <strong class="signal-label">${escapeHtml(titleCaseSignal(signal.signal))}</strong>
+        ${takeaway ? `<p class="signal-takeaway">${escapeHtml(takeaway)}</p>` : ""}
+      </div>
+    </article>`;
+  }
+
+  function overviewMercurySignalLabel(signal) {
+    const key = signal && signal.signal;
+    const bounded = key ? OVERVIEW_MERCURY_SIGNAL_PRESENTATION[key] : null;
+    if (bounded && bounded.label) return bounded.label;
+    return titleCaseSignal(key);
+  }
+
+  function overviewMercurySignalTakeaway(signal, facts, presentation) {
+    const key = signal && signal.signal;
+    const bounded = key ? OVERVIEW_MERCURY_SIGNAL_PRESENTATION[key] : null;
+    if (bounded && bounded.takeaway) return bounded.takeaway;
+    return signalTakeaway(signal, facts, presentation);
+  }
+
+  function renderOverviewMercuryTakeawayRow(signal, facts, presentation) {
+    if (!signal) return "";
+    const takeaway = overviewMercurySignalTakeaway(signal, facts, presentation);
+    return `<article class="signal-row signal-row-compact" data-signal="${escapeHtml(signal.signal)}">
+      <div class="signal-row-main">
+        <strong class="signal-label">${escapeHtml(overviewMercurySignalLabel(signal))}</strong>
+        ${takeaway ? `<p class="signal-takeaway">${escapeHtml(takeaway)}</p>` : ""}
+      </div>
+    </article>`;
+  }
+
+  function renderQuietMercuryFact(fact, presentationMap) {
+    if (!fact) return "";
+    const text = humanFactText(fact, presentationMap);
+    return `<li class="fact-item"><span class="fact-bullet" aria-hidden="true">•</span><span class="fact-text">${escapeHtml(text)}</span></li>`;
+  }
+
+  function collectPreviewFacts(sections, facts, presentation, limit, renderer) {
+    const items = [];
+    (sections || []).forEach((section) => {
+      (section.preview_fact_ids || []).forEach((id) => {
+        if (items.length >= limit) return;
+        const fact = facts.get(id);
+        const html = renderer(fact, presentation);
+        if (html) items.push(html);
+      });
+    });
+    return items.slice(0, limit);
+  }
+
+  function joinPreviewPieces(pieces, limit) {
+    const chosen = (pieces || []).filter((item) => item && item.html).slice(0, limit);
+    const parts = [];
+    const facts = [];
+    const flushFacts = () => {
+      if (!facts.length) return;
+      parts.push(`<ul class="fact-list">${facts.join("")}</ul>`);
+      facts.length = 0;
+    };
+    chosen.forEach((item) => {
+      if (item.type === "fact") {
+        facts.push(item.html);
+        return;
+      }
+      flushFacts();
+      parts.push(item.html);
+    });
+    flushFacts();
+    return parts.join("");
+  }
+
+  function renderProfileGroup(spec) {
+    const preview = (spec.previewHtml || "").trim();
+    const details = (spec.detailsHtml || "").trim();
+    if (!preview && !details) return "";
+    const explore = details
+      ? `<details class="profile-group-explore">
+          <summary class="section-explore-summary"><span class="explore-all-label">Explore details</span></summary>
+          <div class="profile-group-details">${details}</div>
+        </details>`
+      : "";
+    return `<section class="panel profile-group" data-group-key="${escapeHtml(spec.key)}">
+      <div class="panel-head"><h2>${escapeHtml(spec.title)}</h2></div>
+      ${spec.blurb ? `<p class="section-helper">${escapeHtml(spec.blurb)}</p>` : ""}
+      ${preview}
+      ${explore}
+    </section>`;
+  }
+
+  function mercuryGlanceTitle(card) {
+    if (!card) return "";
+    if (card.key === "thinking_style") return "Thinking style";
+    if (card.key === "communication_style") return "Communication style";
+    if (card.key === "learning_style") return "Learning style";
+    if (card.key === "watchout") return "Watchout";
+    return card.title || "";
+  }
+
+  function mercuryGlanceText(card, person, options) {
+    if (!card) return "";
+    const overviewOnly = options && options.overviewOnly;
+    if (overviewOnly && card.key === "watchout") {
+      const tags = card.tags || [];
+      for (const tag of tags) {
+        const bounded = OVERVIEW_MERCURY_GLANCE_PRESENTATION.watchout[tag];
+        if (bounded) return contextualizeNeutralSentence(bounded, person);
+      }
+    }
+    if (card.display_template) return fillPersonTemplate(card.display_template, person);
+    return contextualizeNeutralSentence(card.text, person);
+  }
+
+  function renderMercuryThinkGlance(synthesis, person, options) {
+    const cards = (synthesis && synthesis.thinking_at_a_glance) || [];
+    if (!cards.length) return "";
+    const overviewOnly = options && options.cardsOnly;
+    const items = cards.map((card) => `<article class="think-glance-card" data-glance-key="${escapeHtml(card.key)}">
+      <h3>${escapeHtml(mercuryGlanceTitle(card))}</h3>
+      <p>${escapeHtml(mercuryGlanceText(card, person, { overviewOnly }))}</p>
+    </article>`).join("");
+    if (options && options.cardsOnly) {
+      return `<div class="think-glance">${items}</div>`;
+    }
+    return `<section class="panel think-style-glance level-1">
+      <div class="panel-head"><h2>Thinking at a glance</h2></div>
+      <div class="think-glance">${items}</div>
+    </section>`;
+  }
+
+  function renderOverviewMercuryRecurringChip(signal) {
+    if (!signal) return "";
+    return `<span class="overview-recurring-chip" data-signal="${escapeHtml(signal.signal)}">${escapeHtml(overviewMercurySignalLabel(signal))}</span>`;
+  }
+
+  function renderMercuryOverviewRecurringPatterns(synthesis, audience) {
+    const patterns = (synthesis && synthesis.strongest_patterns) || [];
+    if (!patterns.length) return "";
+    const chips = patterns.slice(0, OVERVIEW_MERCURY_RECURRING_LIMIT)
+      .map((signal) => renderOverviewMercuryRecurringChip(signal))
+      .filter(Boolean)
+      .join("");
+    if (!chips) return "";
+    return `<div class="overview-mercury-recurring">
+      <p class="overview-recurring-label">Recurring patterns</p>
+      <div class="overview-recurring-chips">${chips}</div>
+    </div>`;
+  }
+
+  function renderMercuryOverviewTakeaways(synthesis, audience, person) {
+    const glance = renderMercuryThinkGlance(synthesis, person, { cardsOnly: true });
+    const recurring = renderMercuryOverviewRecurringPatterns(synthesis, audience);
+    if (!glance && !recurring) {
+      const thinking = populatedMercurySection(synthesis, "thinking");
+      if (!thinking) return `<p class="section-helper">${escapeHtml(recurringPatternsEmptyCopy(audience))}</p>`;
+      const facts = synthesisFactMap(synthesis);
+      const presentation = presentationTextMap(synthesis);
+      const fallback = collectPreviewFacts(
+        [thinking],
+        facts,
+        presentation,
+        OVERVIEW_MERCURY_TAKEAWAY_LIMIT,
+        renderQuietMercuryFact,
+      );
+      if (!fallback.length) return "";
+      return `<ul class="fact-list">${fallback.join("")}</ul>`;
+    }
+    return `${glance}${recurring}`;
+  }
+
+  function renderOverviewTensions(synthesis) {
+    const tensions = (synthesis && synthesis.resolved_tensions) || [];
+    if (!tensions.length) return "";
+    const facts = synthesisFactMap(synthesis);
+    const first = tensions.slice(0, 1);
+    return `<section class="panel overview-tensions">
+      <div class="panel-head"><h2>Tensions to be aware of</h2></div>
+      <div class="result-list-group result-list-group-tensions">${renderTensionRows(first, facts, { compact: true })}</div>
+    </section>`;
+  }
+
+  function bridgeKindLabel(kind) {
+    if (kind === "reinforcement") return "Reinforcement";
+    if (kind === "friction") return "Friction";
+    if (kind === "contrast") return "Contrast";
+    return "";
+  }
+
+  function overviewBridgePatterns(bridge) {
+    const all = (bridge && bridge.patterns) || [];
+    const ids = (bridge && bridge.overview_pattern_ids) || [];
+    if (ids.length) {
+      const byId = new Map(all.map((pattern) => [pattern.id, pattern]));
+      return ids.map((id) => byId.get(id)).filter(Boolean).slice(0, 2);
+    }
+    return all.slice(0, 2);
+  }
+
+  function renderThinkingToExecutionOverview(bridge) {
+    const patterns = overviewBridgePatterns(bridge);
+    if (!patterns.length) return "";
+    const rows = patterns.map((pattern) => {
+      const kind = bridgeKindLabel(pattern.kind);
+      return `<article class="bridge-row" data-bridge-id="${escapeHtml(pattern.id)}">
+        ${kind ? `<span class="bridge-kind">${escapeHtml(kind)}</span>` : ""}
+        <strong class="bridge-title">${escapeHtml(pattern.title || "")}</strong>
+        <p class="bridge-takeaway">${escapeHtml(pattern.presentation_text || "")}</p>
+      </article>`;
+    }).join("");
+    return `<section class="panel thinking-to-execution">
+      <div class="panel-head"><h2>From thinking to execution</h2></div>
+      <div class="bridge-list">${rows}</div>
+    </section>`;
+  }
+
+  function renderThinkingToExecutionEvidence(bridge) {
+    const patterns = (bridge && bridge.patterns) || [];
+    if (!patterns.length) return "";
+    const rows = patterns.map((pattern) => {
+      const mercuryProv = (pattern.mercury_provenance || []).map((item) => escapeHtml(item)).join(" · ");
+      const marsProv = (pattern.mars_provenance || []).map((item) => escapeHtml(item)).join(" · ");
+      return `<article class="bridge-evidence-row" data-bridge-id="${escapeHtml(pattern.id)}">
+        <h3>${escapeHtml(pattern.title || "")}</h3>
+        <details class="methodology-row">
+          <summary>Mercury support</summary>
+          <p class="meta">${escapeHtml(pattern.mercury_semantic || "")}</p>
+          ${mercuryProv ? `<p class="meta">${mercuryProv}</p>` : ""}
+        </details>
+        <details class="methodology-row">
+          <summary>Mars support</summary>
+          <p class="meta">${escapeHtml(pattern.mars_semantic || "")}</p>
+          ${marsProv ? `<p class="meta">${marsProv}</p>` : ""}
+        </details>
+        <details class="signal-why">
+          <summary>Why this connection appears</summary>
+          <p class="signal-why-label">${escapeHtml(pattern.why_this_appears || "")}</p>
+        </details>
+      </article>`;
+    }).join("");
+    return `<section class="panel thinking-to-execution-evidence">
+      <div class="panel-head"><h2>Thinking → Execution evidence</h2></div>
+      <div class="bridge-evidence-list">${rows}</div>
+    </section>`;
+  }
+
+  function renderOverviewMarsRecurringChip(signal) {
+    if (!signal) return "";
+    return `<span class="overview-recurring-chip" data-signal="${escapeHtml(signal.signal)}">${escapeHtml(titleCaseSignal(signal.signal))}</span>`;
+  }
+
+  function renderMarsOverviewRecurringPatterns(synthesis) {
+    const patterns = (synthesis && synthesis.repeated_signals) || [];
+    if (!patterns.length) return "";
+    const shown = patterns.slice(0, OVERVIEW_MARS_RECURRING_LIMIT);
+    const chips = shown
+      .map((signal) => renderOverviewMarsRecurringChip(signal))
+      .filter(Boolean)
+      .join("");
+    if (!chips) return "";
+    const label = shown.length === 1 ? "Recurring work pattern" : "Recurring work patterns";
+    return `<div class="overview-mars-repeat">
+      <p class="overview-recurring-label">${escapeHtml(label)}</p>
+      <div class="overview-recurring-chips">${chips}</div>
+    </div>`;
+  }
+
+  function renderProfileOverview(profile, marsProfile, person, audience, bridge) {
+    const mercurySynthesis = (profile && profile.synthesis) || null;
+    const marsSynthesis = (marsProfile && marsProfile.synthesis) || null;
+    const thinks = renderMercuryOverviewTakeaways(mercurySynthesis, audience, person);
+    const worksGlance = renderMarsWorkGlance(marsSynthesis, person, { cardsOnly: true });
+    const marsRepeatHtml = renderMarsOverviewRecurringPatterns(marsSynthesis);
+    const worksBody = `${worksGlance}${marsRepeatHtml}`;
+    return `<div class="overview-grid">
+      <section class="panel overview-dimension" data-overview-dimension="think">
+        <div class="panel-head"><h2>${escapeHtml(howThinksHeading(person))}</h2></div>
+        ${thinks}
+        <button type="button" class="btn btn-ghost overview-cta" data-profile-tab="thinking">Explore thinking</button>
+      </section>
+      <section class="panel overview-dimension" data-overview-dimension="work">
+        <div class="panel-head"><h2>${escapeHtml(howWorksHeading(person))}</h2></div>
+        ${worksBody}
+        <button type="button" class="btn btn-ghost overview-cta" data-profile-tab="working">Explore work style</button>
+      </section>
+    </div>
+    ${renderThinkingToExecutionOverview(bridge)}
+    ${renderOverviewTensions(mercurySynthesis)}`;
+  }
+
+  function renderThinkingGroup(spec, synthesis, audience) {
+    const facts = synthesisFactMap(synthesis);
+    const presentation = presentationTextMap(synthesis);
+    const sections = spec.sections
+      .map((key) => populatedMercurySection(synthesis, key))
+      .filter(Boolean);
+    const patterns = spec.includeThinkingPatterns
+      ? ((synthesis && synthesis.strongest_patterns) || []).filter((signal) => {
+        const keys = signal.section_keys || [];
+        return keys.some((key) => spec.sections.includes(key));
+      })
+      : [];
+    const tensions = spec.includeTensions
+      ? ((synthesis && synthesis.resolved_tensions) || [])
+      : [];
+    if (!sections.length && !patterns.length && !tensions.length) return "";
+    const pieces = [];
+    patterns.forEach((signal) => {
+      const html = renderCompactSignalRow(signal, facts, presentation);
+      if (html) pieces.push({ type: "pattern", html });
+    });
+    sections.forEach((section) => {
+      (section.preview_fact_ids || []).forEach((id) => {
+        const html = renderQuietMercuryFact(facts.get(id), presentation);
+        if (html) pieces.push({ type: "fact", html });
+      });
+    });
+    if (tensions.length) {
+      pieces.push({
+        type: "tension",
+        html: renderTensionRows(tensions.slice(0, 1), facts, { compact: true }),
+      });
+    }
+    const previewHtml = joinPreviewPieces(pieces, GROUP_PREVIEW_LIMIT);
+    const detailsHtml = [
+      sections.map((section) => `<section class="profile-subsection" data-section-key="${escapeHtml(section.key)}">
+        <h3>${escapeHtml(sectionDisplayTitle(section, audience))}</h3>
+        ${renderSectionBody(section, facts, presentation, { hideMeta: true })}
+      </section>`).join(""),
+      spec.includeTensions && tensions.length
+        ? `<div class="profile-subsections-tensions">${renderTensionRows(tensions, facts, { compact: true })}</div>`
+        : "",
+    ].join("");
+    return renderProfileGroup({
+      key: spec.key,
+      title: spec.title,
+      blurb: spec.blurb,
+      previewHtml,
+      detailsHtml,
+    });
+  }
+
+  function renderProfileThinking(synthesis, audience) {
+    const groups = MERCURY_THINKING_GROUPS
+      .map((spec) => renderThinkingGroup(spec, synthesis, audience))
+      .join("");
+    return groups || `<p class="section-helper">No thinking evidence is available for this profile.</p>`;
+  }
+
+  function renderWorkingGroup(spec, synthesis, person) {
+    const facts = synthesisFactMap(synthesis);
+    const presentation = presentationTextMap(synthesis);
+    const sections = spec.sections
+      .map((key) => populatedMarsSection(synthesis, key))
+      .filter(Boolean);
+    const patterns = spec.includeMarsPatterns
+      ? ((synthesis && synthesis.repeated_signals) || [])
+      : [];
+    const professional = spec.includeProfessional
+      ? populatedMarsSection(synthesis, "professional_associations")
+      : null;
+    if (!sections.length && !patterns.length && !professional) return "";
+    const pieces = [];
+    sections.forEach((section) => {
+      (section.preview_fact_ids || []).forEach((id) => {
+        const html = renderMarsPreviewFactItem(facts.get(id), presentation);
+        if (html) pieces.push({ type: "fact", html });
+      });
+    });
+    patterns.forEach((signal) => {
+      const html = renderCompactSignalRow(signal, facts, presentation);
+      if (html) pieces.push({ type: "pattern", html });
+    });
+    const previewHtml = joinPreviewPieces(pieces, GROUP_PREVIEW_LIMIT);
+    const detailsHtml = [
+      sections.map((section) => `<section class="profile-subsection" data-section-key="${escapeHtml(section.key)}">
+        <h3>${escapeHtml(marsSectionTitle(section, person))}</h3>
+        ${renderMarsSectionBody(section, facts, presentation)}
+      </section>`).join(""),
+      professional
+        ? `<details class="watchouts-block profile-professional">
+            <summary><span class="watchouts-summary-main">${escapeHtml(marsSectionTitle(professional, person))}</span></summary>
+            <p class="section-helper">These are source-described associations and aptitudes, not recommended jobs, verified competencies, or hiring recommendations.</p>
+            <div class="watchouts-body">${renderMarsSectionBody(professional, facts, presentation)}</div>
+          </details>`
+        : "",
+    ].join("");
+    return renderProfileGroup({
+      key: spec.key,
+      title: spec.title,
+      blurb: spec.blurb,
+      previewHtml,
+      detailsHtml,
+    });
+  }
+
+  function renderProfileWorking(marsProfile, error, person) {
+    if (error) {
+      return `<p class="status-line error how-you-work-error" role="status">${escapeHtml(error)}</p>`;
+    }
+    const synthesis = (marsProfile && marsProfile.synthesis) || null;
+    const groups = MARS_WORKING_GROUPS
+      .map((spec) => renderWorkingGroup(spec, synthesis, person))
+      .join("");
+    return groups || `<p class="section-helper">No work-style evidence is available for this profile.</p>`;
+  }
+
+  function renderMercuryCalculatedFactors(profile) {
+    const calc = (profile && profile.calculated) || {};
+    if (!calc.mercury_sign && calc.mercury_house == null && !calc.mercury_motion) return "";
     const motion = String(calc.mercury_motion || "");
     const motionHtml = motion.toLowerCase() === "retrograde"
       ? `<span class="motion-rx">Retrograde</span>`
@@ -627,23 +1964,112 @@
     const aspectList = (calc.aspects || [])
       .map((aspect) => `<li>${escapeHtml(formatAspectChip(aspect))}</li>`)
       .join("");
-    const factCount = countActiveSourceFacts(profile);
+    return `<details class="methodology-row">
+      <summary>Calculated thinking factors</summary>
+      <p class="self-calc-line">Mercury in ${escapeHtml(calc.mercury_sign || "—")} · House ${escapeHtml(String(calc.mercury_house ?? "—"))} · ${motionHtml}</p>
+      ${aspectList ? `<ul class="self-aspect-list">${aspectList}</ul>` : `<p class="meta">No calculated aspects in orb.</p>`}
+    </details>`;
+  }
 
-    const headerTitle = displayName
-      ? escapeHtml(displayName)
-      : "Your Mercury Profile";
+  function renderEvidencePatterns(mercurySynthesis, marsSynthesis) {
+    const mercuryHtml = renderStrongestPatterns(mercurySynthesis, "person", "");
+    const marsHtml = renderMarsRecurringPatterns(marsSynthesis);
+    if (!mercuryHtml && !marsHtml) return "";
+    return `${mercuryHtml}${marsHtml}`;
+  }
+
+  function renderProfileEvidence(profile, marsProfile, displayName, person, bridge) {
+    const mercurySynthesis = (profile && profile.synthesis) || null;
+    const factCount = profile ? countActiveSourceFacts(profile) : 0;
+    const mercuryCalc = renderMercuryCalculatedFactors(profile);
+    const patterns = renderEvidencePatterns(mercurySynthesis, marsProfile && marsProfile.synthesis);
+    const tensions = renderResolvedTensions(mercurySynthesis, resolveProfileAudience(displayName));
+    const conditional = renderConditionalTensions(mercurySynthesis);
+    const mercuryMethod = profile
+      ? renderDetailsMethodology(profile, mercurySynthesis, displayName, factCount)
+      : "";
+    const marsMethod = marsProfile
+      ? renderMarsDetailsMethodology(marsProfile, marsProfile.synthesis, person)
+      : "";
+    return `<div class="evidence-stack">
+      ${mercuryCalc}
+      ${patterns}
+      ${renderThinkingToExecutionEvidence(bridge)}
+      ${tensions}
+      ${conditional}
+      ${mercuryMethod}
+      ${marsMethod}
+    </div>`;
+  }
+
+  function profileTabFromHash() {
+    const raw = String(location.hash || "").replace("#", "");
+    return PROFILE_TABS.includes(raw) ? raw : "overview";
+  }
+
+  function applyProfileTab(tab) {
+    const next = PROFILE_TABS.includes(tab) ? tab : "overview";
+    activeProfileTab = next;
+    PROFILE_TABS.forEach((key) => {
+      const panel = selfProfileContent.querySelector(`[data-profile-panel="${key}"]`);
+      const nav = selfProfileContent.querySelector(`.profile-tab-nav [data-profile-tab="${key}"]`);
+      if (panel) panel.hidden = key !== next;
+      if (nav) {
+        nav.classList.toggle("is-active", key === next);
+        nav.setAttribute("aria-selected", key === next ? "true" : "false");
+      }
+    });
+    const hash = `#${next}`;
+    if (location.hash !== hash) history.replaceState(null, "", hash);
+  }
+
+  function bindProfileTabClicks() {
+    selfProfileContent.querySelectorAll("[data-profile-tab]").forEach((btn) => {
+      btn.addEventListener("click", () => applyProfileTab(btn.getAttribute("data-profile-tab")));
+    });
+  }
+
+  function renderProfileTabNav() {
+    const items = [
+      ["overview", "Overview"],
+      ["thinking", "Thinking"],
+      ["working", "Working"],
+      ["evidence", "Evidence"],
+    ].map(([key, label]) => `<button type="button" class="profile-tab${key === "overview" ? " is-active" : ""}" data-profile-tab="${key}" role="tab" aria-selected="${key === "overview" ? "true" : "false"}">${escapeHtml(label)}</button>`).join("");
+    return `<nav class="profile-tab-nav" role="tablist" aria-label="Profile sections">${items}</nav>`;
+  }
+
+  function renderHowYouWorkDimension(profile, error, person) {
+    return renderProfileWorking(profile, error, person);
+  }
+
+  function renderSelfProfile(profile, displayName, marsProfile, marsError, bridge) {
+    const synthesis = (profile && profile.synthesis) || null;
+    const audience = resolveProfileAudience(displayName);
+    const person = currentPersonPerspective();
+    setBrandTitleForProfile(audience, displayName);
+    activeProfileTab = profileTabFromHash();
 
     selfProfileContent.innerHTML = `
-      <section class="panel self-header">
-        <h2>${headerTitle}</h2>
-        <p class="self-calc-line">Mercury in ${escapeHtml(calc.mercury_sign || "—")} · House ${escapeHtml(String(calc.mercury_house ?? "—"))} · ${motionHtml}</p>
-        ${aspectList ? `<ul class="self-aspect-list">${aspectList}</ul>` : `<p class="meta">No calculated aspects in orb.</p>`}
-      </section>
-      ${renderRepeatedSignals(profile.repeated_signals)}
-      ${renderSourceLayers(profile)}
-      ${renderContrasts(profile)}
-      ${renderTraceability(profile, displayName, factCount)}
+      ${renderProfileTabNav()}
+      <div class="profile-tab-panels">
+        <div class="profile-tab-panel" data-profile-panel="overview" role="tabpanel">${renderProfileOverview(profile, marsProfile, person, audience, bridge)}</div>
+        <div class="profile-tab-panel how-you-think" data-profile-panel="thinking" data-dimension="think" role="tabpanel" hidden>
+          <h2 class="dimension-heading">${escapeHtml(howThinksHeading(person))}</h2>
+          ${renderProfileThinking(synthesis, audience)}
+        </div>
+        <div class="profile-tab-panel how-you-work" data-profile-panel="working" data-dimension="work" role="tabpanel" hidden>
+          <h2 class="dimension-heading">${escapeHtml(howWorksHeading(person))}</h2>
+          ${renderProfileWorking(marsProfile, marsError, person)}
+        </div>
+        <div class="profile-tab-panel" data-profile-panel="evidence" role="tabpanel" hidden>
+          <h2 class="dimension-heading">Evidence</h2>
+          ${renderProfileEvidence(profile, marsProfile, displayName, person, bridge)}
+        </div>
+      </div>
     `;
+    bindProfileTabClicks();
+    applyProfileTab(activeProfileTab);
   }
 
   async function buildMyProfile() {
@@ -662,21 +2088,53 @@
       birth_place: birthPlace,
     };
     if (birthTime) payload.birth_time = birthTime;
+    const sexEl = document.getElementById("self-sex");
+    const bridgePayload = { ...payload };
+    if (displayName) bridgePayload.display_name = displayName;
+    if (sexEl && sexEl.value) bridgePayload.sex = sexEl.value;
 
     setStatus(selfSetupStatus, "Building source-backed profile…", "loading");
     setStatus(selfProfileStatus, "Building source-backed profile…", "loading");
     showSelfProfileShell();
     selfProfileContent.innerHTML = "";
 
+    const mercuryPromise = apiPost("/api/v1/mercury-source-profile", payload);
+    const marsPromise = apiPost("/api/v1/mars-source-profile", payload);
+    const bridgePromise = apiPost("/api/v1/thinking-to-execution", bridgePayload);
+
+    async function loadBridge() {
+      try {
+        return await bridgePromise;
+      } catch (_err) {
+        return null;
+      }
+    }
+
+    let mercury = null;
     try {
-      const profile = await apiPost("/api/v1/mercury-source-profile", payload);
-      closeSelfDrawer();
-      renderSelfProfile(profile, displayName);
-      setStatus(selfProfileStatus, "");
-      setStatus(selfSetupStatus, "");
+      mercury = await mercuryPromise;
     } catch (err) {
       setStatus(selfSetupStatus, err.message, "error");
       setStatus(selfProfileStatus, err.message, "error");
+      try {
+        const marsOnly = await marsPromise;
+        selfProfileContent.innerHTML = renderHowYouWorkDimension(marsOnly, null, currentPersonPerspective());
+      } catch (marsErr) {
+        selfProfileContent.innerHTML = renderHowYouWorkDimension(null, marsErr.message, currentPersonPerspective());
+      }
+      return;
+    }
+
+    closeSelfDrawer();
+    renderSelfProfile(mercury, displayName, null, null, null);
+    setStatus(selfProfileStatus, "");
+    setStatus(selfSetupStatus, "");
+
+    try {
+      const mars = await marsPromise;
+      renderSelfProfile(mercury, displayName, mars, null, await loadBridge());
+    } catch (err) {
+      renderSelfProfile(mercury, displayName, null, err.message, await loadBridge());
     }
   }
 
