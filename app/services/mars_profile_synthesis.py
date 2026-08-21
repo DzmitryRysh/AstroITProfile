@@ -276,12 +276,15 @@ def _to_coverage_schema(coverage: MarsSourceCoverage) -> MarsSourceCoverageSchem
 
 def serialize_mars_profile_synthesis(
     synthesis: MarsProfileSynthesis,
+    *,
+    source_profile_response: MarsSourceProfileResponse | None = None,
 ) -> MarsProfileSynthesisResponse:
     """Convert internal Mars synthesis dataclasses to the API response schema."""
+    from app.services.mars_deep_profile import build_mars_deep_profile
     from app.services.mars_work_glance import build_mars_work_glance
 
     glance = build_mars_work_glance(synthesis)
-    return MarsProfileSynthesisResponse(
+    response = MarsProfileSynthesisResponse(
         work_style_at_a_glance=[
             MarsGlanceCardSchema(
                 key=card.key,
@@ -328,13 +331,17 @@ def serialize_mars_profile_synthesis(
         },
         presentation_text_by_fact_id=dict(synthesis.presentation_text_by_fact_id),
     )
+    if source_profile_response is not None:
+        # Attach deep profile against the full source response (without nested
+        # synthesis) to avoid recursion; caller passes pre-synthesis snapshot.
+        response.deep_profile = build_mars_deep_profile(source_profile_response)
+    return response
 
 
 def serialize_mars_source_profile(profile: MarsSourceProfile) -> MarsSourceProfileResponse:
     """Serialize calculated Mars source + additive synthesis for API/UI delivery."""
     calculated = profile.calculated
-    synthesis = serialize_mars_profile_synthesis(build_mars_profile_synthesis(profile))
-    return MarsSourceProfileResponse(
+    base_response = MarsSourceProfileResponse(
         calculated=CalculatedMarsSnapshot(
             mars_sign=calculated.mars_sign,
             mars_house=calculated.mars_house,
@@ -358,5 +365,10 @@ def serialize_mars_source_profile(profile: MarsSourceProfile) -> MarsSourceProfi
         conditional_unresolved=[_to_fact_schema(fact) for fact in profile.conditional_unresolved],
         coverage=_to_coverage_schema(profile.coverage),
         limitations=list(profile.limitations),
-        synthesis=synthesis,
+        synthesis=None,
     )
+    synthesis = serialize_mars_profile_synthesis(
+        build_mars_profile_synthesis(profile),
+        source_profile_response=base_response,
+    )
+    return base_response.model_copy(update={"synthesis": synthesis})

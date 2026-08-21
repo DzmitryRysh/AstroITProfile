@@ -2068,3 +2068,18 @@ details.more-details > summary::-webkit-details-marker {
     padding: 0.9rem 0.95rem 1rem;
   }
 }
+
+/* --- Deep Mars (M10.5 Phase 2B) --- */
+
+.deep-secondary-lane {
+  margin-top: 0.55rem;
+}
+
+.deep-sensitive-lane .deep-secondary-body,
+.deep-unresolved-lane .deep-secondary-body {
+  opacity: 0.88;
+}
+
+.deep-aspect-unsupported .deep-interaction-statement {
+  font-style: italic;
+}
