@@ -145,6 +145,31 @@ class DeepMercuryConfiguration(BaseModel):
     aspects: list[DeepMercuryAspectIdentity] = Field(default_factory=list)
 
 
+class DeepMercuryNarrativeSubsection(BaseModel):
+    """Optional thematic subsection inside a factor narrative."""
+
+    key: str
+    title: str
+    text: str
+    supporting_fact_ids: list[str] = Field(default_factory=list)
+
+
+class DeepMercuryFactorNarrative(BaseModel):
+    """Deterministic human synthesis for a Mercury factor. Not a source fact.
+
+    Core theme/summary are owned by unconditional factor facts only.
+    Conditionally activated facts (e.g. hard_aspected) stay visible under a
+    dedicated subsection and conditional_fact_ids — they do not redefine base.
+    """
+
+    kind: DeepContentKind = "synthesis"
+    core_theme: str
+    summary: str
+    subsections: list[DeepMercuryNarrativeSubsection] = Field(default_factory=list)
+    supporting_fact_ids: list[str] = Field(default_factory=list)
+    conditional_fact_ids: list[str] = Field(default_factory=list)
+
+
 class DeepMercuryFactorBlock(BaseModel):
     """Canonical source ownership for one Mercury factor layer."""
 
@@ -161,18 +186,21 @@ class DeepMercuryFactorBlock(BaseModel):
     provenance: str
     categories: list[str] = Field(default_factory=list)
     tags: list[str] = Field(default_factory=list)
+    narrative: Optional[DeepMercuryFactorNarrative] = None
 
 
 class DeepMercuryAdditiveTheme(BaseModel):
     """Theme introduced by an aspect and not already present in base Mercury."""
 
     tag: str
+    label: str = ""
     aspect_fact_ids: list[str] = Field(default_factory=list)
 
 
 class DeepMercuryReinforcingSignal(BaseModel):
     signal: str
     tag: str
+    label: str = ""
     aspect_fact_ids: list[str] = Field(default_factory=list)
     base_fact_ids: list[str] = Field(default_factory=list)
     base_provenance_keys: list[str] = Field(default_factory=list)
@@ -181,6 +209,7 @@ class DeepMercuryReinforcingSignal(BaseModel):
 class DeepMercuryContrastingSignal(BaseModel):
     tag_a: str
     tag_b: str
+    label: str = ""
     aspect_fact_ids: list[str] = Field(default_factory=list)
     base_fact_ids: list[str] = Field(default_factory=list)
     base_provenance_keys: list[str] = Field(default_factory=list)

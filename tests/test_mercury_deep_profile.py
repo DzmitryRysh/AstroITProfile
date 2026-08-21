@@ -269,6 +269,8 @@ class DeepProfileAspectTests(unittest.TestCase):
         for item in saturn.interaction.adds:
             self.assertTrue(set(item.aspect_fact_ids) <= set(saturn.fact_ids))
         self.assertIn("adds", saturn.interaction.statement.lower())
+        self.assertIn("contrast between", saturn.interaction.statement.lower())
+        self.assertNotIn(" vs ", saturn.interaction.statement.lower())
 
     def test_add_fact_ids_belong_to_exact_aspect(self):
         deep = _deep(**AVDEY)
@@ -425,8 +427,11 @@ class DeepProfileIntegratedTests(unittest.TestCase):
             self.assertNotIn(item.text, source_texts)
             if item.basis == "aspect_addition":
                 self.assertTrue(all(key.startswith("aspect:") for key in item.provenance_keys))
-                self.assertIn("aspect-backed modification", item.text)
-                self.assertIn("not a base", item.text.lower())
+                self.assertTrue(
+                    "intensifies" in item.text.lower()
+                    or "beyond what the base" in item.text.lower()
+                )
+                self.assertNotRegex(item.text, r"(aspect:|sign:|house:|motion:)")
             else:
                 self.assertGreaterEqual(
                     len(set(p.split(":")[0] for p in item.provenance_keys)),
@@ -447,7 +452,10 @@ class DeepProfileIntegratedTests(unittest.TestCase):
         for item in additive:
             self.assertTrue(item.supporting_fact_ids)
             self.assertTrue(all(key.startswith("aspect:") for key in item.provenance_keys))
-            self.assertNotIn("already present in the base Mercury", item.text)
+            self.assertTrue(
+                "intensifies" in item.text.lower()
+                or "beyond what the base" in item.text.lower()
+            )
 
     def test_integrated_is_deterministic(self):
         profile = _profile(**AVDEY)

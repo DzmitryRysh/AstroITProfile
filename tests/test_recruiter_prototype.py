@@ -650,7 +650,7 @@ class RecruiterMarsHowYouWorkTests(unittest.TestCase):
 
     def test_how_you_work_hierarchy_is_takeaway_first(self):
         overview_fn = self.js.split("function renderProfileOverview", 1)[1].split(
-            "function renderThinkingGroup", 1
+            "function aspectGlyph", 1
         )[0]
         working_fn = self.js.split("function renderProfileWorking", 1)[1].split(
             "function renderMercuryCalculatedFactors", 1
@@ -781,7 +781,8 @@ class RecruiterMarsHowYouWorkTests(unittest.TestCase):
             "async function buildMyProfile", 1
         )[0]
         self.assertIn("how-you-think", think_wrap)
-        self.assertIn("howThinksHeading(person)", think_wrap)
+        self.assertIn("renderProfileThinking", think_wrap)
+        self.assertNotIn("howThinksHeading(person)", think_wrap)
         self.assertIn("howWorksHeading", think_wrap)
         primary_mars = self.js.split("function renderMarsWorkGlance", 1)[1].split(
             "function renderMarsDetailsMethodology", 1
@@ -830,7 +831,7 @@ class RecruiterProfileArchitectureTests(unittest.TestCase):
         self.assertIn('PROFILE_TABS.includes(raw) ? raw : "overview"', hash_fn)
 
     def test_overview_is_not_a_full_evidence_dump(self):
-        overview = self._fn("function renderProfileOverview", "function renderThinkingGroup")
+        overview = self._fn("function renderProfileOverview", "function aspectGlyph")
         self.assertNotIn("renderSynthesisSections", overview)
         self.assertNotIn("renderMarsPrimarySections", overview)
         self.assertNotIn("renderMarsSecondarySections", overview)
@@ -848,12 +849,12 @@ class RecruiterProfileArchitectureTests(unittest.TestCase):
         self.assertNotIn("renderDetailsMethodology", self_fn)
 
     def test_overview_contains_thinks_and_works_summaries(self):
-        overview = self._fn("function renderProfileOverview", "function renderThinkingGroup")
+        overview = self._fn("function renderProfileOverview", "function aspectGlyph")
         self.assertIn("howThinksHeading(person)", overview)
         self.assertIn("howWorksHeading(person)", overview)
         self.assertIn("renderMercuryOverviewTakeaways", overview)
         self.assertIn("renderMarsWorkGlance", overview)
-        self.assertIn("Explore thinking", overview)
+        self.assertIn("Explore Mercury", overview)
         self.assertIn("Explore work style", overview)
         self.assertIn('data-overview-dimension="think"', overview)
         self.assertIn('data-overview-dimension="work"', overview)
@@ -889,8 +890,10 @@ class RecruiterProfileArchitectureTests(unittest.TestCase):
         self.assertIn("Learning & adaptation", groups)
         self.assertIn("Tensions & context", groups)
         thinking = self._fn("function renderProfileThinking", "function renderWorkingGroup")
-        self.assertIn("MERCURY_THINKING_GROUPS", thinking)
-        self.assertIn("renderThinkingGroup", thinking)
+        self.assertIn("renderDeepMercury", thinking)
+        self.assertIn("renderMercuryWorkLens", thinking)
+        self.assertIn("MERCURY_THINKING_GROUPS", self._fn("function renderMercuryWorkLens", "function renderProfileThinking"))
+        self.assertIn("renderThinkingGroup", self._fn("function renderMercuryWorkLens", "function renderProfileThinking"))
 
     def test_working_groups_mars_into_four_blocks(self):
         groups = self._fn("const MARS_WORKING_GROUPS", "function mercurySectionByKey")
@@ -933,7 +936,7 @@ class RecruiterProfileArchitectureTests(unittest.TestCase):
         self.assertIn("self-calc-line", calc)
 
     def test_full_recurring_cards_are_not_duplicated_across_tabs(self):
-        overview = self._fn("function renderProfileOverview", "function renderThinkingGroup")
+        overview = self._fn("function renderProfileOverview", "function aspectGlyph")
         thinking = self._fn("function renderThinkingGroup", "function renderProfileThinking")
         working = self._fn("function renderWorkingGroup", "function renderProfileWorking")
         evidence = self._fn("function renderEvidencePatterns", "function renderProfileEvidence")
@@ -949,7 +952,7 @@ class RecruiterProfileArchitectureTests(unittest.TestCase):
         self.assertIn("renderMarsRecurringPatterns", evidence)
 
     def test_overview_mars_recurring_patterns_are_compact_chips(self):
-        overview = self._fn("function renderProfileOverview", "function renderThinkingGroup")
+        overview = self._fn("function renderProfileOverview", "function aspectGlyph")
         mars_recurring = self._fn(
             "function renderMarsOverviewRecurringPatterns",
             "function renderProfileOverview",
@@ -1014,7 +1017,7 @@ class RecruiterProfileArchitectureTests(unittest.TestCase):
         self.assertIn("PERSON_PRONOUN_FORMS.female", helper)
         self.assertIn("PERSON_PRONOUN_FORMS.male", helper)
         self.assertNotIn("Avdey", helper)
-        overview = self._fn("function renderProfileOverview", "function renderThinkingGroup")
+        overview = self._fn("function renderProfileOverview", "function aspectGlyph")
         self_fn = self._fn("function renderSelfProfile", "async function buildMyProfile")
         self.assertIn("howThinksHeading(person)", overview)
         self.assertIn("howWorksHeading(person)", overview)
@@ -1062,7 +1065,7 @@ class RecruiterProfileArchitectureTests(unittest.TestCase):
         self.assertIn("setBrandTitleForProfile", self_fn)
 
     def test_overview_omits_standalone_key_recurring_patterns(self):
-        overview = self._fn("function renderProfileOverview", "function renderThinkingGroup")
+        overview = self._fn("function renderProfileOverview", "function aspectGlyph")
         self.assertNotIn("Key recurring patterns", overview)
         self.assertNotIn("renderOverviewKeyPatterns", overview)
         self.assertNotIn("overview-patterns", overview)
@@ -1077,7 +1080,7 @@ class RecruiterProfileArchitectureTests(unittest.TestCase):
         self.assertIn("Key recurring patterns", self.js)
 
     def test_overview_tension_block_stays_compact(self):
-        overview = self._fn("function renderProfileOverview", "function renderThinkingGroup")
+        overview = self._fn("function renderProfileOverview", "function aspectGlyph")
         self.assertIn("renderOverviewTensions", overview)
         tensions = self._fn("function renderOverviewTensions", "function renderProfileOverview")
         self.assertIn("Tensions to be aware of", tensions)
@@ -1195,6 +1198,159 @@ class RecruiterThinkingToExecutionUiTests(unittest.TestCase):
         self.assertNotIn("overthinking", blob)
         self.assertNotIn("technical worker", blob)
         self.assertNotIn("candidate ranking", blob)
+
+
+class RecruiterDeepMercuryFrontendTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.js = RECRUITER_JS.read_text(encoding="utf-8")
+        cls.css = RECRUITER_CSS.read_text(encoding="utf-8")
+
+    def _fn(self, start, end):
+        return self.js.split(start, 1)[1].split(end, 1)[0]
+
+    def test_mercury_tab_label_and_cta(self):
+        nav = self._fn("function renderProfileTabNav", "function renderHowYouWorkDimension")
+        self.assertIn('["thinking", "Mercury"]', nav)
+        self.assertNotIn('["thinking", "Thinking"]', nav)
+        overview = self._fn("function renderProfileOverview", "function aspectGlyph")
+        self.assertIn("Explore Mercury", overview)
+
+    def test_deep_mercury_configuration_renders(self):
+        config = self._fn("function renderDeepMercuryConfiguration", "function renderDeepFactorNarrative")
+        self.assertIn("Your Mercury", config)
+        self.assertIn("mercury_sign", config)
+        self.assertIn("house_available", config)
+        self.assertIn("House unavailable", config)
+        self.assertIn("Major aspects", config)
+        self.assertIn("formatMajorAspectLine", config)
+
+    def test_factor_narrative_renders_before_key_observations(self):
+        factor = self._fn("function renderDeepFactorBlock", "function renderDeepThemeList")
+        self.assertIn("renderDeepFactorNarrative", factor)
+        self.assertIn("block.narrative", factor)
+        self.assertIn("renderDeepKeyObservations", factor)
+        self.assertLess(
+            factor.find("renderDeepFactorNarrative"),
+            factor.find("renderDeepKeyObservations"),
+        )
+        narrative = self._fn("function renderDeepFactorNarrative", "function renderDeepKeyObservations")
+        self.assertIn("core_theme", narrative)
+        self.assertIn("summary", narrative)
+        self.assertIn("subsections", narrative)
+        self.assertIn("Explore deeper themes", narrative)
+        self.assertIn("deep-deeper-themes", narrative)
+        # Detailed subsections are collapsed by default (details, not open).
+        self.assertNotIn("<details open", narrative)
+        self.assertIn("<details class=\"deep-deeper-themes\">", narrative)
+
+    def test_factor_detailed_themes_collapsed_but_reachable(self):
+        narrative = self._fn("function renderDeepFactorNarrative", "function renderDeepKeyObservations")
+        self.assertIn("Explore deeper themes", narrative)
+        self.assertIn("deep-narrative-sub", narrative)
+        self.assertIn("data-narrative-sub", narrative)
+        factor = self._fn("function renderDeepFactorBlock", "function renderDeepThemeList")
+        self.assertIn("renderDeepSourceExplore", factor)
+        self.assertIn("Explore all", self._fn(
+            "function renderDeepSourceExplore",
+            "function renderDeepMercuryConfiguration",
+        ))
+        keys = self._fn("function renderDeepKeyObservations", "function renderDeepFactorBlock")
+        self.assertIn("Key observations", keys)
+        self.assertIn("deep-key-observations", keys)
+        self.assertNotIn("<details open", keys)
+
+    def test_sign_highlights_use_backend_highlight_fact_ids(self):
+        keys = self._fn("function renderDeepKeyObservations", "function renderDeepFactorBlock")
+        self.assertIn("highlight_fact_ids", keys)
+        self.assertIn("Key observations", keys)
+        self.assertIn("renderDeepFactList(block.highlight_fact_ids", keys)
+        self.assertNotIn(".slice(0,", keys)
+        explore = self._fn("function renderDeepSourceExplore", "function renderDeepMercuryConfiguration")
+        self.assertIn("block.fact_ids", explore)
+        self.assertIn("Explore all", explore)
+        self.assertIn("renderDeepFactList(allIds", explore)
+
+    def test_house_unavailable_and_motion_render_separately(self):
+        factor = self._fn("function renderDeepFactorBlock", "function renderDeepThemeList")
+        self.assertIn('availability === "unavailable"', factor)
+        self.assertIn("deep-factor-unavailable", factor)
+        self.assertIn('availability === "neutral_default"', factor)
+        self.assertIn("No additional motion-specific source interpretation is active.", factor)
+        deep = self._fn("function renderDeepMercury(synthesis)", "function renderWorkLensSectionDetails")
+        self.assertIn('Expression"', deep)
+        self.assertIn('Processing modifier"', deep)
+        self.assertIn("deep.sign", deep)
+        self.assertIn("deep.house", deep)
+        self.assertIn("deep.motion", deep)
+
+    def test_one_card_per_aspect_with_conditional_modifiers(self):
+        aspects = self._fn("function renderDeepAspectBlock", "function renderDeepIntegrated")
+        self.assertIn("data-deep-aspect", aspects)
+        self.assertIn("renderDeepAspectInteraction", aspects)
+        self.assertIn("renderDeepAspectSource", aspects)
+        # Human synthesis before source observations.
+        self.assertLess(
+            aspects.find("renderDeepAspectInteraction"),
+            aspects.find("renderDeepAspectSource"),
+        )
+        interaction = self._fn(
+            "function renderDeepAspectInteraction",
+            "function renderDeepAspectSource",
+        )
+        self.assertIn("What this aspect changes", interaction)
+        self.assertIn('data-modifier="adds"', interaction)
+        self.assertIn('data-modifier="reinforces"', interaction)
+        self.assertIn('data-modifier="contrasts"', interaction)
+        self.assertIn("if ((interaction.adds || []).length)", interaction)
+        self.assertIn("if ((interaction.reinforcing || []).length)", interaction)
+        self.assertIn("if ((interaction.contrasting || []).length)", interaction)
+        self.assertNotIn("Structured themes from supported source evidence", interaction)
+        source = self._fn("function renderDeepAspectSource", "function renderDeepAspectBlock")
+        self.assertIn("Source observations", source)
+        self.assertIn("block.fact_ids", source)
+        self.assertIn("All source observations", source)
+        self.assertNotIn("<details open", source)
+        deep = self._fn("function renderDeepMercury(synthesis)", "function renderWorkLensSectionDetails")
+        self.assertIn("deep.aspects", deep)
+        self.assertIn("renderDeepAspectBlock", deep)
+
+    def test_integrated_then_work_lens_order(self):
+        thinking = self._fn("function renderProfileThinking", "function renderWorkingGroup")
+        self.assertLess(
+            thinking.find("renderDeepMercury"),
+            thinking.find("renderMercuryWorkLens"),
+        )
+        deep = self._fn("function renderDeepMercury(synthesis)", "function renderWorkLensSectionDetails")
+        self.assertLess(
+            deep.find("(deep.aspects || [])"),
+            deep.find("renderDeepIntegrated(deep.integrated)"),
+        )
+        integrated = self._fn("function renderDeepIntegrated", "function renderDeepMercury(synthesis)")
+        self.assertIn("deep-integrated-list", integrated)
+        self.assertIn("Evidence", integrated)
+        work = self._fn("function renderMercuryWorkLens", "function renderProfileThinking")
+        self.assertIn("How this Mercury can show up at work", work)
+        self.assertIn("not new evidence", work)
+
+    def test_work_lens_excludes_preview_fact_ids_from_details(self):
+        group = self._fn("function renderThinkingGroup", "function renderMercuryWorkLens")
+        self.assertIn("previewFactIds", group)
+        self.assertIn("factId: id", group)
+        self.assertIn("renderWorkLensSectionDetails", group)
+        details = self._fn("function renderWorkLensSectionDetails", "function renderThinkingGroup")
+        self.assertIn("excludeFactIds", details)
+        self.assertIn("!excluded.has(id)", details)
+        self.assertNotIn("renderSectionBody(", details)
+
+    def test_full_source_evidence_remains_reachable(self):
+        evidence = self._fn("function renderProfileEvidence", "function profileTabFromHash")
+        self.assertIn("renderDetailsMethodology", evidence)
+        self.assertIn("renderMercuryCalculatedFactors", evidence)
+        self.assertIn("renderSourceEvidenceRow", self.js)
+        self.assertIn(".deep-mercury", self.css)
+        self.assertIn(".deep-aspect-synthesis", self.css)
+        self.assertIn(".deep-work-lens", self.css)
 
 
 if __name__ == "__main__":

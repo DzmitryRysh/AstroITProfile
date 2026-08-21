@@ -31,6 +31,17 @@ from app.schemas.mercury_source_profile import (
     SourceFact,
 )
 from app.schemas.mercury_work_profile import MercuryAspect
+from app.services.mercury_deep_narrative import (
+    attach_aspect_human_copy,
+    attach_factor_narrative,
+    build_aspect_narrative_statement,
+    enrich_additive_themes,
+    enrich_contrasting,
+    enrich_reinforcing,
+    humanize_integrated_takeaway,
+    select_integrated_for_presentation,
+    tag_label,
+)
 from app.services.mercury_human_copy_catalog import (
     STATUS_APPROVED_OVERRIDE,
     STATUS_APPROVED_RAW,
@@ -359,6 +370,7 @@ def _build_additive_themes(
     return [
         DeepMercuryAdditiveTheme(
             tag=tag,
+            label=tag_label(tag),
             aspect_fact_ids=_unique_sorted(fact_ids),
         )
         for tag, fact_ids in sorted(by_tag.items())
@@ -372,42 +384,12 @@ def _interaction_statement(
     reinforcing: list[DeepMercuryReinforcingSignal],
     contrasting: list[DeepMercuryContrastingSignal],
 ) -> str | None:
-    parts: list[str] = []
-    if adds:
-        themes = ", ".join(_labelize(item.tag) for item in adds[:5])
-        more = "" if len(adds) <= 5 else f" (+{len(adds) - 5} more)"
-        parts.append(
-            f"{aspect_title} adds {themes}{more} not already present in the "
-            f"base Mercury configuration."
-        )
-    if reinforcing:
-        signals = ", ".join(_labelize(item.signal) for item in reinforcing)
-        bases = _unique_sorted(
-            [key for item in reinforcing for key in item.base_provenance_keys]
-        )
-        base_labels = ", ".join(_labelize(key.split(":", 1)[-1]) for key in bases)
-        layer_bits: list[str] = []
-        for key in bases:
-            factor_type, _ = _parse_provenance(key)
-            if factor_type not in layer_bits:
-                layer_bits.append(factor_type)
-        layers = ", ".join(layer_bits)
-        parts.append(
-            f"{aspect_title} reinforces the {signals} theme already present "
-            f"in base Mercury ({layers}: {base_labels})."
-        )
-    if contrasting:
-        pairs = "; ".join(
-            f"{_labelize(item.tag_a)} vs {_labelize(item.tag_b)}"
-            for item in contrasting
-        )
-        parts.append(
-            f"{aspect_title} participates in a supported tension with base "
-            f"Mercury factors ({pairs})."
-        )
-    if not parts:
-        return None
-    return " ".join(parts)
+    return build_aspect_narrative_statement(
+        aspect_title=aspect_title,
+        adds=enrich_additive_themes(adds),
+        reinforcing=enrich_reinforcing(reinforcing),
+        contrasting=enrich_contrasting(contrasting),
+    )
 
 
 def _build_aspect_interaction(
@@ -539,14 +521,16 @@ def _build_aspect_blocks(
             facts_by_id=facts_by_id,
         )
         blocks.append(
-            DeepMercuryAspectBlock(
-                identity=identity,
-                fact_ids=_fact_ids(facts),
-                highlight_fact_ids=select_highlight_fact_ids(facts),
-                provenance=_provenance("aspect", identity.factor_key),
-                categories=_categories(facts),
-                tags=_tags(facts),
-                interaction=interaction,
+            attach_aspect_human_copy(
+                DeepMercuryAspectBlock(
+                    identity=identity,
+                    fact_ids=_fact_ids(facts),
+                    highlight_fact_ids=select_highlight_fact_ids(facts),
+                    provenance=_provenance("aspect", identity.factor_key),
+                    categories=_categories(facts),
+                    tags=_tags(facts),
+                    interaction=interaction,
+                )
             )
         )
     return blocks
@@ -574,10 +558,8 @@ def _build_integrated(
             else 99,
         )
         layer_label = " + ".join(layers)
-        text = (
-            f"The {_labelize(signal.signal)} theme is supported across "
-            f"{layer_label} ({', '.join(signal.sources)})."
-        )
+        # Placeholder; humanize_integrated_takeaway replaces user-facing text.
+        text = f"placeholder:{signal.signal}:{layer_label}"
         takeaways.append(
             DeepMercuryIntegratedTakeaway(
                 key=f"repeat:{signal.signal}",
@@ -603,10 +585,7 @@ def _build_integrated(
         )
         if len(_factor_type_span(provs)) < 2:
             continue
-        text = (
-            f"Supported tension between {_labelize(pair.tag_a)} and "
-            f"{_labelize(pair.tag_b)} across {', '.join(provs)}."
-        )
+        text = f"placeholder-contrast:{pair.tag_a}:{pair.tag_b}"
         takeaways.append(
             DeepMercuryIntegratedTakeaway(
                 key=f"contrast:{pair.tag_a}:{pair.tag_b}",
@@ -623,19 +602,13 @@ def _build_integrated(
         if not adds:
             continue
         # One concise additive takeaway per aspect with supported ADD themes.
-        theme_labels = ", ".join(_labelize(item.tag) for item in adds[:3])
-        more = "" if len(adds) <= 3 else f" (+{len(adds) - 3} more)"
         support_ids = _unique_sorted(
             [fid for item in adds for fid in item.aspect_fact_ids]
         )
         takeaways.append(
             DeepMercuryIntegratedTakeaway(
                 key=f"add:{block.identity.factor_key}",
-                text=(
-                    f"{block.identity.title} adds {theme_labels}{more} as an "
-                    f"aspect-backed modification of Mercury (not a base "
-                    f"sign/house/motion trait)."
-                ),
+                text=f"placeholder-add:{block.identity.factor_key}",
                 basis="aspect_addition",
                 signal=adds[0].tag,
                 supporting_fact_ids=support_ids,
@@ -653,53 +626,12 @@ def _build_integrated(
             basis_rank = 2
         return (basis_rank, 0 if has_sign else 1, item.key)
 
-    # Prefer covering additive aspects that would otherwise be absent from
-    # the selected cross-factor set when slots remain.
-    ordered = sorted(takeaways, key=_rank)
-    selected: list[DeepMercuryIntegratedTakeaway] = []
-    selected_keys: set[str] = set()
-    covered_aspects: set[str] = set()
-
-    def _note_aspect_coverage(item: DeepMercuryIntegratedTakeaway) -> None:
-        for key in item.provenance_keys:
-            if key.startswith("aspect:"):
-                covered_aspects.add(key.partition(":")[2])
-
-    for item in ordered:
-        if len(selected) >= MAX_INTEGRATED_TAKEAWAYS:
-            break
-        if item.basis == "aspect_addition":
-            continue
-        selected.append(item)
-        selected_keys.add(item.key)
-        _note_aspect_coverage(item)
-
-    for item in ordered:
-        if len(selected) >= MAX_INTEGRATED_TAKEAWAYS:
-            break
-        if item.basis != "aspect_addition":
-            continue
-        aspect_key = item.key.partition(":")[2]
-        if aspect_key in covered_aspects:
-            # Aspect already represented via reinforce/contrast; still allow
-            # additive takeaway only if slots remain after uncovered ones.
-            continue
-        selected.append(item)
-        selected_keys.add(item.key)
-        covered_aspects.add(aspect_key)
-
-    # Fill remaining slots with additive takeaways for already-covered aspects
-    # only if space remains and they were not selected.
-    if len(selected) < MAX_INTEGRATED_TAKEAWAYS:
-        for item in ordered:
-            if len(selected) >= MAX_INTEGRATED_TAKEAWAYS:
-                break
-            if item.basis != "aspect_addition" or item.key in selected_keys:
-                continue
-            selected.append(item)
-            selected_keys.add(item.key)
-
-    return sorted(selected, key=_rank)[:MAX_INTEGRATED_TAKEAWAYS]
+    # Presentation selection: outcome mix (≤4), then humanize.
+    selected = select_integrated_for_presentation(
+        sorted(takeaways, key=_rank),
+        max_items=min(4, MAX_INTEGRATED_TAKEAWAYS),
+    )
+    return [humanize_integrated_takeaway(item) for item in selected]
 
 
 def build_mercury_deep_profile(
@@ -707,12 +639,24 @@ def build_mercury_deep_profile(
 ) -> MercuryDeepProfile:
     """Assemble factor-first Deep Mercury presentation from an existing profile."""
     configuration = _build_configuration(profile)
+    sign = attach_factor_narrative(
+        _build_sign_block(profile),
+        list(profile.sign_facts),
+    )
+    house = attach_factor_narrative(
+        _build_house_block(profile),
+        list(profile.house_facts),
+    )
+    motion = attach_factor_narrative(
+        _build_motion_block(profile),
+        list(profile.motion_facts),
+    )
     aspects = _build_aspect_blocks(profile)
     return MercuryDeepProfile(
         configuration=configuration,
-        sign=_build_sign_block(profile),
-        house=_build_house_block(profile),
-        motion=_build_motion_block(profile),
+        sign=sign,
+        house=house,
+        motion=motion,
         aspects=aspects,
         integrated=_build_integrated(profile, aspects),
         limitations=list(profile.limitations or []),

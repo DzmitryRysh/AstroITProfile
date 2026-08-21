@@ -1825,7 +1825,7 @@
       <section class="panel overview-dimension" data-overview-dimension="think">
         <div class="panel-head"><h2>${escapeHtml(howThinksHeading(person))}</h2></div>
         ${thinks}
-        <button type="button" class="btn btn-ghost overview-cta" data-profile-tab="thinking">Explore thinking</button>
+        <button type="button" class="btn btn-ghost overview-cta" data-profile-tab="thinking">Explore Mercury</button>
       </section>
       <section class="panel overview-dimension" data-overview-dimension="work">
         <div class="panel-head"><h2>${escapeHtml(howWorksHeading(person))}</h2></div>
@@ -1835,6 +1835,306 @@
     </div>
     ${renderThinkingToExecutionOverview(bridge)}
     ${renderOverviewTensions(mercurySynthesis)}`;
+  }
+
+  function aspectGlyph(type) {
+    const map = {
+      conjunction: "☌",
+      opposition: "☍",
+      square: "□",
+      trine: "△",
+      sextile: "⚹",
+    };
+    return map[String(type || "").toLowerCase()] || "•";
+  }
+
+  function formatMajorAspectLine(aspect) {
+    if (!aspect) return "";
+    const glyph = aspectGlyph(aspect.aspect_type || aspect.type);
+    const planet = aspect.planet || "";
+    return `${glyph} ${planet}`.trim();
+  }
+
+  function deepFactText(factId, facts, presentation) {
+    const fact = facts.get(factId);
+    if (!fact) return "";
+    return humanFactText(fact, presentation);
+  }
+
+  function renderDeepFactList(factIds, facts, presentation) {
+    const items = (factIds || [])
+      .map((id) => {
+        const text = deepFactText(id, facts, presentation);
+        if (!text) return "";
+        const fact = facts.get(id);
+        const risk = fact && fact.polarity === "risk";
+        const marker = risk
+          ? `<span class="risk-mark" title="Possible difficulty">Risk</span>`
+          : `<span class="fact-bullet" aria-hidden="true">•</span>`;
+        return `<li class="fact-item${risk ? " fact-risk" : ""}" data-fact-id="${escapeHtml(id)}">${marker}<span class="fact-text">${escapeHtml(text)}</span></li>`;
+      })
+      .filter(Boolean)
+      .join("");
+    return items ? `<ul class="fact-list deep-fact-list">${items}</ul>` : "";
+  }
+
+  function renderDeepSourceExplore(block, facts, presentation) {
+    const allIds = block.fact_ids || [];
+    if (!allIds.length) return "";
+    // Full source lists every canonical fact id so the complete pack remains
+    // inspectable. Highlights above use the same ids; they are not new evidence.
+    const count = allIds.length;
+    const label = count === 1
+      ? "Explore all 1 source observation"
+      : `Explore all ${count} source observations`;
+    return `<details class="deep-source-explore">
+      <summary class="section-explore-summary"><span class="explore-all-label">${escapeHtml(label)}</span></summary>
+      <div class="deep-source-body">
+        ${renderDeepFactList(allIds, facts, presentation)}
+      </div>
+    </details>`;
+  }
+
+  function renderDeepMercuryConfiguration(config) {
+    if (!config) return "";
+    const sign = config.mercury_sign
+      ? `<p class="deep-config-line">Mercury in ${escapeHtml(config.mercury_sign)}</p>`
+      : "";
+    const house = config.house_available
+      ? `<p class="deep-config-line">House ${escapeHtml(String(config.mercury_house))}</p>`
+      : `<div class="deep-config-unavailable">
+          <p class="deep-config-line">House unavailable</p>
+          <p class="deep-config-note">${escapeHtml(config.house_unavailable_reason || "Birth time is required for house placement.")}</p>
+        </div>`;
+    const motion = config.mercury_motion
+      ? `<p class="deep-config-line">${escapeHtml(titleCaseSignal(config.mercury_motion))}</p>`
+      : "";
+    const aspectLines = (config.aspects || [])
+      .map((aspect) => `<li>${escapeHtml(formatMajorAspectLine(aspect))}</li>`)
+      .join("");
+    const aspects = aspectLines
+      ? `<div class="deep-config-aspects">
+          <h3>Major aspects</h3>
+          <ul class="deep-aspect-list">${aspectLines}</ul>
+        </div>`
+      : `<p class="meta">No calculated major aspects in orb.</p>`;
+    return `<section class="panel deep-mercury-config" data-deep-section="configuration">
+      <div class="panel-head"><h2>Your Mercury</h2></div>
+      <div class="deep-config-body">
+        ${sign}
+        ${house}
+        ${motion}
+        ${aspects}
+      </div>
+    </section>`;
+  }
+
+  function renderDeepFactorNarrative(narrative) {
+    if (!narrative) return "";
+    const subs = (narrative.subsections || []).map((item) => `<div class="deep-narrative-sub" data-narrative-sub="${escapeHtml(item.key)}">
+      <h4>${escapeHtml(item.title)}</h4>
+      <p>${escapeHtml(item.text)}</p>
+    </div>`).join("");
+    const deeper = subs
+      ? `<details class="deep-deeper-themes">
+          <summary class="section-explore-summary"><span class="explore-all-label">Explore deeper themes</span></summary>
+          <div class="deep-narrative-subs">${subs}</div>
+        </details>`
+      : "";
+    return `<div class="deep-factor-narrative">
+      <p class="deep-core-theme">${escapeHtml(narrative.core_theme || "")}</p>
+      <p class="deep-narrative-summary">${escapeHtml(narrative.summary || "")}</p>
+      ${deeper}
+    </div>`;
+  }
+
+  function renderDeepKeyObservations(block, facts, presentation) {
+    const highlights = renderDeepFactList(block.highlight_fact_ids || [], facts, presentation);
+    if (!highlights) return "";
+    const count = (block.highlight_fact_ids || []).length;
+    const label = count === 1
+      ? "Key observations (1)"
+      : `Key observations (${count})`;
+    return `<details class="deep-key-observations">
+      <summary class="section-explore-summary"><span class="explore-all-label">${escapeHtml(label)}</span></summary>
+      <div class="deep-highlights">${highlights}</div>
+    </details>`;
+  }
+
+  function renderDeepFactorBlock(block, facts, presentation, eyebrow, purposeFallback) {
+    if (!block) return "";
+    if (block.availability === "unavailable") {
+      return `<section class="panel deep-factor-block deep-factor-unavailable" data-deep-factor="${escapeHtml(block.factor_type)}">
+        <p class="deep-eyebrow">${escapeHtml(eyebrow)}</p>
+        <div class="panel-head"><h2>${escapeHtml(block.title || eyebrow)}</h2></div>
+        <p class="deep-unavailable-copy">${escapeHtml(block.unavailable_reason || "This layer is unavailable.")}</p>
+      </section>`;
+    }
+    if (block.availability === "neutral_default") {
+      return `<section class="panel deep-factor-block deep-factor-neutral" data-deep-factor="${escapeHtml(block.factor_type)}">
+        <p class="deep-eyebrow">${escapeHtml(eyebrow)}</p>
+        <div class="panel-head"><h2>${escapeHtml(block.title)}</h2></div>
+        <p class="section-helper">No additional motion-specific source interpretation is active.</p>
+      </section>`;
+    }
+    return `<section class="panel deep-factor-block" data-deep-factor="${escapeHtml(block.factor_type)}" data-factor-key="${escapeHtml(block.factor_key || "")}">
+      <p class="deep-eyebrow">${escapeHtml(eyebrow)}</p>
+      <div class="panel-head"><h2>${escapeHtml(block.title)}</h2></div>
+      ${renderDeepFactorNarrative(block.narrative)}
+      ${renderDeepKeyObservations(block, facts, presentation)}
+      ${renderDeepSourceExplore(block, facts, presentation)}
+    </section>`;
+  }
+
+  function renderDeepThemeList(items, labelKey) {
+    const rows = (items || [])
+      .map((item) => {
+        const label = item.label
+          || titleCaseSignal(item[labelKey] || item.tag || item.signal || "");
+        return label ? `<li>${escapeHtml(label)}</li>` : "";
+      })
+      .filter(Boolean)
+      .join("");
+    return rows ? `<ul class="deep-theme-list">${rows}</ul>` : "";
+  }
+
+  function renderDeepAspectInteraction(interaction) {
+    if (!interaction || !interaction.available) return "";
+    const parts = [];
+    if ((interaction.adds || []).length) {
+      parts.push(`<div class="deep-modifier-group" data-modifier="adds">
+        <h4>Adds</h4>
+        ${renderDeepThemeList(interaction.adds, "tag")}
+      </div>`);
+    }
+    if ((interaction.reinforcing || []).length) {
+      parts.push(`<div class="deep-modifier-group" data-modifier="reinforces">
+        <h4>Reinforces</h4>
+        ${renderDeepThemeList(interaction.reinforcing, "signal")}
+      </div>`);
+    }
+    if ((interaction.contrasting || []).length) {
+      parts.push(`<div class="deep-modifier-group" data-modifier="contrasts">
+        <h4>Complicates</h4>
+        ${renderDeepThemeList(interaction.contrasting, "label")}
+      </div>`);
+    }
+    const synthesis = interaction.statement
+      ? `<p class="deep-interaction-statement">${escapeHtml(interaction.statement)}</p>`
+      : "";
+    if (!parts.length && !synthesis) return "";
+    return `<div class="deep-aspect-synthesis">
+      <h3>What this aspect changes</h3>
+      ${synthesis}
+      ${parts.length ? `<div class="deep-modifier-details">${parts.join("")}</div>` : ""}
+    </div>`;
+  }
+
+  function renderDeepAspectSource(block, facts, presentation) {
+    const allIds = block.fact_ids || [];
+    const highlights = renderDeepFactList(block.highlight_fact_ids || [], facts, presentation);
+    const fullList = allIds.length
+      ? renderDeepFactList(allIds, facts, presentation)
+      : "";
+    if (!highlights && !fullList) {
+      return `<p class="section-helper">No source observations for this aspect.</p>`;
+    }
+    const count = allIds.length;
+    const label = count
+      ? (count === 1 ? "Source observations (1)" : `Source observations (${count})`)
+      : "Source observations";
+    return `<details class="deep-aspect-source-explore">
+      <summary class="section-explore-summary"><span class="explore-all-label">${escapeHtml(label)}</span></summary>
+      <div class="deep-aspect-source-body">
+        ${highlights ? `<div class="deep-aspect-highlights"><h4>Highlights</h4>${highlights}</div>` : ""}
+        ${fullList ? `<div class="deep-aspect-full-source"><h4>All source observations</h4>${fullList}</div>` : ""}
+      </div>
+    </details>`;
+  }
+
+  function renderDeepAspectBlock(block, facts, presentation) {
+    if (!block || !block.identity) return "";
+    const title = block.identity.title
+      || `Mercury ${aspectPhrase(block.identity.aspect_type, block.identity.planet)} ${block.identity.planet}`;
+    return `<article class="panel deep-aspect-block" data-deep-aspect="${escapeHtml(block.identity.factor_key)}">
+      <p class="deep-eyebrow">Aspect modifier</p>
+      <div class="panel-head"><h2>${escapeHtml(title)}</h2></div>
+      ${renderDeepAspectInteraction(block.interaction)}
+      <div class="deep-aspect-source">
+        ${renderDeepAspectSource(block, facts, presentation)}
+      </div>
+    </article>`;
+  }
+
+  function renderDeepIntegrated(integrated) {
+    const items = integrated || [];
+    if (!items.length) return "";
+    const rows = items.map((item) => {
+      const evidence = (item.provenance_keys || [])
+        .map((key) => `<li>${escapeHtml(provenanceLabel(key))}</li>`)
+        .join("");
+      return `<li class="deep-integrated-item" data-integrated-key="${escapeHtml(item.key || "")}">
+        <p class="deep-integrated-text">${escapeHtml(item.text || "")}</p>
+        ${evidence ? `<details class="deep-integrated-evidence">
+          <summary>Evidence</summary>
+          <ul class="deep-provenance-list">${evidence}</ul>
+        </details>` : ""}
+      </li>`;
+    }).join("");
+    return `<section class="panel deep-integrated" data-deep-section="integrated">
+      <p class="deep-eyebrow">How it works together</p>
+      <div class="panel-head"><h2>Integrated Mercury</h2></div>
+      <p class="section-helper">What kind of Mercury this chart produces. Supporting relationships stay under Evidence.</p>
+      <ol class="deep-integrated-list">${rows}</ol>
+    </section>`;
+  }
+
+  function renderDeepMercury(synthesis) {
+    const deep = synthesis && synthesis.deep_profile;
+    if (!deep) {
+      return `<p class="section-helper">Deep Mercury presentation is not available for this profile.</p>`;
+    }
+    const facts = synthesisFactMap(synthesis);
+    const presentation = presentationTextMap(synthesis);
+    const aspects = (deep.aspects || [])
+      .map((block) => renderDeepAspectBlock(block, facts, presentation))
+      .join("");
+    return `<div class="deep-mercury" data-deep-mercury="true">
+      ${renderDeepMercuryConfiguration(deep.configuration)}
+      ${renderDeepFactorBlock(deep.sign, facts, presentation, "Base Mercury", "The sign is the base Mercury mechanism.")}
+      ${renderDeepFactorBlock(deep.house, facts, presentation, "Expression", "Where / through what domain this Mercury is expressed.")}
+      ${renderDeepFactorBlock(deep.motion, facts, presentation, "Processing modifier", "What processing modifier is present.")}
+      ${aspects ? `<div class="deep-aspects-wrap" data-deep-section="aspects">
+        <p class="deep-section-label">Aspect modifiers</p>
+        <div class="deep-aspects">${aspects}</div>
+      </div>` : ""}
+      ${renderDeepIntegrated(deep.integrated)}
+    </div>`;
+  }
+
+  function renderWorkLensSectionDetails(section, facts, presentation, excludeFactIds) {
+    const excluded = excludeFactIds || new Set();
+    const remainingIds = (section.resolved_fact_ids || []).filter((id) => !excluded.has(id));
+    const exploreSection = {
+      key: section.key,
+      title: section.title,
+      categories: section.categories,
+      resolved_fact_ids: remainingIds,
+      resolved_fact_count: remainingIds.length,
+      factor_keys: section.factor_keys,
+      factor_count: section.factor_count,
+      preview_fact_ids: [],
+    };
+    if (!remainingIds.length) {
+      return `<section class="profile-subsection" data-section-key="${escapeHtml(section.key)}">
+        <h3>${escapeHtml(section.title)}</h3>
+        <p class="section-helper">Key observations for this group are already shown in the preview above.</p>
+      </section>`;
+    }
+    return `<section class="profile-subsection" data-section-key="${escapeHtml(section.key)}">
+      <h3>${escapeHtml(section.title)}</h3>
+      ${renderSectionFactorExplore(exploreSection, facts, presentation)}
+    </section>`;
   }
 
   function renderThinkingGroup(spec, synthesis, audience) {
@@ -1861,7 +2161,7 @@
     sections.forEach((section) => {
       (section.preview_fact_ids || []).forEach((id) => {
         const html = renderQuietMercuryFact(facts.get(id), presentation);
-        if (html) pieces.push({ type: "fact", html });
+        if (html) pieces.push({ type: "fact", html, factId: id });
       });
     });
     if (tensions.length) {
@@ -1870,12 +2170,21 @@
         html: renderTensionRows(tensions.slice(0, 1), facts, { compact: true }),
       });
     }
-    const previewHtml = joinPreviewPieces(pieces, GROUP_PREVIEW_LIMIT);
+    const chosen = pieces.filter((item) => item && item.html).slice(0, GROUP_PREVIEW_LIMIT);
+    const previewFactIds = new Set(
+      chosen.filter((item) => item.type === "fact" && item.factId).map((item) => item.factId)
+    );
+    const previewHtml = joinPreviewPieces(chosen, GROUP_PREVIEW_LIMIT);
     const detailsHtml = [
-      sections.map((section) => `<section class="profile-subsection" data-section-key="${escapeHtml(section.key)}">
-        <h3>${escapeHtml(sectionDisplayTitle(section, audience))}</h3>
-        ${renderSectionBody(section, facts, presentation, { hideMeta: true })}
-      </section>`).join(""),
+      sections.map((section) => renderWorkLensSectionDetails(
+        {
+          ...section,
+          title: sectionDisplayTitle(section, audience),
+        },
+        facts,
+        presentation,
+        previewFactIds
+      )).join(""),
       spec.includeTensions && tensions.length
         ? `<div class="profile-subsections-tensions">${renderTensionRows(tensions, facts, { compact: true })}</div>`
         : "",
@@ -1889,11 +2198,24 @@
     });
   }
 
-  function renderProfileThinking(synthesis, audience) {
+  function renderMercuryWorkLens(synthesis, audience) {
     const groups = MERCURY_THINKING_GROUPS
       .map((spec) => renderThinkingGroup(spec, synthesis, audience))
       .join("");
-    return groups || `<p class="section-helper">No thinking evidence is available for this profile.</p>`;
+    if (!groups) return "";
+    return `<section class="deep-work-lens" data-deep-section="work-lens">
+      <p class="deep-eyebrow">Work lens</p>
+      <h2 class="dimension-heading deep-work-lens-heading">How this Mercury can show up at work</h2>
+      <p class="section-helper">Work translation of the Mercury configuration above. Reused observations are not new evidence.</p>
+      ${groups}
+    </section>`;
+  }
+
+  function renderProfileThinking(synthesis, audience) {
+    const deepHtml = renderDeepMercury(synthesis);
+    const workHtml = renderMercuryWorkLens(synthesis, audience);
+    const html = `${deepHtml}${workHtml}`.trim();
+    return html || `<p class="section-helper">No Mercury evidence is available for this profile.</p>`;
   }
 
   function renderWorkingGroup(spec, synthesis, person) {
@@ -2032,7 +2354,7 @@
   function renderProfileTabNav() {
     const items = [
       ["overview", "Overview"],
-      ["thinking", "Thinking"],
+      ["thinking", "Mercury"],
       ["working", "Working"],
       ["evidence", "Evidence"],
     ].map(([key, label]) => `<button type="button" class="profile-tab${key === "overview" ? " is-active" : ""}" data-profile-tab="${key}" role="tab" aria-selected="${key === "overview" ? "true" : "false"}">${escapeHtml(label)}</button>`).join("");
@@ -2055,7 +2377,6 @@
       <div class="profile-tab-panels">
         <div class="profile-tab-panel" data-profile-panel="overview" role="tabpanel">${renderProfileOverview(profile, marsProfile, person, audience, bridge)}</div>
         <div class="profile-tab-panel how-you-think" data-profile-panel="thinking" data-dimension="think" role="tabpanel" hidden>
-          <h2 class="dimension-heading">${escapeHtml(howThinksHeading(person))}</h2>
           ${renderProfileThinking(synthesis, audience)}
         </div>
         <div class="profile-tab-panel how-you-work" data-profile-panel="working" data-dimension="work" role="tabpanel" hidden>
