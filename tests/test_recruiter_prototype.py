@@ -665,7 +665,12 @@ class RecruiterMarsHowYouWorkTests(unittest.TestCase):
         self.assertIn("cardsOnly: true", overview_fn)
         self.assertIn("renderMarsOverviewRecurringPatterns", overview_fn)
         self.assertNotIn("renderCompactSignalRow", overview_fn)
-        self.assertIn("renderWorkingGroup", working_fn)
+        self.assertIn("renderDeepMars", working_fn)
+        self.assertIn("renderMarsWorkLens", working_fn)
+        lens_fn = self.js.split("function renderMarsWorkLens", 1)[1].split(
+            "function renderProfileWorking", 1
+        )[0]
+        self.assertIn("renderWorkingGroup", lens_fn)
         self.assertIn("renderMarsDetailsMethodology", evidence_fn)
         groups = self.js.split("const MARS_WORKING_GROUPS", 1)[1].split(
             "function mercurySectionByKey", 1
@@ -770,7 +775,12 @@ class RecruiterMarsHowYouWorkTests(unittest.TestCase):
         work_fn = self.js.split("function renderProfileWorking", 1)[1].split(
             "function renderMercuryCalculatedFactors", 1
         )[0]
-        self.assertIn("renderWorkingGroup", work_fn)
+        self.assertIn("renderDeepMars", work_fn)
+        self.assertIn("renderMarsWorkLens", work_fn)
+        lens_fn = self.js.split("function renderMarsWorkLens", 1)[1].split(
+            "function renderProfileWorking", 1
+        )[0]
+        self.assertIn("renderWorkingGroup", lens_fn)
         self.assertNotIn('dimension-heading">How you work', work_fn)
         glance_fn = self.js.split("function renderMarsWorkGlance", 1)[1].split(
             "function renderMarsRecurringPatterns", 1
@@ -783,7 +793,9 @@ class RecruiterMarsHowYouWorkTests(unittest.TestCase):
         self.assertIn("how-you-think", think_wrap)
         self.assertIn("renderProfileThinking", think_wrap)
         self.assertNotIn("howThinksHeading(person)", think_wrap)
-        self.assertIn("howWorksHeading", think_wrap)
+        self.assertIn("howTakesActionHeading(person)", think_wrap)
+        self.assertIn("function howWorksHeading", self.js)
+        self.assertIn("howWorksHeading(person)", self.js)
         primary_mars = self.js.split("function renderMarsWorkGlance", 1)[1].split(
             "function renderMarsDetailsMethodology", 1
         )[0].lower()
@@ -1213,6 +1225,8 @@ class RecruiterDeepMercuryFrontendTests(unittest.TestCase):
         nav = self._fn("function renderProfileTabNav", "function renderHowYouWorkDimension")
         self.assertIn('["thinking", "Mercury"]', nav)
         self.assertNotIn('["thinking", "Thinking"]', nav)
+        self.assertIn('["working", "Mars"]', nav)
+        self.assertNotIn('["working", "Working"]', nav)
         overview = self._fn("function renderProfileOverview", "function aspectGlyph")
         self.assertIn("Explore Mercury", overview)
 
@@ -1351,6 +1365,25 @@ class RecruiterDeepMercuryFrontendTests(unittest.TestCase):
         self.assertIn(".deep-mercury", self.css)
         self.assertIn(".deep-aspect-synthesis", self.css)
         self.assertIn(".deep-work-lens", self.css)
+
+    def test_deep_mars_working_tab_progressive_disclosure(self):
+        working = self._fn("function renderProfileWorking", "function renderMercuryCalculatedFactors")
+        self.assertIn("renderDeepMars", working)
+        self.assertIn("renderMarsWorkLens", working)
+        self.assertLess(working.find("renderDeepMars"), working.find("renderMarsWorkLens"))
+        config = self._fn("function renderDeepMarsConfiguration", "function laneIdsFromRefs")
+        self.assertIn("Your Mars", config)
+        self.assertIn("mars_sign", config)
+        self.assertIn("Major aspects", config)
+        integrated = self._fn("function renderDeepMarsIntegrated", "function renderDeepMars")
+        self.assertIn("Integrated Mars", integrated)
+        self.assertIn("deep-integrated-evidence", integrated)
+        self.assertIn("data-deep-mars", self.js)
+        self.assertIn(".deep-sensitive-lane", self.css)
+        self_profile = self._fn("function renderSelfProfile", "async function buildMyProfile")
+        self.assertIn("howTakesActionHeading(person)", self_profile)
+        lens = self._fn("function renderMarsWorkLens", "function renderProfileWorking")
+        self.assertIn("howWorksHeading(person)", lens)
 
 
 if __name__ == "__main__":

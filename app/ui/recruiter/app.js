@@ -250,6 +250,11 @@
     return `How ${person.name} works`;
   }
 
+  function howTakesActionHeading(person) {
+    if (!person || person.perspective === "self" || !person.name) return "How you take action";
+    return `How ${person.name} takes action`;
+  }
+
   function currentPersonPerspective() {
     const nameEl = document.getElementById("self-name");
     const sexEl = document.getElementById("self-sex");
@@ -2265,15 +2270,230 @@
     });
   }
 
+  function marsDeepFactMap(synthesis) {
+    const map = synthesisFactMap(synthesis);
+    const deep = synthesis && synthesis.deep_profile;
+    (deep && deep.secondary_facts ? deep.secondary_facts : []).forEach((fact) => {
+      if (fact && fact.id && !map.has(fact.id)) map.set(fact.id, fact);
+    });
+    return map;
+  }
+
+  function renderDeepMarsConfiguration(config) {
+    if (!config) return "";
+    const sign = config.mars_sign
+      ? `<p class="deep-config-line">Mars in ${escapeHtml(config.mars_sign)}</p>`
+      : "";
+    const house = config.house_available
+      ? `<p class="deep-config-line">House ${escapeHtml(String(config.mars_house))}</p>`
+      : `<div class="deep-config-unavailable">
+          <p class="deep-config-line">House unavailable</p>
+          <p class="deep-config-note">${escapeHtml(config.house_unavailable_reason || "Birth time is required for house placement.")}</p>
+        </div>`;
+    const motion = config.mars_motion
+      ? `<p class="deep-config-line">${escapeHtml(titleCaseSignal(config.mars_motion))}</p>`
+      : "";
+    const aspectLines = (config.aspects || [])
+      .map((aspect) => `<li>${escapeHtml(formatMajorAspectLine(aspect))}</li>`)
+      .join("");
+    const aspects = aspectLines
+      ? `<div class="deep-config-aspects">
+          <h3>Major aspects</h3>
+          <ul class="deep-aspect-list">${aspectLines}</ul>
+        </div>`
+      : `<p class="meta">No calculated major aspects in orb.</p>`;
+    return `<section class="panel deep-mercury-config deep-mars-config" data-deep-section="configuration">
+      <div class="panel-head"><h2>Your Mars</h2></div>
+      <div class="deep-config-body">
+        ${sign}
+        ${house}
+        ${motion}
+        ${aspects}
+      </div>
+    </section>`;
+  }
+
+  function laneIdsFromRefs(block, lane) {
+    return (block.fact_refs || [])
+      .filter((ref) => ref.presentation_lane === lane)
+      .map((ref) => ref.fact_id);
+  }
+
+  function renderDeepMarsSecondaryExplore(block, facts, presentation) {
+    const sourceSpecific = laneIdsFromRefs(block, "source_specific");
+    const sensitive = laneIdsFromRefs(block, "sensitive_source");
+    const unresolved = (block.unresolved_evidence_ids || []).length
+      ? block.unresolved_evidence_ids
+      : laneIdsFromRefs(block, "unresolved");
+    const parts = [];
+    if (sourceSpecific.length) {
+      parts.push(`<details class="deep-secondary-lane" data-lane="source_specific">
+        <summary class="section-explore-summary"><span class="explore-all-label">Source-specific observations (${sourceSpecific.length})</span></summary>
+        <div class="deep-source-body deep-secondary-body">
+          ${renderDeepFactList(sourceSpecific, facts, presentation)}
+        </div>
+      </details>`);
+    }
+    if (sensitive.length) {
+      parts.push(`<details class="deep-secondary-lane deep-sensitive-lane" data-lane="sensitive_source">
+        <summary class="section-explore-summary"><span class="explore-all-label">Sensitive source observations (${sensitive.length})</span></summary>
+        <div class="deep-source-body deep-secondary-body">
+          <p class="section-helper">Secondary evidence only — not used in narrative or Integrated Mars.</p>
+          ${renderDeepFactList(sensitive, facts, presentation)}
+        </div>
+      </details>`);
+    }
+    if (unresolved.length) {
+      parts.push(`<details class="deep-secondary-lane deep-unresolved-lane" data-lane="unresolved">
+        <summary class="section-explore-summary"><span class="explore-all-label">Unresolved evidence (${unresolved.length})</span></summary>
+        <div class="deep-source-body deep-secondary-body">
+          <p class="section-helper">Unresolved chart-relevant source — not stated as a personal fact.</p>
+          ${renderDeepFactList(unresolved, facts, presentation)}
+        </div>
+      </details>`);
+    }
+    return parts.join("");
+  }
+
+  function renderDeepMarsCoreExplore(block, facts, presentation) {
+    const coreIds = laneIdsFromRefs(block, "core");
+    const ids = coreIds.length ? coreIds : (block.work_fact_ids || []);
+    if (!ids.length) return "";
+    const count = ids.length;
+    const label = count === 1
+      ? "Explore all 1 source observation"
+      : `Explore all ${count} source observations`;
+    return `<details class="deep-source-explore">
+      <summary class="section-explore-summary"><span class="explore-all-label">${escapeHtml(label)}</span></summary>
+      <div class="deep-source-body">
+        ${renderDeepFactList(ids, facts, presentation)}
+      </div>
+    </details>`;
+  }
+
+  function renderDeepMarsFactorBlock(block, facts, presentation, eyebrow) {
+    if (!block) return "";
+    if (block.availability === "unavailable") {
+      return `<section class="panel deep-factor-block deep-factor-unavailable" data-deep-factor="${escapeHtml(block.factor_type)}">
+        <p class="deep-eyebrow">${escapeHtml(eyebrow)}</p>
+        <div class="panel-head"><h2>${escapeHtml(block.title || eyebrow)}</h2></div>
+        <p class="deep-unavailable-copy">${escapeHtml(block.unavailable_reason || "This layer is unavailable.")}</p>
+      </section>`;
+    }
+    if (block.availability === "neutral_default") {
+      return `<section class="panel deep-factor-block deep-factor-neutral" data-deep-factor="${escapeHtml(block.factor_type)}">
+        <p class="deep-eyebrow">${escapeHtml(eyebrow)}</p>
+        <div class="panel-head"><h2>${escapeHtml(block.title)}</h2></div>
+        <p class="section-helper">No additional motion-specific source interpretation is active.</p>
+      </section>`;
+    }
+    return `<section class="panel deep-factor-block" data-deep-factor="${escapeHtml(block.factor_type)}" data-factor-key="${escapeHtml(block.factor_key || "")}">
+      <p class="deep-eyebrow">${escapeHtml(eyebrow)}</p>
+      <div class="panel-head"><h2>${escapeHtml(block.title)}</h2></div>
+      ${renderDeepFactorNarrative(block.narrative)}
+      ${renderDeepKeyObservations(block, facts, presentation)}
+      ${renderDeepMarsCoreExplore(block, facts, presentation)}
+      ${renderDeepMarsSecondaryExplore(block, facts, presentation)}
+    </section>`;
+  }
+
+  function renderDeepMarsAspectInteraction(block) {
+    const interaction = block && block.interaction;
+    const unsupported = block && block.source_interpretation_available === false;
+    if (unsupported) {
+      const statement = (interaction && interaction.statement)
+        || "Source interpretation for this Mars aspect is not currently available.";
+      return `<div class="deep-aspect-synthesis deep-aspect-unsupported">
+        <h3>What this aspect changes</h3>
+        <p class="deep-interaction-statement">${escapeHtml(statement)}</p>
+      </div>`;
+    }
+    return renderDeepAspectInteraction(interaction);
+  }
+
+  function renderDeepMarsAspectBlock(block, facts, presentation) {
+    if (!block || !block.identity) return "";
+    const title = block.identity.title
+      || `Mars ${aspectPhrase(block.identity.aspect_type, block.identity.planet)} ${block.identity.planet}`;
+    return `<article class="panel deep-aspect-block" data-deep-aspect="${escapeHtml(block.identity.factor_key)}">
+      <p class="deep-eyebrow">Aspect modifier</p>
+      <div class="panel-head"><h2>${escapeHtml(title)}</h2></div>
+      ${renderDeepMarsAspectInteraction(block)}
+      <div class="deep-aspect-source">
+        ${renderDeepAspectSource(block, facts, presentation)}
+        ${renderDeepMarsSecondaryExplore(block, facts, presentation)}
+      </div>
+    </article>`;
+  }
+
+  function renderDeepMarsIntegrated(integrated) {
+    const items = integrated || [];
+    if (!items.length) return "";
+    const rows = items.map((item) => {
+      const evidence = (item.supporting_fact_ids || [])
+        .map((id) => `<li>${escapeHtml(id)}</li>`)
+        .join("");
+      return `<li class="deep-integrated-item" data-integrated-key="${escapeHtml(item.key || "")}">
+        <p class="deep-integrated-text">${escapeHtml(item.text || "")}</p>
+        ${evidence ? `<details class="deep-integrated-evidence">
+          <summary>Evidence</summary>
+          <ul class="deep-provenance-list">${evidence}</ul>
+        </details>` : ""}
+      </li>`;
+    }).join("");
+    return `<section class="panel deep-integrated" data-deep-section="integrated">
+      <p class="deep-eyebrow">How it works together</p>
+      <div class="panel-head"><h2>Integrated Mars</h2></div>
+      <p class="section-helper">What kind of Mars this chart produces. Supporting evidence stays expandable.</p>
+      <ol class="deep-integrated-list">${rows}</ol>
+    </section>`;
+  }
+
+  function renderDeepMars(synthesis) {
+    const deep = synthesis && synthesis.deep_profile;
+    if (!deep) {
+      return `<p class="section-helper">Deep Mars presentation is not available for this profile.</p>`;
+    }
+    const facts = marsDeepFactMap(synthesis);
+    const presentation = presentationTextMap(synthesis);
+    const aspects = (deep.aspects || [])
+      .map((block) => renderDeepMarsAspectBlock(block, facts, presentation))
+      .join("");
+    return `<div class="deep-mercury deep-mars" data-deep-mars="true">
+      ${renderDeepMarsConfiguration(deep.configuration)}
+      ${renderDeepMarsFactorBlock(deep.sign, facts, presentation, "Base Mars")}
+      ${renderDeepMarsFactorBlock(deep.house, facts, presentation, "Expression")}
+      ${renderDeepMarsFactorBlock(deep.motion, facts, presentation, "Action / drive modifier")}
+      ${aspects ? `<div class="deep-aspects-wrap" data-deep-section="aspects">
+        <p class="deep-section-label">Aspect modifiers</p>
+        <div class="deep-aspects">${aspects}</div>
+      </div>` : ""}
+      ${renderDeepMarsIntegrated(deep.integrated)}
+    </div>`;
+  }
+
+  function renderMarsWorkLens(synthesis, person) {
+    const groups = MARS_WORKING_GROUPS
+      .map((spec) => renderWorkingGroup(spec, synthesis, person))
+      .join("");
+    if (!groups) return "";
+    return `<section class="deep-work-lens" data-deep-section="work-lens">
+      <p class="deep-eyebrow">Execution / Work Lens</p>
+      <h2 class="dimension-heading deep-work-lens-heading">${escapeHtml(howWorksHeading(person))}</h2>
+      <p class="section-helper">Existing work-style synthesis. Secondary to Deep Mars above.</p>
+      ${groups}
+    </section>`;
+  }
+
   function renderProfileWorking(marsProfile, error, person) {
     if (error) {
       return `<p class="status-line error how-you-work-error" role="status">${escapeHtml(error)}</p>`;
     }
     const synthesis = (marsProfile && marsProfile.synthesis) || null;
-    const groups = MARS_WORKING_GROUPS
-      .map((spec) => renderWorkingGroup(spec, synthesis, person))
-      .join("");
-    return groups || `<p class="section-helper">No work-style evidence is available for this profile.</p>`;
+    const deepHtml = renderDeepMars(synthesis);
+    const workHtml = renderMarsWorkLens(synthesis, person);
+    const html = `${deepHtml}${workHtml}`.trim();
+    return html || `<p class="section-helper">No work-style evidence is available for this profile.</p>`;
   }
 
   function renderMercuryCalculatedFactors(profile) {
@@ -2355,7 +2575,7 @@
     const items = [
       ["overview", "Overview"],
       ["thinking", "Mercury"],
-      ["working", "Working"],
+      ["working", "Mars"],
       ["evidence", "Evidence"],
     ].map(([key, label]) => `<button type="button" class="profile-tab${key === "overview" ? " is-active" : ""}" data-profile-tab="${key}" role="tab" aria-selected="${key === "overview" ? "true" : "false"}">${escapeHtml(label)}</button>`).join("");
     return `<nav class="profile-tab-nav" role="tablist" aria-label="Profile sections">${items}</nav>`;
@@ -2380,7 +2600,7 @@
           ${renderProfileThinking(synthesis, audience)}
         </div>
         <div class="profile-tab-panel how-you-work" data-profile-panel="working" data-dimension="work" role="tabpanel" hidden>
-          <h2 class="dimension-heading">${escapeHtml(howWorksHeading(person))}</h2>
+          <h2 class="dimension-heading">${escapeHtml(howTakesActionHeading(person))}</h2>
           ${renderProfileWorking(marsProfile, marsError, person)}
         </div>
         <div class="profile-tab-panel" data-profile-panel="evidence" role="tabpanel" hidden>
