@@ -1766,3 +1766,305 @@ details.more-details > summary::-webkit-details-marker {
     justify-self: start;
   }
 }
+
+/* --- Deep Mercury (M9.5B) --- */
+
+.deep-mercury {
+  display: grid;
+  gap: 1.15rem;
+  margin-bottom: 1.75rem;
+}
+
+.deep-eyebrow,
+.deep-section-label {
+  margin: 0 0 0.35rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.deep-purpose,
+.deep-synthesis-note,
+.deep-config-note,
+.deep-unavailable-copy {
+  margin: 0 0 0.75rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.deep-config-body {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.deep-config-line {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.deep-config-unavailable {
+  margin: 0.15rem 0 0.35rem;
+}
+
+.deep-config-aspects {
+  margin-top: 0.85rem;
+}
+
+.deep-config-aspects h3,
+.deep-highlights h3,
+.deep-aspect-source h3,
+.deep-aspect-synthesis h3 {
+  margin: 0 0 0.45rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.deep-aspect-list,
+.deep-theme-list,
+.deep-provenance-list {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.deep-aspect-list li,
+.deep-theme-list li,
+.deep-provenance-list li {
+  margin: 0.15rem 0;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.deep-factor-block,
+.deep-aspect-block,
+.deep-integrated,
+.deep-mercury-config {
+  padding: 1.05rem 1.15rem 1.15rem;
+}
+
+.deep-factor-unavailable,
+.deep-factor-neutral {
+  border-style: dashed;
+}
+
+.deep-highlights {
+  margin-bottom: 0.55rem;
+}
+
+.deep-source-explore {
+  margin-top: 0.35rem;
+}
+
+.deep-source-body {
+  margin-top: 0.55rem;
+}
+
+.deep-aspects-wrap {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.deep-aspects {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.deep-aspect-source {
+  margin-top: 0.85rem;
+}
+
+.deep-aspect-synthesis {
+  padding-top: 0;
+  border-top: none;
+}
+
+.deep-aspect-source-body {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.55rem;
+}
+
+.deep-aspect-source-body h4 {
+  margin: 0 0 0.3rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.deep-deeper-themes,
+.deep-key-observations,
+.deep-aspect-source-explore {
+  margin-top: 0.35rem;
+}
+
+.deep-deeper-themes .deep-narrative-subs {
+  margin-top: 0.55rem;
+}
+
+.deep-modifier-group {
+  margin: 0 0 0.7rem;
+}
+
+.deep-modifier-group h4 {
+  margin: 0 0 0.3rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary, inherit);
+  font-weight: 700;
+}
+
+.deep-factor-narrative {
+  margin: 0 0 0.55rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.deep-core-theme {
+  margin: 0;
+  font-size: 1.02rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+}
+
+.deep-narrative-summary {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--text-secondary, inherit);
+}
+
+.deep-narrative-subs {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.35rem;
+}
+
+.deep-narrative-sub h4 {
+  margin: 0 0 0.15rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.deep-narrative-sub p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.deep-modifier-details {
+  margin-top: 0.65rem;
+}
+
+.deep-interaction-statement {
+  margin: 0 0 0.55rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--text-secondary, inherit);
+  font-style: normal;
+}
+
+.deep-integrated-list {
+  display: grid;
+  gap: 0.85rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: deep-integrated;
+}
+
+.deep-integrated-item {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.55rem 0 0.55rem 1.75rem;
+  position: relative;
+  border-top: 1px solid var(--border);
+  counter-increment: deep-integrated;
+}
+
+.deep-integrated-item:first-child {
+  border-top: none;
+  padding-top: 0.15rem;
+}
+
+.deep-integrated-item::before {
+  content: counter(deep-integrated);
+  position: absolute;
+  left: 0;
+  top: 0.55rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: color-mix(in srgb, var(--border) 65%, transparent);
+}
+
+.deep-integrated-item:first-child::before {
+  top: 0.15rem;
+}
+
+.deep-integrated-text {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.deep-integrated-evidence {
+  margin: 0;
+}
+
+.deep-integrated-evidence > summary {
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.deep-work-lens {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 0.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.deep-work-lens-heading {
+  margin-bottom: 0.15rem;
+}
+
+.deep-work-lens .profile-group {
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .deep-config-line {
+    font-size: 1rem;
+  }
+
+  .deep-factor-block,
+  .deep-aspect-block,
+  .deep-integrated,
+  .deep-mercury-config {
+    padding: 0.9rem 0.95rem 1rem;
+  }
+}
