@@ -537,7 +537,11 @@ def attach_mercury_profile_synthesis(
     profile: MercurySourceProfileResponse,
 ) -> MercurySourceProfileResponse:
     """Attach additive synthesis to an already-built source profile (no recalculation)."""
+    from app.services.mercury_deep_profile import build_mercury_deep_profile
+
     synthesis = serialize_mercury_profile_synthesis(
         build_mercury_profile_synthesis(profile)
     )
+    deep_profile = build_mercury_deep_profile(profile)
+    synthesis = synthesis.model_copy(update={"deep_profile": deep_profile})
     return profile.model_copy(update={"synthesis": synthesis})

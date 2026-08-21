@@ -119,6 +119,126 @@ class MercuryGlanceCard(BaseModel):
     display_template: str = ""
 
 
+# --- Mercury Deep Profile (M9.5A) — additive factor-first presentation ---
+
+FactorAvailability = Literal["available", "unavailable", "neutral_default"]
+DeepContentKind = Literal["source", "synthesis"]
+
+
+class DeepMercuryAspectIdentity(BaseModel):
+    factor_key: str
+    aspect_type: str
+    planet: str
+    title: str
+    orb_deg: Optional[float] = None
+
+
+class DeepMercuryConfiguration(BaseModel):
+    """Concise Mercury configuration header. No recalculation."""
+
+    mercury_sign: Optional[str] = None
+    mercury_house: Optional[int] = None
+    house_available: bool
+    house_unavailable_reason: Optional[str] = None
+    mercury_motion: Optional[str] = None
+    birth_time_known: bool
+    aspects: list[DeepMercuryAspectIdentity] = Field(default_factory=list)
+
+
+class DeepMercuryFactorBlock(BaseModel):
+    """Canonical source ownership for one Mercury factor layer."""
+
+    factor_type: FactorType
+    factor_key: str
+    title: str
+    purpose: str
+    availability: FactorAvailability
+    unavailable_reason: Optional[str] = None
+    content_kind: DeepContentKind = "source"
+    ownership: Literal["canonical_source"] = "canonical_source"
+    fact_ids: list[str] = Field(default_factory=list)
+    highlight_fact_ids: list[str] = Field(default_factory=list)
+    provenance: str
+    categories: list[str] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=list)
+
+
+class DeepMercuryAdditiveTheme(BaseModel):
+    """Theme introduced by an aspect and not already present in base Mercury."""
+
+    tag: str
+    aspect_fact_ids: list[str] = Field(default_factory=list)
+
+
+class DeepMercuryReinforcingSignal(BaseModel):
+    signal: str
+    tag: str
+    aspect_fact_ids: list[str] = Field(default_factory=list)
+    base_fact_ids: list[str] = Field(default_factory=list)
+    base_provenance_keys: list[str] = Field(default_factory=list)
+
+
+class DeepMercuryContrastingSignal(BaseModel):
+    tag_a: str
+    tag_b: str
+    aspect_fact_ids: list[str] = Field(default_factory=list)
+    base_fact_ids: list[str] = Field(default_factory=list)
+    base_provenance_keys: list[str] = Field(default_factory=list)
+
+
+class DeepMercuryAspectInteraction(BaseModel):
+    """Aspect modifier synthesis: adds / reinforces / contrasts base Mercury."""
+
+    available: bool = False
+    content_kind: DeepContentKind = "synthesis"
+    adds: list[DeepMercuryAdditiveTheme] = Field(default_factory=list)
+    reinforcing: list[DeepMercuryReinforcingSignal] = Field(default_factory=list)
+    contrasting: list[DeepMercuryContrastingSignal] = Field(default_factory=list)
+    statement: Optional[str] = None
+    supporting_fact_ids: list[str] = Field(default_factory=list)
+    provenance_keys: list[str] = Field(default_factory=list)
+
+
+class DeepMercuryAspectBlock(BaseModel):
+    """One calculated Mercury aspect: source observations + optional base interaction."""
+
+    identity: DeepMercuryAspectIdentity
+    content_kind: DeepContentKind = "source"
+    ownership: Literal["canonical_source"] = "canonical_source"
+    fact_ids: list[str] = Field(default_factory=list)
+    highlight_fact_ids: list[str] = Field(default_factory=list)
+    provenance: str
+    categories: list[str] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=list)
+    interaction: DeepMercuryAspectInteraction = Field(
+        default_factory=DeepMercuryAspectInteraction
+    )
+
+
+class DeepMercuryIntegratedTakeaway(BaseModel):
+    """Cross-factor or additive synthesis. References source ids; not a source fact."""
+
+    kind: DeepContentKind = "synthesis"
+    key: str
+    text: str
+    basis: Literal["repeated_signal", "contrasting_signal", "aspect_addition"]
+    signal: Optional[str] = None
+    supporting_fact_ids: list[str] = Field(default_factory=list)
+    provenance_keys: list[str] = Field(default_factory=list)
+
+
+class MercuryDeepProfile(BaseModel):
+    """Factor-first personal Mercury presentation (additive to work synthesis)."""
+
+    configuration: DeepMercuryConfiguration
+    sign: DeepMercuryFactorBlock
+    house: DeepMercuryFactorBlock
+    motion: DeepMercuryFactorBlock
+    aspects: list[DeepMercuryAspectBlock] = Field(default_factory=list)
+    integrated: list[DeepMercuryIntegratedTakeaway] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+
+
 class MercuryProfileSynthesisResponse(BaseModel):
     """API-facing synthesis presentation index (additive to source profile)."""
 
@@ -132,6 +252,7 @@ class MercuryProfileSynthesisResponse(BaseModel):
     traceability: SynthesisTraceability
     facts_by_id: dict[str, SourceFact] = Field(default_factory=dict)
     presentation_text_by_fact_id: dict[str, str] = Field(default_factory=dict)
+    deep_profile: Optional[MercuryDeepProfile] = None
 
 
 class MercurySourceProfileResponse(BaseModel):
