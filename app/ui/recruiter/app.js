@@ -3357,6 +3357,8 @@
     renderProjectDemandSnapshot(null);
     clearAllProjectDemandFieldErrors();
     setProjectDemandActionStatus("");
+    clearPersonCoverageResults();
+    syncPersonCoverageAvailability();
     setStatus(document.getElementById("project-demand-status"), "");
   }
 
@@ -3384,6 +3386,7 @@
       lastProjectDemand = demand;
       applyProjectDemandToForm(demand);
       renderProjectDemandSnapshot(demand);
+      markPersonCoverageStaleAfterDemandChange();
       // Success confirmation lives only on the snapshot banner.
       setStatus(status, "");
       setProjectDemandActionStatus("");
@@ -3415,6 +3418,281 @@
     bindProjectDemandFieldClear(labelEl);
     if (form) form.addEventListener("submit", submitProjectDemand);
     if (resetBtn) resetBtn.addEventListener("click", resetProjectDemandForm);
+  }
+
+  const COVERAGE_STATUS_LABELS = {
+    covered: "Covered",
+    partially_covered: "Partially covered",
+    conditional_coverage: "Conditional coverage",
+    gap: "Gap",
+    not_required: "Not required",
+  };
+
+  const CONTRIBUTION_STATE_LABELS = {
+    primary: "Primary",
+    strong: "Strong",
+    supporting: "Supporting",
+    conditional: "Conditional",
+  };
+
+  const DEMAND_LEVEL_LABELS = {
+    critical: "Critical",
+    important: "Important",
+    useful: "Useful",
+    not_required: "Not required",
+  };
+
+  let lastPersonCoverageResult = null;
+
+  function coverageStatusLabel(status) {
+    return COVERAGE_STATUS_LABELS[status] || String(status || "");
+  }
+
+  function contributionStateLabel(state) {
+    if (state == null || state === "") return "No current contribution";
+    return CONTRIBUTION_STATE_LABELS[state] || String(state);
+  }
+
+  function demandLevelDisplayLabel(level) {
+    return DEMAND_LEVEL_LABELS[level] || demandLevelLabel(level);
+  }
+
+  function listWorkspacePeopleForCoverage() {
+    const people = [];
+    try {
+      collectMembers().forEach((member) => {
+        people.push({
+          key: `member:${member.member_id}`,
+          group: "Current Team",
+          display_name: member.display_name,
+          person: {
+            display_name: member.display_name,
+            birth_date: member.birth_date,
+            birth_time: member.birth_time || null,
+            birth_place: member.birth_place,
+          },
+        });
+      });
+    } catch (_err) {
+      /* incomplete member cards are ignored for coverage selection */
+    }
+    try {
+      collectCandidates().forEach((candidate) => {
+        people.push({
+          key: `candidate:${candidate.candidate_id}`,
+          group: "Shortlist",
+          display_name: candidate.display_name,
+          person: {
+            display_name: candidate.display_name,
+            birth_date: candidate.birth_date,
+            birth_time: candidate.birth_time || null,
+            birth_place: candidate.birth_place,
+          },
+        });
+      });
+    } catch (_err) {
+      /* incomplete candidate cards are ignored for coverage selection */
+    }
+    return people;
+  }
+
+  function setPersonCoverageStale(message) {
+    const el = document.getElementById("person-coverage-stale");
+    if (!el) return;
+    if (!message) {
+      el.hidden = true;
+      el.textContent = "";
+      return;
+    }
+    el.hidden = false;
+    el.textContent = message;
+  }
+
+  function clearPersonCoverageResults(staleMessage) {
+    lastPersonCoverageResult = null;
+    const results = document.getElementById("person-coverage-results");
+    if (results) {
+      results.hidden = true;
+      results.innerHTML = "";
+    }
+    const status = document.getElementById("person-coverage-status");
+    if (status) setStatus(status, "");
+    setPersonCoverageStale(staleMessage || "");
+  }
+
+  function syncPersonCoverageAvailability() {
+    const empty = document.getElementById("person-coverage-empty");
+    const controls = document.getElementById("person-coverage-controls");
+    const hasDemand = Boolean(lastProjectDemand);
+    if (empty) empty.hidden = hasDemand;
+    if (controls) controls.hidden = !hasDemand;
+    if (hasDemand) refreshPersonCoverageSelect();
+  }
+
+  function refreshPersonCoverageSelect() {
+    const select = document.getElementById("person-coverage-select");
+    if (!select) return;
+    const previous = select.value;
+    const people = listWorkspacePeopleForCoverage();
+    const groups = [
+      { label: "Current Team", items: people.filter((p) => p.group === "Current Team") },
+      { label: "Shortlist", items: people.filter((p) => p.group === "Shortlist") },
+    ];
+    const options = ['<option value="" selected disabled>Select a person</option>'];
+    groups.forEach((group) => {
+      if (!group.items.length) return;
+      options.push(`<optgroup label="${escapeHtml(group.label)}">`);
+      group.items.forEach((person) => {
+        options.push(
+          `<option value="${escapeHtml(person.key)}">${escapeHtml(person.display_name)} — ${escapeHtml(group.label)}</option>`
+        );
+      });
+      options.push("</optgroup>");
+    });
+    select.innerHTML = options.join("");
+    if (previous && people.some((p) => p.key === previous)) {
+      select.value = previous;
+      const placeholder = select.querySelector('option[value=""]');
+      if (placeholder) placeholder.removeAttribute("selected");
+    } else {
+      select.value = "";
+    }
+  }
+
+  function selectedCoveragePerson() {
+    const select = document.getElementById("person-coverage-select");
+    const key = select ? select.value : "";
+    if (!key) return null;
+    return listWorkspacePeopleForCoverage().find((item) => item.key === key) || null;
+  }
+
+  function renderPersonCoverageResults(coverage) {
+    const root = document.getElementById("person-coverage-results");
+    if (!root) return;
+    if (!coverage) {
+      root.hidden = true;
+      root.innerHTML = "";
+      return;
+    }
+    const personName = coverage.person_display_name || "this person";
+    const rows = (coverage.dimensions || []).map((item) => {
+      const demandLabel = demandLevelDisplayLabel(item.demand_level);
+      const contribLabel = contributionStateLabel(item.contribution_state);
+      const statusLabel = coverageStatusLabel(item.coverage_status);
+      return `<article class="person-coverage-row" data-dimension="${escapeHtml(item.dimension)}" data-demand="${escapeHtml(item.demand_level)}" data-status="${escapeHtml(item.coverage_status)}">
+        <div class="person-coverage-row-head">
+          <h3>${escapeHtml(item.title || item.dimension)}</h3>
+          <p class="coverage-status-badge" data-status="${escapeHtml(item.coverage_status)}">${escapeHtml(statusLabel)}</p>
+        </div>
+        <div class="person-coverage-meta">
+          <div class="person-coverage-meta-item">
+            <p class="meta-label">Project need</p>
+            <p class="meta-value demand-level-badge" data-level="${escapeHtml(item.demand_level)}">${escapeHtml(demandLabel)}</p>
+          </div>
+          <div class="person-coverage-meta-item">
+            <p class="meta-label">Person contribution</p>
+            <p class="meta-value">${escapeHtml(contribLabel)}</p>
+          </div>
+          <div class="person-coverage-meta-item">
+            <p class="meta-label">Coverage</p>
+            <p class="meta-value coverage-status-badge" data-status="${escapeHtml(item.coverage_status)}">${escapeHtml(statusLabel)}</p>
+          </div>
+        </div>
+        <div>
+          <p class="person-coverage-rationale-label">Why the project needs it</p>
+          <p class="person-coverage-rationale">${escapeHtml(item.demand_rationale || "")}</p>
+        </div>
+        <div>
+          <p class="person-coverage-explanation-label">Coverage explanation</p>
+          <p class="person-coverage-explanation">${escapeHtml(item.explanation || "")}</p>
+        </div>
+      </article>`;
+    }).join("");
+    root.innerHTML = `
+      <div class="person-coverage-head">
+        <p class="eyebrow">Project Coverage</p>
+        <h3>How ${escapeHtml(personName)} supports this project</h3>
+        <p class="person-coverage-project-label">Project: ${escapeHtml(coverage.project_label || "")}</p>
+        <p class="meta">
+          This compares the project's requirements with the contribution patterns currently supported for ${escapeHtml(personName)}.
+        </p>
+      </div>
+      <div class="person-coverage-rows">${rows}</div>
+      <details class="person-coverage-about">
+        <summary>About this comparison</summary>
+        <p class="meta">
+          This describes how current contribution evidence relates to project requirements.
+          It does not rank candidates, predict performance, or replace technical assessment.
+        </p>
+      </details>
+    `;
+    root.hidden = false;
+    setPersonCoverageStale("");
+  }
+
+  async function submitPersonProjectCoverage() {
+    const status = document.getElementById("person-coverage-status");
+    const submitBtn = document.getElementById("person-coverage-submit");
+    if (!lastProjectDemand) {
+      setStatus(status, "Save project requirements first.", "error");
+      return;
+    }
+    const selected = selectedCoveragePerson();
+    if (!selected) {
+      setStatus(status, "Select a person to check coverage.", "error");
+      return;
+    }
+    if (submitBtn) submitBtn.disabled = true;
+    setStatus(status, "Checking project coverage…", "loading");
+    clearPersonCoverageResults();
+    try {
+      const coverage = await apiPost("/api/v1/contribution-demand-coverage", {
+        project_demand: lastProjectDemand,
+        person: selected.person,
+      });
+      lastPersonCoverageResult = coverage;
+      renderPersonCoverageResults(coverage);
+      setStatus(status, "");
+      const results = document.getElementById("person-coverage-results");
+      if (results) {
+        results.scrollIntoView({ behavior: "smooth", block: "start" });
+        results.setAttribute("tabindex", "-1");
+        results.focus({ preventScroll: true });
+      }
+    } catch (_err) {
+      lastPersonCoverageResult = null;
+      renderPersonCoverageResults(null);
+      setStatus(
+        status,
+        "Could not calculate project coverage. Please try again.",
+        "error",
+      );
+    } finally {
+      if (submitBtn) submitBtn.disabled = false;
+    }
+  }
+
+  function onPersonCoverageSelectionChange() {
+    if (lastPersonCoverageResult) {
+      clearPersonCoverageResults("Person changed. Check coverage again.");
+    }
+  }
+
+  function markPersonCoverageStaleAfterDemandChange() {
+    if (lastPersonCoverageResult) {
+      clearPersonCoverageResults("Project requirements changed. Check coverage again.");
+    } else {
+      clearPersonCoverageResults();
+    }
+    syncPersonCoverageAvailability();
+  }
+
+  function initPersonProjectCoverageUi() {
+    syncPersonCoverageAvailability();
+    const submitBtn = document.getElementById("person-coverage-submit");
+    const select = document.getElementById("person-coverage-select");
+    if (submitBtn) submitBtn.addEventListener("click", submitPersonProjectCoverage);
+    if (select) select.addEventListener("change", onPersonCoverageSelectionChange);
   }
 
   function renderWorkflowStrip(gap) {
@@ -3890,6 +4168,8 @@
     renderWorkspaceHeader(null, candidates.length);
     impactSection.hidden = true;
     document.getElementById("impact-content").innerHTML = "";
+    refreshPersonCoverageSelect();
+    syncPersonCoverageAvailability();
     setStatus(document.getElementById("team-map-status"), "Loading team map…", "loading");
     setStatus(document.getElementById("team-gap-status"), "Loading workflow coverage…", "loading");
     setStatus(document.getElementById("compare-status"), "", null);
@@ -4079,5 +4359,6 @@
   }));
   updateSaveButtonLabel();
   initProjectDemandUi();
+  initPersonProjectCoverageUi();
   loadPlaces();
 })();
