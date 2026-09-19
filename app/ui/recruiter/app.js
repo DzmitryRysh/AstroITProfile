@@ -123,7 +123,7 @@
   function setStatus(el, message, kind) {
     if (!el) return;
     el.textContent = message || "";
-    el.classList.remove("error", "loading");
+    el.classList.remove("error", "loading", "success");
     if (kind) el.classList.add(kind);
   }
 
@@ -3024,6 +3024,399 @@
     `;
   }
 
+  const PROJECT_DEMAND_DIMENSIONS = [
+    {
+      key: "investigation",
+      title: "Investigation",
+      helper:
+        "Does this work require figuring out unclear problems, causes, or unknowns?",
+      placeholder:
+        "e.g. Requirements are ambiguous and root-cause analysis is central to this work.",
+    },
+    {
+      key: "structuring",
+      title: "Structuring",
+      helper:
+        "Does the work need planning, sequencing, or turning complexity into a clear structure?",
+      placeholder:
+        "e.g. Delivery needs a planned sequence before build starts.",
+    },
+    {
+      key: "validation",
+      title: "Validation",
+      helper:
+        "How important is checking facts, outputs, quality, or failure modes?",
+      placeholder:
+        "e.g. Answers must be checked for grounding and failure modes before rollout.",
+    },
+    {
+      key: "execution_momentum",
+      title: "Execution momentum",
+      helper:
+        "How important is keeping implementation moving once the direction is clear?",
+      placeholder:
+        "e.g. The MVP needs steady implementation progress across connected components.",
+    },
+    {
+      key: "hands_on_delivery",
+      title: "Hands-on delivery",
+      helper:
+        "How much direct building, implementation, integration, or delivery is required?",
+      placeholder:
+        "e.g. Direct backend, integration, and deployment work is required.",
+    },
+  ];
+
+  const PROJECT_DEMAND_LEVELS = [
+    { value: "critical", label: "Critical" },
+    { value: "important", label: "Important" },
+    { value: "useful", label: "Useful" },
+    { value: "not_required", label: "Not required" },
+  ];
+
+  let lastProjectDemand = null;
+
+  function demandLevelLabel(level) {
+    const found = PROJECT_DEMAND_LEVELS.find((item) => item.value === level);
+    return found ? found.label : String(level || "");
+  }
+
+  function clearProjectDemandFieldError(control) {
+    if (!control) return;
+    control.removeAttribute("aria-invalid");
+    const describedBy = String(control.getAttribute("aria-describedby") || "")
+      .split(/\s+/)
+      .filter(Boolean);
+    describedBy.forEach((id) => {
+      const errorEl = document.getElementById(id);
+      if (!errorEl || !errorEl.classList.contains("field-error")) return;
+      errorEl.hidden = true;
+      errorEl.textContent = "";
+    });
+  }
+
+  function setProjectDemandFieldError(control, message) {
+    if (!control) return;
+    control.setAttribute("aria-invalid", "true");
+    const describedBy = String(control.getAttribute("aria-describedby") || "")
+      .split(/\s+/)
+      .filter(Boolean);
+    let errorEl = null;
+    describedBy.forEach((id) => {
+      const candidate = document.getElementById(id);
+      if (candidate && candidate.classList.contains("field-error")) errorEl = candidate;
+    });
+    if (!errorEl && control.id) {
+      errorEl = document.getElementById(`${control.id}-error`);
+    }
+    if (!errorEl) return;
+    errorEl.hidden = false;
+    errorEl.textContent = message;
+  }
+
+  function clearAllProjectDemandFieldErrors() {
+    const form = document.getElementById("project-demand-form");
+    if (!form) return;
+    form.querySelectorAll("[aria-invalid='true']").forEach((control) => {
+      clearProjectDemandFieldError(control);
+    });
+    form.querySelectorAll(".field-error").forEach((errorEl) => {
+      errorEl.hidden = true;
+      errorEl.textContent = "";
+    });
+  }
+
+  function bindProjectDemandFieldClear(control) {
+    if (!control || control.dataset.pdErrorBound === "true") return;
+    const clear = () => clearProjectDemandFieldError(control);
+    control.addEventListener("input", clear);
+    control.addEventListener("change", clear);
+    control.dataset.pdErrorBound = "true";
+  }
+
+  function setProjectDemandActionStatus(message, kind) {
+    const el = document.getElementById("project-demand-action-status");
+    if (!el) return;
+    if (!message) {
+      el.hidden = true;
+      el.textContent = "";
+      el.classList.remove("is-success", "is-error");
+      return;
+    }
+    el.hidden = false;
+    el.textContent = message;
+    el.classList.toggle("is-success", kind === "success");
+    el.classList.toggle("is-error", kind === "error");
+  }
+
+  function renderProjectDemandDimensionFields() {
+    const root = document.getElementById("project-demand-dimensions");
+    if (!root) return;
+    root.innerHTML = PROJECT_DEMAND_DIMENSIONS.map((dim) => {
+      const options = [
+        `<option value="" selected disabled>Select a demand level</option>`,
+        ...PROJECT_DEMAND_LEVELS.map(
+          (level) => `<option value="${escapeHtml(level.value)}">${escapeHtml(level.label)}</option>`
+        ),
+      ].join("");
+      return `<fieldset class="project-demand-dim" data-dimension="${escapeHtml(dim.key)}">
+        <legend>${escapeHtml(dim.title)}</legend>
+        <p class="meta dim-helper">${escapeHtml(dim.helper)}</p>
+        <label class="field">
+          <span>Demand level</span>
+          <select id="pd-level-${escapeHtml(dim.key)}" name="level-${escapeHtml(dim.key)}" required aria-describedby="pd-level-${escapeHtml(dim.key)}-error">
+            ${options}
+          </select>
+          <p id="pd-level-${escapeHtml(dim.key)}-error" class="field-error" role="alert" hidden></p>
+        </label>
+        <label class="field">
+          <span>Rationale</span>
+          <textarea id="pd-rationale-${escapeHtml(dim.key)}" name="rationale-${escapeHtml(dim.key)}" rows="2" required placeholder="${escapeHtml(dim.placeholder)}" aria-describedby="pd-rationale-${escapeHtml(dim.key)}-error"></textarea>
+          <p id="pd-rationale-${escapeHtml(dim.key)}-error" class="field-error" role="alert" hidden></p>
+        </label>
+      </fieldset>`;
+    }).join("");
+    PROJECT_DEMAND_DIMENSIONS.forEach((dim) => {
+      bindProjectDemandFieldClear(document.getElementById(`pd-level-${dim.key}`));
+      bindProjectDemandFieldClear(document.getElementById(`pd-rationale-${dim.key}`));
+    });
+  }
+
+  function validateProjectDemandForm() {
+    clearAllProjectDemandFieldErrors();
+    const issues = [];
+    const labelEl = document.getElementById("pd-label");
+    const label = labelEl ? labelEl.value.trim() : "";
+    if (!label) {
+      const message = "Add a project name.";
+      setProjectDemandFieldError(labelEl, message);
+      issues.push({ control: labelEl, message });
+    }
+
+    const dimensions = [];
+    PROJECT_DEMAND_DIMENSIONS.forEach((dim) => {
+      const levelEl = document.getElementById(`pd-level-${dim.key}`);
+      const rationaleEl = document.getElementById(`pd-rationale-${dim.key}`);
+      const demandLevel = levelEl ? levelEl.value : "";
+      const rationale = rationaleEl ? rationaleEl.value.trim() : "";
+      if (!demandLevel) {
+        const message = `Choose how much this project depends on ${dim.title}.`;
+        setProjectDemandFieldError(levelEl, message);
+        issues.push({ control: levelEl, message });
+      }
+      if (!rationale) {
+        const message = `Explain why ${dim.title} is needed at this level.`;
+        setProjectDemandFieldError(rationaleEl, message);
+        issues.push({ control: rationaleEl, message });
+      }
+      if (demandLevel && rationale) {
+        dimensions.push({
+          dimension: dim.key,
+          demand_level: demandLevel,
+          rationale,
+        });
+      }
+    });
+
+    if (issues.length) {
+      return {
+        ok: false,
+        firstIssue: issues[0],
+        message: issues[0].message,
+      };
+    }
+
+    const descriptionRaw = document.getElementById("pd-description").value.trim();
+    const assumptions = document.getElementById("pd-assumptions").value
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+    return {
+      ok: true,
+      payload: {
+        label,
+        description: descriptionRaw || null,
+        assumptions,
+        dimensions,
+      },
+    };
+  }
+
+  function applyProjectDemandToForm(demand) {
+    if (!demand) return;
+    document.getElementById("pd-label").value = demand.label || "";
+    document.getElementById("pd-description").value = demand.description || "";
+    document.getElementById("pd-assumptions").value = (demand.assumptions || []).join("\n");
+    (demand.dimensions || []).forEach((item) => {
+      const levelEl = document.getElementById(`pd-level-${item.dimension}`);
+      const rationaleEl = document.getElementById(`pd-rationale-${item.dimension}`);
+      if (levelEl) levelEl.value = item.demand_level || "";
+      if (rationaleEl) rationaleEl.value = item.rationale || "";
+    });
+    clearAllProjectDemandFieldErrors();
+  }
+
+  function renderProjectDemandSnapshot(demand) {
+    const root = document.getElementById("project-demand-snapshot");
+    const empty = document.getElementById("project-demand-empty");
+    const form = document.getElementById("project-demand-form");
+    if (!root) return;
+    if (!demand) {
+      root.hidden = true;
+      root.innerHTML = "";
+      if (empty) empty.hidden = false;
+      if (form) form.hidden = false;
+      return;
+    }
+    if (empty) empty.hidden = true;
+    if (form) form.hidden = true;
+    const rows = (demand.dimensions || []).map((item) => {
+      const meta = PROJECT_DEMAND_DIMENSIONS.find((dim) => dim.key === item.dimension);
+      const title = meta ? meta.title : titleCaseSignal(String(item.dimension || "").replace(/_/g, " "));
+      return `<article class="demand-row" data-dimension="${escapeHtml(item.dimension)}" data-level="${escapeHtml(item.demand_level)}">
+        <div class="demand-row-head">
+          <h3>${escapeHtml(title)}</h3>
+          <p class="demand-level-badge" data-level="${escapeHtml(item.demand_level)}">${escapeHtml(demandLevelLabel(item.demand_level))}</p>
+        </div>
+        <p class="demand-rationale">${escapeHtml(item.rationale || "")}</p>
+      </article>`;
+    }).join("");
+    const assumptions = (demand.assumptions || []).length
+      ? `<div class="demand-assumptions">
+          <h3>Assumptions</h3>
+          <ul>${demand.assumptions.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+        </div>`
+      : "";
+    const notesBody = (demand.notes || []).length
+      ? `<ul class="demand-notes">${demand.notes.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`
+      : `<p class="meta">Project requirements describe the work, not candidate quality.</p>`;
+    root.innerHTML = `
+      <div class="demand-save-success" role="status">
+        <p class="demand-save-success-title">✓ Requirements saved</p>
+        <p class="meta">Project requirements are ready.</p>
+      </div>
+      <div class="demand-snapshot-head">
+        <p class="eyebrow">Project Demand</p>
+        <h3>What this project needs</h3>
+        <p class="demand-project-label">${escapeHtml(demand.label || "")}</p>
+        ${demand.description ? `<p class="demand-description">${escapeHtml(demand.description)}</p>` : ""}
+        <p class="meta">Created from: Explicit requirements</p>
+        <p class="section-helper demand-snapshot-intro">
+          This snapshot describes what the work requires.
+          It can later be compared with Contribution profiles to identify support,
+          conditional coverage, and gaps.
+        </p>
+      </div>
+      <div class="demand-rows">${rows}</div>
+      ${assumptions}
+      <div class="demand-snapshot-actions">
+        <button type="button" id="pd-edit-requirements" class="btn btn-secondary">Edit requirements</button>
+      </div>
+      <details class="demand-safety">
+        <summary>Important</summary>
+        <p class="meta demand-safety-summary">
+          Project requirements describe the work, not candidate quality.
+          They do not rank people, predict performance, or replace technical assessment.
+        </p>
+        ${notesBody}
+      </details>
+    `;
+    root.hidden = false;
+    const editBtn = document.getElementById("pd-edit-requirements");
+    if (editBtn) editBtn.addEventListener("click", editProjectDemandRequirements);
+  }
+
+  function editProjectDemandRequirements() {
+    const form = document.getElementById("project-demand-form");
+    const empty = document.getElementById("project-demand-empty");
+    const root = document.getElementById("project-demand-snapshot");
+    if (lastProjectDemand) applyProjectDemandToForm(lastProjectDemand);
+    if (form) {
+      form.hidden = false;
+      form.scrollIntoView({ behavior: "smooth", block: "start" });
+      const label = document.getElementById("pd-label");
+      if (label) label.focus();
+    }
+    if (empty) empty.hidden = true;
+    if (root) root.hidden = true;
+    setProjectDemandActionStatus("");
+    setStatus(
+      document.getElementById("project-demand-status"),
+      "Edit the requirements, then save again.",
+    );
+  }
+
+  function resetProjectDemandForm() {
+    const form = document.getElementById("project-demand-form");
+    if (form) {
+      form.reset();
+      form.hidden = false;
+    }
+    renderProjectDemandDimensionFields();
+    lastProjectDemand = null;
+    renderProjectDemandSnapshot(null);
+    clearAllProjectDemandFieldErrors();
+    setProjectDemandActionStatus("");
+    setStatus(document.getElementById("project-demand-status"), "");
+  }
+
+  async function submitProjectDemand(event) {
+    if (event) event.preventDefault();
+    const status = document.getElementById("project-demand-status");
+    const submitBtn = document.getElementById("pd-submit");
+    setProjectDemandActionStatus("");
+    const validation = validateProjectDemandForm();
+    if (!validation.ok) {
+      // Field-specific errors are inline only; do not repeat them near Save.
+      setStatus(status, "");
+      setProjectDemandActionStatus("");
+      const control = validation.firstIssue && validation.firstIssue.control;
+      if (control) {
+        control.scrollIntoView({ behavior: "smooth", block: "center" });
+        if (typeof control.focus === "function") control.focus();
+      }
+      return;
+    }
+    if (submitBtn) submitBtn.disabled = true;
+    setStatus(status, "Saving project requirements…", "loading");
+    try {
+      const demand = await apiPost("/api/v1/project-demand", validation.payload);
+      lastProjectDemand = demand;
+      applyProjectDemandToForm(demand);
+      renderProjectDemandSnapshot(demand);
+      // Success confirmation lives only on the snapshot banner.
+      setStatus(status, "");
+      setProjectDemandActionStatus("");
+      const snapshot = document.getElementById("project-demand-snapshot");
+      if (snapshot) {
+        snapshot.scrollIntoView({ behavior: "smooth", block: "start" });
+        if (typeof snapshot.focus === "function") {
+          snapshot.setAttribute("tabindex", "-1");
+          snapshot.focus({ preventScroll: true });
+        }
+      }
+    } catch (_err) {
+      setStatus(status, "");
+      setProjectDemandActionStatus(
+        "Could not save project requirements. Please try again.",
+        "error",
+      );
+    } finally {
+      if (submitBtn) submitBtn.disabled = false;
+    }
+  }
+
+  function initProjectDemandUi() {
+    renderProjectDemandDimensionFields();
+    renderProjectDemandSnapshot(null);
+    const form = document.getElementById("project-demand-form");
+    const resetBtn = document.getElementById("pd-reset");
+    const labelEl = document.getElementById("pd-label");
+    bindProjectDemandFieldClear(labelEl);
+    if (form) form.addEventListener("submit", submitProjectDemand);
+    if (resetBtn) resetBtn.addEventListener("click", resetProjectDemandForm);
+  }
+
   function renderWorkflowStrip(gap) {
     const root = document.getElementById("workflow-strip");
     const priority = document.getElementById("gap-priority");
@@ -3685,5 +4078,6 @@
     current_role: "Engineer",
   }));
   updateSaveButtonLabel();
+  initProjectDemandUi();
   loadPlaces();
 })();

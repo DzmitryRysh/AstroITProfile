@@ -8,6 +8,7 @@ from app.api.routes.mars_source_profile import router as mars_source_profile_rou
 from app.api.routes.mercury_source_profile import router as mercury_source_profile_router
 from app.api.routes.mercury_work_profile import router as mercury_work_profile_router
 from app.api.routes.profile import router as profile_router
+from app.api.routes.project_demand import router as project_demand_router
 from app.api.routes.team_gap import router as team_gap_router
 from app.api.routes.team_map import router as team_map_router
 from app.api.routes.thinking_to_execution import router as thinking_to_execution_router
@@ -21,6 +22,7 @@ api_router.include_router(mercury_source_profile_router)
 api_router.include_router(mars_source_profile_router)
 api_router.include_router(thinking_to_execution_router)
 api_router.include_router(contribution_profile_router)
+api_router.include_router(project_demand_router)
 api_router.include_router(candidate_compare_router)
 api_router.include_router(team_map_router)
 api_router.include_router(team_gap_router)

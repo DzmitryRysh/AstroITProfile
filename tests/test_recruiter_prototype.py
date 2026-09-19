@@ -69,6 +69,7 @@ class RecruiterPrototypeRouteTests(unittest.TestCase):
         self.assertIn("/api/v1/mars-source-profile", paths)
         self.assertIn("/api/v1/thinking-to-execution", paths)
         self.assertIn("/api/v1/contribution-profile", paths)
+        self.assertIn("/api/v1/project-demand", paths)
         self.assertIn("/api/v1/candidate-compare", paths)
         self.assertIn("/api/v1/team-map", paths)
         self.assertIn("/api/v1/team-gap", paths)
@@ -99,7 +100,7 @@ class RecruiterUxPolishTests(unittest.TestCase):
         self.assertIn("Explore Yourself", self.html)
         self.assertIn("Understand how you think, communicate and learn", self.html)
         self.assertIn("Load Demo Scenario", self.html)
-        self.assertIn("Set Up Team", self.html)
+        self.assertIn("Set Up Project / Team", self.html)
 
     def test_explore_yourself_entry_and_self_profile_input(self):
         self.assertIn('id="explore-yourself"', self.html)
@@ -114,7 +115,8 @@ class RecruiterUxPolishTests(unittest.TestCase):
         self.assertIn('data-self-demo="vlad"', self.html)
         self.assertIn('data-self-demo="dzmitry"', self.html)
         self.assertIn("Back to Start", self.html)
-        self.assertIn("Build a Team", self.html)
+        self.assertIn("Set Up Project / Team", self.html)
+        self.assertIn("self-build-team", self.html)
 
     def test_self_profile_calls_mercury_source_profile_endpoint(self):
         self.assertIn('/api/v1/mercury-source-profile', self.js)
@@ -370,9 +372,9 @@ class RecruiterUxPolishTests(unittest.TestCase):
             self.assertNotIn("candidate score", blob)
             self.assertNotIn("fit score", blob)
         self.assertNotIn("strongest pattern", patterns_fn.replace("strongest_patterns", ""))
-        # Quick-fill + Build a Team preserved.
+        # Quick-fill + Set Up Project / Team preserved.
         self.assertIn('data-self-demo="avdey"', self.html)
-        self.assertIn("Build a Team", self.html)
+        self.assertIn("Set Up Project / Team", self.html)
         self.assertIn("self-build-team", self.html)
 
     def test_self_profile_synthesis_contract(self):
@@ -1384,6 +1386,224 @@ class RecruiterDeepMercuryFrontendTests(unittest.TestCase):
         self.assertIn("howTakesActionHeading(person)", self_profile)
         lens = self._fn("function renderMarsWorkLens", "function renderProfileWorking")
         self.assertIn("howWorksHeading(person)", lens)
+
+
+class RecruiterProjectDemandUiTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.html = RECRUITER_INDEX.read_text(encoding="utf-8")
+        cls.js = RECRUITER_JS.read_text(encoding="utf-8")
+        cls.css = RECRUITER_CSS.read_text(encoding="utf-8")
+
+    def test_project_demand_lives_in_workspace_not_personal_tabs(self):
+        workspace = self.html.split('id="workspace"', 1)[1].split("id=\"setup-overlay\"", 1)[0]
+        self.assertIn("project-demand-heading", workspace)
+        self.assertIn("What this project needs", workspace)
+        self.assertIn("Project Demand", workspace)
+        self.assertIn("project-demand-form", workspace)
+        self.assertLess(
+            workspace.find("project-demand-heading"),
+            workspace.find("coverage-heading"),
+        )
+        personal = self.html.split('id="self-profile"', 1)[1].split('id="workspace"', 1)[0]
+        self.assertNotIn("project-demand", personal)
+        nav = self.js.split("function renderProfileTabNav", 1)[1].split(
+            "function renderHowYouWorkDimension", 1
+        )[0]
+        self.assertNotIn("Project Demand", nav)
+        self.assertIn('["working", "Mars"]', nav)
+
+    def test_purpose_and_future_relationship_are_explained(self):
+        workspace = self.html.split('id="workspace"', 1)[1].split("id=\"setup-overlay\"", 1)[0]
+        self.assertIn("Describe the work first — before looking at people.", workspace)
+        self.assertIn("What the project needs", workspace)
+        self.assertIn("What people contribute", workspace)
+        self.assertIn("Support and gaps", workspace)
+        self.assertIn("How much does THIS PROJECT depend on this contribution?", workspace)
+        self.assertIn("project-demand-flow", workspace)
+        # Explanatory future language is allowed; computed coverage results are not.
+        self.assertNotIn('data-coverage="covered"', self.js)
+        self.assertNotIn("partially_covered", self.js)
+        self.assertNotIn("renderSupplyDemand", self.js)
+
+    def test_exactly_five_supported_dimensions(self):
+        self.assertIn("PROJECT_DEMAND_DIMENSIONS", self.js)
+        block = self.js.split("const PROJECT_DEMAND_DIMENSIONS = [", 1)[1].split(
+            "];", 1
+        )[0]
+        for key in (
+            "investigation",
+            "structuring",
+            "validation",
+            "execution_momentum",
+            "hands_on_delivery",
+        ):
+            self.assertIn(f'key: "{key}"', block)
+        self.assertNotIn("leadership", block)
+        self.assertNotIn("communication", block)
+        self.assertNotIn("creativity", block)
+        self.assertEqual(block.count('key: "'), 5)
+        self.assertIn("unclear problems, causes, or unknowns", block)
+
+    def test_explicit_unselected_levels_no_silent_defaults(self):
+        self.assertIn('value="" selected disabled>Select a demand level</option>', self.js)
+        self.assertIn("required", self.js.split("pd-level-", 1)[1].split("textarea", 1)[0])
+        self.assertNotIn('value="useful" selected', self.js)
+        self.assertNotIn('value="not_required" selected', self.js)
+
+    def test_rationale_required_and_api_flow(self):
+        self.assertIn("pd-rationale-", self.js)
+        self.assertIn('"/api/v1/project-demand"', self.js)
+        self.assertIn("validateProjectDemandForm", self.js)
+        self.assertIn("renderProjectDemandSnapshot", self.js)
+        self.assertIn("Created from: Explicit requirements", self.js)
+        self.assertIn("demand.notes", self.js)
+        self.assertIn("What this project needs", self.js)
+        self.assertNotIn("Canonical snapshot", self.js)
+
+    def test_successful_save_feedback_and_snapshot_scroll(self):
+        self.assertIn("✓ Requirements saved", self.js)
+        self.assertIn("Project requirements are ready.", self.js)
+        self.assertIn("demand-save-success", self.js)
+        self.assertIn('scrollIntoView({ behavior: "smooth", block: "start" })', self.js)
+        snapshot_render = self.js.split("function renderProjectDemandSnapshot", 1)[1].split(
+            "function editProjectDemandRequirements", 1
+        )[0]
+        self.assertIn("✓ Requirements saved", snapshot_render)
+        self.assertIn("Project requirements are ready.", snapshot_render)
+        self.assertEqual(snapshot_render.count("✓ Requirements saved"), 1)
+        submit = self.js.split("async function submitProjectDemand", 1)[1].split(
+            "function initProjectDemandUi", 1
+        )[0]
+        self.assertIn("renderProjectDemandSnapshot(demand)", submit)
+        self.assertIn('snapshot.scrollIntoView({ behavior: "smooth", block: "start" })', submit)
+        self.assertIn("snapshot.focus({ preventScroll: true })", submit)
+        # Success confirmation is only on the snapshot banner, not near Save.
+        self.assertNotIn(
+            'setProjectDemandActionStatus("✓ Requirements saved", "success")',
+            submit,
+        )
+        self.assertNotIn(
+            'setStatus(status, "✓ Requirements saved. Project requirements are ready.", "success")',
+            submit,
+        )
+        self.assertIn(
+            'setProjectDemandActionStatus(\n'
+            '        "Could not save project requirements. Please try again.",\n'
+            '        "error",\n'
+            "      )",
+            submit,
+        )
+        self.assertIn("editProjectDemandRequirements", self.js)
+        self.assertNotIn("Project Demand snapshot ready.", submit)
+        self.assertNotIn("Supply × Demand", self.js)
+        self.assertIn("/api/v1/project-demand", submit)
+
+    def test_field_level_validation_and_focus(self):
+        self.assertIn("setProjectDemandFieldError", self.js)
+        self.assertIn("clearProjectDemandFieldError", self.js)
+        self.assertIn("clearAllProjectDemandFieldErrors", self.js)
+        self.assertIn('setAttribute("aria-invalid", "true")', self.js)
+        self.assertIn('role="alert"', self.js)
+        self.assertIn("Add a project name.", self.js)
+        self.assertIn("Choose how much this project depends on", self.js)
+        self.assertIn("Explain why ${dim.title} is needed at this level.", self.js)
+        self.assertIn('scrollIntoView({ behavior: "smooth", block: "center" })', self.js)
+        self.assertIn("control.focus()", self.js)
+        self.assertIn("bindProjectDemandFieldClear", self.js)
+        self.assertIn('id="pd-label-error"', self.html)
+        self.assertIn("field-error", self.css)
+        # Validation failure must not claim success.
+        submit = self.js.split("async function submitProjectDemand", 1)[1].split(
+            "function initProjectDemandUi", 1
+        )[0]
+        fail_branch = submit.split("if (!validation.ok)", 1)[1].split(
+            "if (submitBtn) submitBtn.disabled = true;", 1
+        )[0]
+        self.assertNotIn("Requirements saved", fail_branch)
+        self.assertNotIn("renderProjectDemandSnapshot(demand)", fail_branch)
+        # Specific field messages are not repeated near Save.
+        self.assertNotIn(
+            "setProjectDemandActionStatus(validation.message",
+            fail_branch,
+        )
+        self.assertNotIn('setStatus(status, validation.message', fail_branch)
+        self.assertNotIn("Add a project name.", fail_branch)
+        self.assertIn("setProjectDemandFieldError", self.js)
+
+    def test_demand_levels_and_assumptions_render(self):
+        for label in ("Critical", "Important", "Useful", "Not required"):
+            self.assertIn(label, self.html)
+            self.assertIn(label, self.js)
+        self.assertIn("pd-assumptions", self.html)
+        self.assertIn("demand.assumptions", self.js)
+        self.assertIn("demand-level-badge", self.js)
+
+    def test_snapshot_safety_and_edit_action(self):
+        self.assertIn("Edit requirements", self.js)
+        self.assertIn("editProjectDemandRequirements", self.js)
+        self.assertIn("demand-safety", self.js)
+        self.assertIn("<summary>Important</summary>", self.js)
+        self.assertIn("Project requirements describe the work, not candidate quality.", self.js)
+        self.assertIn(".field textarea", self.css)
+
+    def test_no_fit_score_or_computed_coverage_results(self):
+        workspace = self.html.split('id="workspace"', 1)[1].split("id=\"setup-overlay\"", 1)[0].lower()
+        pd_js = self.js.split("const PROJECT_DEMAND_DIMENSIONS", 1)[1].split(
+            "function renderWorkflowStrip", 1
+        )[0].lower()
+        for term in (
+            "fit score",
+            "compatibility %",
+            "87%",
+            "best candidate",
+            "hire this",
+            "reject this",
+            "supply × demand",
+        ):
+            self.assertNotIn(term, workspace, term)
+            self.assertNotIn(term, pd_js, term)
+        self.assertNotIn("coverage_score", pd_js)
+        self.assertNotIn("fit_score", pd_js)
+
+    def test_no_astrology_language_in_project_demand_ui(self):
+        workspace = self.html.split('id="project-demand-heading"', 1)[1].split(
+            'id="coverage-heading"', 1
+        )[0].lower()
+        pd_js = self.js.split("const PROJECT_DEMAND_DIMENSIONS", 1)[1].split(
+            "function renderWorkflowStrip", 1
+        )[0].lower()
+        for term in ("mercury", "mars", "zodiac", "aspect", "retrograde", "house", "birth"):
+            self.assertNotIn(term, workspace, term)
+            self.assertNotIn(term, pd_js, term)
+
+    def test_workflow_coverage_remains_separate(self):
+        workspace = self.html.split('id="workspace"', 1)[1].split("id=\"setup-overlay\"", 1)[0]
+        self.assertIn("Workflow Coverage", workspace)
+        self.assertIn("Team Function model", workspace)
+        self.assertIn("not Contribution Dimension project requirements", workspace)
+        self.assertIn("workflow-strip", workspace)
+        self.assertIn("/api/v1/team-gap", self.js)
+
+    def test_workspace_persistence_does_not_include_project_demand(self):
+        payload = self.js.split("function collectWorkspacePayload", 1)[1].split(
+            "function fillWorkspaceForms", 1
+        )[0]
+        self.assertNotIn("project_demand", payload)
+        self.assertNotIn("projectDemand", payload)
+        self.assertIn("members", payload)
+        self.assertIn("candidates", payload)
+
+    def test_home_cta_mentions_project_and_team(self):
+        self.assertIn(">Set Up Project / Team<", self.html)
+        self.assertIn('id="setup-team"', self.html)
+
+    def test_project_demand_styles_present(self):
+        self.assertIn(".project-demand-panel", self.css)
+        self.assertIn(".demand-level-badge", self.css)
+        self.assertIn(".project-demand-snapshot", self.css)
+        self.assertIn(".project-demand-flow", self.css)
+        self.assertIn(".field textarea", self.css)
 
 
 if __name__ == "__main__":
