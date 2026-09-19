@@ -38,7 +38,7 @@
       </p>
       <div class="actions">
         <button type="button" id="explore-yourself" class="btn btn-primary">Explore Yourself</button>
-        <button type="button" id="setup-team" class="btn btn-secondary">Set Up Team</button>
+        <button type="button" id="setup-team" class="btn btn-secondary">Set Up Project / Team</button>
         <button type="button" id="load-demo-empty" class="btn btn-ghost">Load Demo Scenario</button>
         <button type="button" id="saved-workspaces-empty" class="btn btn-ghost">Saved Workspaces</button>
       </div>
@@ -50,7 +50,7 @@
     <section id="self-profile" class="self-profile" hidden aria-labelledby="self-profile-heading">
       <div class="self-profile-nav actions">
         <button type="button" id="self-back-start" class="btn btn-ghost">Back to Start</button>
-        <button type="button" id="self-build-team" class="btn btn-secondary">Build a Team</button>
+        <button type="button" id="self-build-team" class="btn btn-secondary">Set Up Project / Team</button>
       </div>
       <h2 id="self-profile-heading" class="visually-hidden">Your source-backed profile</h2>
       <div id="self-profile-status" class="status-line" role="status" aria-live="polite"></div>
@@ -58,10 +58,100 @@
     </section>
 
     <section id="workspace" class="workspace" hidden>
+      <section class="panel project-demand-panel" aria-labelledby="project-demand-heading">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">Project requirements · Project Demand</p>
+            <h2 id="project-demand-heading">What this project needs</h2>
+          </div>
+        </div>
+        <p class="section-helper project-demand-lead">
+          Describe the work first — before looking at people.
+        </p>
+        <p class="section-helper">
+          Choose how important each contribution is to this project.
+          Later, AstroIT can show where a person or team supports these needs
+          and where gaps remain.
+        </p>
+
+        <div class="project-demand-flow" aria-label="How project requirements relate to people later">
+          <div class="project-demand-flow-step">
+            <p class="flow-label">What the project needs</p>
+            <p class="flow-detail">Contribution requirements</p>
+          </div>
+          <div class="project-demand-flow-arrow" aria-hidden="true">→</div>
+          <div class="project-demand-flow-step">
+            <p class="flow-label">Compared later with</p>
+            <p class="flow-detail">What people contribute</p>
+          </div>
+          <div class="project-demand-flow-arrow" aria-hidden="true">→</div>
+          <div class="project-demand-flow-step">
+            <p class="flow-label">Then</p>
+            <p class="flow-detail">Support and gaps</p>
+          </div>
+        </div>
+
+        <div id="project-demand-status" class="status-line" role="status" aria-live="polite"></div>
+
+        <div id="project-demand-empty" class="project-demand-empty">
+          <p class="empty-copy">Define what this project requires.</p>
+          <p class="meta">
+            Classify every contribution dimension intentionally.
+            Missing is not the same as Not required.
+            This describes the work only — it does not rank people.
+          </p>
+        </div>
+
+        <form id="project-demand-form" class="project-demand-form" novalidate>
+          <div class="project-demand-meta setup-grid">
+            <label class="field">
+              <span>Project label</span>
+              <input id="pd-label" name="label" type="text" required autocomplete="off" placeholder="e.g. AI support assistant MVP" aria-describedby="pd-label-error" />
+              <p id="pd-label-error" class="field-error" role="alert" hidden></p>
+            </label>
+            <label class="field field-span-2">
+              <span>Description <span class="meta">(optional)</span></span>
+              <textarea id="pd-description" name="description" rows="2" placeholder="Short description of the work for this demand snapshot"></textarea>
+            </label>
+            <label class="field field-span-2">
+              <span>Assumptions <span class="meta">(optional, one per line)</span></span>
+              <textarea id="pd-assumptions" name="assumptions" rows="2" placeholder="Backend platform already exists.&#10;Design is handled by a separate team."></textarea>
+            </label>
+          </div>
+
+          <fieldset class="project-demand-levels-legend">
+            <legend>How much does THIS PROJECT depend on this contribution?</legend>
+            <ul class="demand-level-help">
+              <li><strong>Critical</strong> — The work depends heavily on this contribution.</li>
+              <li><strong>Important</strong> — Materially important to successful delivery.</li>
+              <li><strong>Useful</strong> — Helpful, but not central to the work.</li>
+              <li><strong>Not required</strong> — Intentionally not required for this snapshot.</li>
+            </ul>
+          </fieldset>
+
+          <div id="project-demand-dimensions" class="project-demand-dimensions"></div>
+
+          <div class="actions project-demand-actions">
+            <button type="submit" id="pd-submit" class="btn btn-primary">Save requirements</button>
+            <button type="button" id="pd-reset" class="btn btn-ghost">Clear form</button>
+          </div>
+          <div id="project-demand-action-status" class="project-demand-action-status" role="status" aria-live="polite" hidden></div>
+        </form>
+
+        <div id="project-demand-snapshot" class="project-demand-snapshot" hidden></div>
+      </section>
+
       <section class="panel" aria-labelledby="coverage-heading">
         <div class="panel-head">
-          <h2 id="coverage-heading">Workflow Coverage</h2>
+          <div>
+            <p class="eyebrow">Team Function model</p>
+            <h2 id="coverage-heading">Workflow Coverage</h2>
+          </div>
         </div>
+        <p class="section-helper">
+          Separate from Project Demand. This view uses Team Function labels for workflow stages,
+          not Contribution Dimension project requirements.
+        </p>
         <div id="team-gap-status" class="status-line" role="status"></div>
         <div id="workflow-strip" class="workflow-strip" aria-label="Explore Validate Productionize Connect"></div>
         <div id="gap-priority" class="gap-priority"></div>
