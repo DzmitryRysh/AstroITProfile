@@ -141,6 +141,55 @@
         <div id="project-demand-snapshot" class="project-demand-snapshot" hidden></div>
       </section>
 
+      <section class="panel person-project-coverage-panel" aria-labelledby="person-project-coverage-heading">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">Project Coverage</p>
+            <h2 id="person-project-coverage-heading">How this person supports the project</h2>
+          </div>
+        </div>
+        <p class="section-helper">
+          Compare what this project needs with the contribution patterns currently supported for one person.
+        </p>
+        <div class="project-demand-flow person-coverage-flow" aria-label="How coverage is calculated">
+          <div class="project-demand-flow-step">
+            <p class="flow-label">Project needs</p>
+            <p class="flow-detail">Saved requirements</p>
+          </div>
+          <div class="project-demand-flow-arrow" aria-hidden="true">→</div>
+          <div class="project-demand-flow-step">
+            <p class="flow-label">Person contributes</p>
+            <p class="flow-detail">One person from this workspace</p>
+          </div>
+          <div class="project-demand-flow-arrow" aria-hidden="true">→</div>
+          <div class="project-demand-flow-step">
+            <p class="flow-label">Support and gaps</p>
+            <p class="flow-detail">Requirement coverage</p>
+          </div>
+        </div>
+
+        <div id="person-coverage-empty" class="person-coverage-empty">
+          <p class="empty-copy">Save project requirements first.</p>
+          <p class="meta">Coverage can be calculated after the project needs are defined.</p>
+        </div>
+
+        <div id="person-coverage-controls" class="person-coverage-controls" hidden>
+          <label class="field person-coverage-person-field">
+            <span>Person</span>
+            <select id="person-coverage-select" aria-describedby="person-coverage-stale">
+              <option value="" selected disabled>Select a person</option>
+            </select>
+          </label>
+          <div class="actions person-coverage-actions">
+            <button type="button" id="person-coverage-submit" class="btn btn-primary">Check project coverage</button>
+          </div>
+          <p id="person-coverage-stale" class="meta person-coverage-stale" hidden></p>
+        </div>
+
+        <div id="person-coverage-status" class="status-line" role="status" aria-live="polite"></div>
+        <div id="person-coverage-results" class="person-coverage-results" hidden></div>
+      </section>
+
       <section class="panel" aria-labelledby="coverage-heading">
         <div class="panel-head">
           <div>

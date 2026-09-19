@@ -1403,6 +1403,10 @@ class RecruiterProjectDemandUiTests(unittest.TestCase):
         self.assertIn("project-demand-form", workspace)
         self.assertLess(
             workspace.find("project-demand-heading"),
+            workspace.find("person-project-coverage-heading"),
+        )
+        self.assertLess(
+            workspace.find("person-project-coverage-heading"),
             workspace.find("coverage-heading"),
         )
         personal = self.html.split('id="self-profile"', 1)[1].split('id="workspace"', 1)[0]
@@ -1421,10 +1425,13 @@ class RecruiterProjectDemandUiTests(unittest.TestCase):
         self.assertIn("Support and gaps", workspace)
         self.assertIn("How much does THIS PROJECT depend on this contribution?", workspace)
         self.assertIn("project-demand-flow", workspace)
-        # Explanatory future language is allowed; computed coverage results are not.
-        self.assertNotIn('data-coverage="covered"', self.js)
-        self.assertNotIn("partially_covered", self.js)
-        self.assertNotIn("renderSupplyDemand", self.js)
+        # Explanatory future language is allowed; Project Demand UI must not compute coverage.
+        demand_js = self.js.split("const PROJECT_DEMAND_DIMENSIONS", 1)[1].split(
+            "function initProjectDemandUi", 1
+        )[0]
+        self.assertNotIn('data-coverage="covered"', demand_js)
+        self.assertNotIn("resolve_coverage_status", demand_js)
+        self.assertNotIn("renderSupplyDemand", demand_js)
 
     def test_exactly_five_supported_dimensions(self):
         self.assertIn("PROJECT_DEMAND_DIMENSIONS", self.js)
@@ -1568,10 +1575,10 @@ class RecruiterProjectDemandUiTests(unittest.TestCase):
 
     def test_no_astrology_language_in_project_demand_ui(self):
         workspace = self.html.split('id="project-demand-heading"', 1)[1].split(
-            'id="coverage-heading"', 1
+            'id="person-project-coverage-heading"', 1
         )[0].lower()
         pd_js = self.js.split("const PROJECT_DEMAND_DIMENSIONS", 1)[1].split(
-            "function renderWorkflowStrip", 1
+            "function initProjectDemandUi", 1
         )[0].lower()
         for term in ("mercury", "mars", "zodiac", "aspect", "retrograde", "house", "birth"):
             self.assertNotIn(term, workspace, term)
@@ -1604,6 +1611,171 @@ class RecruiterProjectDemandUiTests(unittest.TestCase):
         self.assertIn(".project-demand-snapshot", self.css)
         self.assertIn(".project-demand-flow", self.css)
         self.assertIn(".field textarea", self.css)
+
+
+class RecruiterPersonProjectCoverageUiTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.html = RECRUITER_INDEX.read_text(encoding="utf-8")
+        cls.js = RECRUITER_JS.read_text(encoding="utf-8")
+        cls.css = RECRUITER_CSS.read_text(encoding="utf-8")
+
+    def _coverage_js(self):
+        return self.js.split("const COVERAGE_STATUS_LABELS", 1)[1].split(
+            "function renderWorkflowStrip", 1
+        )[0]
+
+    def test_panel_placement_between_demand_and_workflow(self):
+        workspace = self.html.split('id="workspace"', 1)[1].split('id="setup-overlay"', 1)[0]
+        self.assertIn("person-project-coverage-heading", workspace)
+        self.assertIn("How this person supports the project", workspace)
+        self.assertIn("Project Coverage", workspace)
+        self.assertLess(
+            workspace.find("project-demand-heading"),
+            workspace.find("person-project-coverage-heading"),
+        )
+        self.assertLess(
+            workspace.find("person-project-coverage-heading"),
+            workspace.find("coverage-heading"),
+        )
+        self.assertIn("Workflow Coverage", workspace)
+        self.assertIn("Team Function model", workspace)
+
+    def test_empty_state_before_project_demand(self):
+        self.assertIn("Save project requirements first.", self.html)
+        self.assertIn(
+            "Coverage can be calculated after the project needs are defined.",
+            self.html,
+        )
+        coverage_js = self._coverage_js()
+        self.assertIn("syncPersonCoverageAvailability", coverage_js)
+        self.assertIn("Boolean(lastProjectDemand)", coverage_js)
+        submit = coverage_js.split("async function submitPersonProjectCoverage", 1)[1]
+        # Endpoint only invoked inside submit after demand exists.
+        self.assertIn('"/api/v1/contribution-demand-coverage"', submit)
+        self.assertIn("if (!lastProjectDemand)", submit)
+
+    def test_explains_project_needs_vs_person_contribution(self):
+        panel = self.html.split('id="person-project-coverage-heading"', 1)[1].split(
+            'id="coverage-heading"', 1
+        )[0]
+        self.assertIn(
+            "Compare what this project needs with the contribution patterns currently supported for one person.",
+            panel,
+        )
+        self.assertIn("Project needs", panel)
+        self.assertIn("Person contributes", panel)
+        self.assertIn("Support and gaps", panel)
+
+    def test_person_selector_uses_workspace_people_no_duplicate_natal_form(self):
+        coverage_js = self._coverage_js()
+        self.assertIn("listWorkspacePeopleForCoverage", coverage_js)
+        self.assertIn("collectMembers()", coverage_js)
+        self.assertIn("collectCandidates()", coverage_js)
+        self.assertIn("Current Team", coverage_js)
+        self.assertIn("Shortlist", coverage_js)
+        self.assertIn("person-coverage-select", self.html)
+        panel = self.html.split('id="person-project-coverage-heading"', 1)[1].split(
+            'id="coverage-heading"', 1
+        )[0]
+        self.assertNotIn('type="date"', panel)
+        self.assertNotIn("Birth Date", panel)
+        self.assertNotIn("Birth Place", panel)
+
+    def test_request_uses_last_project_demand_and_person_fields(self):
+        coverage_js = self._coverage_js()
+        submit = coverage_js.split("async function submitPersonProjectCoverage", 1)[1]
+        self.assertIn('"/api/v1/contribution-demand-coverage"', submit)
+        self.assertIn("project_demand: lastProjectDemand", submit)
+        self.assertIn("person: selected.person", submit)
+        self.assertIn("birth_date: member.birth_date", coverage_js)
+        self.assertIn("birth_place: member.birth_place", coverage_js)
+        self.assertIn("display_name: member.display_name", coverage_js)
+        self.assertNotIn("resolve_coverage_status", coverage_js)
+        self.assertNotIn("apply_coverage_matrix", coverage_js)
+
+    def test_results_render_backend_fields_and_labels(self):
+        coverage_js = self._coverage_js()
+        render = coverage_js.split("function renderPersonCoverageResults", 1)[1].split(
+            "async function submitPersonProjectCoverage", 1
+        )[0]
+        self.assertIn("coverage.dimensions", render)
+        self.assertIn("item.demand_level", render)
+        self.assertIn("item.contribution_state", render)
+        self.assertIn("item.coverage_status", render)
+        self.assertIn("item.demand_rationale", render)
+        self.assertIn("item.explanation", render)
+        self.assertIn("Why the project needs it", render)
+        self.assertIn("No current contribution", coverage_js)
+        self.assertIn("Partially covered", coverage_js)
+        self.assertIn("Conditional coverage", coverage_js)
+        self.assertIn("Covered", coverage_js)
+        self.assertIn('data-level="', render)
+        self.assertIn("demand-level-badge", render)
+        self.assertIn("coverage-status-badge", render)
+
+    def test_no_score_ranking_or_progress(self):
+        coverage_js = self._coverage_js().lower()
+        panel = self.html.split('id="person-project-coverage-heading"', 1)[1].split(
+            'id="coverage-heading"', 1
+        )[0].lower()
+        for term in (
+            "fit %",
+            "fit score",
+            "match score",
+            "suitability",
+            "progress-bar",
+            "hire this",
+            "reject this",
+            "recommended",
+            "4 of 5",
+            "good coverage",
+            "poor coverage",
+        ):
+            self.assertNotIn(term, coverage_js, term)
+            self.assertNotIn(term, panel, term)
+        self.assertNotIn("progress", self.css.split(".person-coverage-results", 1)[-1][:2000].lower())
+
+    def test_stale_handling_on_person_and_demand_change(self):
+        coverage_js = self._coverage_js()
+        self.assertIn("Person changed. Check coverage again.", coverage_js)
+        self.assertIn("Project requirements changed. Check coverage again.", coverage_js)
+        self.assertIn("onPersonCoverageSelectionChange", coverage_js)
+        self.assertIn("markPersonCoverageStaleAfterDemandChange", coverage_js)
+        submit_demand = self.js.split("async function submitProjectDemand", 1)[1].split(
+            "function initProjectDemandUi", 1
+        )[0]
+        self.assertIn("markPersonCoverageStaleAfterDemandChange()", submit_demand)
+        reset = self.js.split("function resetProjectDemandForm", 1)[1].split(
+            "async function submitProjectDemand", 1
+        )[0]
+        self.assertIn("clearPersonCoverageResults()", reset)
+        self.assertIn("syncPersonCoverageAvailability()", reset)
+
+    def test_api_failure_clears_results(self):
+        submit = self._coverage_js().split(
+            "async function submitPersonProjectCoverage", 1
+        )[1]
+        self.assertIn("Could not calculate project coverage. Please try again.", submit)
+        self.assertIn("clearPersonCoverageResults()", submit)
+        fail_branch = submit.split("catch (_err)", 1)[1]
+        self.assertIn("lastPersonCoverageResult = null", fail_branch)
+        self.assertIn("renderPersonCoverageResults(null)", fail_branch)
+        self.assertNotIn("lastPersonCoverageResult = coverage", fail_branch)
+
+    def test_safety_and_edit_requirements_still_work(self):
+        coverage_js = self._coverage_js()
+        self.assertIn("About this comparison", coverage_js)
+        self.assertIn("does not rank candidates", coverage_js)
+        self.assertIn("editProjectDemandRequirements", self.js)
+        self.assertIn("Edit requirements", self.js)
+
+    def test_workflow_coverage_remains_separate(self):
+        workspace = self.html.split('id="workspace"', 1)[1].split('id="setup-overlay"', 1)[0]
+        self.assertIn("Workflow Coverage", workspace)
+        self.assertIn("not Contribution Dimension project requirements", workspace)
+        self.assertIn("/api/v1/team-gap", self.js)
+        self.assertNotIn("/api/v1/team-gap", self._coverage_js())
 
 
 if __name__ == "__main__":
