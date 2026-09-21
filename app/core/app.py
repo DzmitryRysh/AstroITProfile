@@ -5,11 +5,15 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.api.router import api_router
+from app.core.runtime_checks import validate_runtime
 
 RECRUITER_UI_DIR = Path(__file__).resolve().parents[1] / "ui" / "recruiter"
 
 
-def create_app() -> FastAPI:
+def create_app(*, run_startup_checks: bool = True) -> FastAPI:
+    if run_startup_checks:
+        validate_runtime()
+
     app = FastAPI(
         title="Astro IT Profile",
         version="0.1.0",
