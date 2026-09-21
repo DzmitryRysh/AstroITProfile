@@ -93,9 +93,6 @@ class AstroService:
             uranus_lon=uranus_lon,
         )
 
-
-        print("DEBUG ASPECTS:", aspects_list, "BONUS", aspects_bonus)
-
         # co-ruler (optional)
         co_ruler_sign = None
         co_ruler_house = None
