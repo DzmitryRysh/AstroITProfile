@@ -38,8 +38,14 @@ def _serialize_record(record: WorkspaceRecord) -> dict[str, Any]:
 
 class WorkspaceRepository:
     def __init__(self, store_path: Path | None = None) -> None:
-        self.store_path = (store_path or default_store_path()).resolve()
+        self._store_path_override = store_path
         self._lock = threading.RLock()
+
+    @property
+    def store_path(self) -> Path:
+        if self._store_path_override is not None:
+            return self._store_path_override.resolve()
+        return default_store_path()
 
     def list_records(self) -> list[WorkspaceRecord]:
         with self._lock:
@@ -54,7 +60,12 @@ class WorkspaceRepository:
                     return self._parse_record(item)
             return None
 
-    def create_record(self, payload: WorkspaceData) -> WorkspaceRecord:
+    def create_record(
+        self,
+        payload: WorkspaceData,
+        *,
+        workspace_scope_id: str | None = None,
+    ) -> WorkspaceRecord:
         with self._lock:
             document = self._read_document()
             now = _utc_now()
@@ -67,18 +78,32 @@ class WorkspaceRepository:
                 candidates=list(payload.candidates),
                 created_at=now,
                 updated_at=now,
+                workspace_scope_id=workspace_scope_id,
             )
             document["workspaces"].append(_serialize_record(record))
             self._write_document(document)
             return record
 
-    def update_record(self, workspace_id: str, payload: WorkspaceData) -> WorkspaceRecord | None:
+    def update_record(
+        self,
+        workspace_id: str,
+        payload: WorkspaceData,
+        *,
+        workspace_scope_id: str | None = None,
+        require_scope: bool = False,
+    ) -> WorkspaceRecord | None:
         with self._lock:
             document = self._read_document()
             for index, item in enumerate(document["workspaces"]):
                 if item.get("workspace_id") != workspace_id:
                     continue
                 existing = self._parse_record(item)
+                if require_scope:
+                    if (
+                        not existing.workspace_scope_id
+                        or existing.workspace_scope_id != workspace_scope_id
+                    ):
+                        return None
                 updated = WorkspaceRecord(
                     workspace_id=existing.workspace_id,
                     team_name=payload.team_name,
@@ -88,23 +113,40 @@ class WorkspaceRepository:
                     candidates=list(payload.candidates),
                     created_at=existing.created_at,
                     updated_at=_utc_now(),
+                    workspace_scope_id=existing.workspace_scope_id,
                 )
                 document["workspaces"][index] = _serialize_record(updated)
                 self._write_document(document)
                 return updated
             return None
 
-    def delete_record(self, workspace_id: str) -> bool:
+    def delete_record(
+        self,
+        workspace_id: str,
+        *,
+        workspace_scope_id: str | None = None,
+        require_scope: bool = False,
+    ) -> bool:
         with self._lock:
             document = self._read_document()
-            before = len(document["workspaces"])
-            document["workspaces"] = [
-                item
-                for item in document["workspaces"]
-                if item.get("workspace_id") != workspace_id
-            ]
-            if len(document["workspaces"]) == before:
+            kept: list[dict[str, Any]] = []
+            deleted = False
+            for item in document["workspaces"]:
+                if item.get("workspace_id") != workspace_id:
+                    kept.append(item)
+                    continue
+                if require_scope:
+                    existing = self._parse_record(item)
+                    if (
+                        not existing.workspace_scope_id
+                        or existing.workspace_scope_id != workspace_scope_id
+                    ):
+                        kept.append(item)
+                        continue
+                deleted = True
+            if not deleted:
                 return False
+            document["workspaces"] = kept
             self._write_document(document)
             return True
 

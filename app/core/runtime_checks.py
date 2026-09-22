@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 
 from app.services.workspace_repository import default_store_path
+from app.core.settings import validate_beta_settings
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _DEFAULT_PLACES_PATH = _REPO_ROOT / "data" / "places.json"
@@ -77,9 +78,11 @@ def validate_runtime(
     workspace_store: Path | None = None,
 ) -> dict[str, str]:
     """Fail-fast checks for production-critical local filesystem dependencies."""
+    beta = validate_beta_settings()
     places = validate_places_data(places_path)
     store = validate_workspace_store_writable(workspace_store)
     return {
         "places_path": str(places),
         "workspace_store_path": str(store),
+        "beta_gate_enabled": "true" if beta.gate_enabled else "false",
     }
