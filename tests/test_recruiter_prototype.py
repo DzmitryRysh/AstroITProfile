@@ -131,6 +131,43 @@ class RecruiterUxPolishTests(unittest.TestCase):
         self.assertIn("Set Up Project / Team", self.html)
         self.assertIn("self-build-team", self.html)
 
+    def test_self_birth_time_helper_explains_house_limitation(self):
+        field = self.html.split('id="self-birth-time"', 1)[0].rsplit("<label", 1)[-1]
+        field = field + self.html.split('id="self-birth-time"', 1)[1].split("</label>", 1)[0]
+        self.assertIn("Birth Time (optional)", field)
+        self.assertIn("house-dependent interpretations may be unavailable", field)
+        self.assertIn("Birth time is optional", field)
+        # Submission still omits empty birth_time; no required attr on the time input.
+        time_tag = self.html.split('id="self-birth-time"', 1)[1].split(">", 1)[0]
+        self.assertNotIn("required", time_tag)
+        self.assertIn("if (birthTime) payload.birth_time = birthTime", self.js)
+        self.assertIn("House not calculated — birth time required.", self.js)
+
+    def test_self_birth_place_helper_explains_supported_places(self):
+        block = self.html.split('id="self-birth-place"', 1)[0].rsplit("<label", 1)[-1]
+        block = block + self.html.split('id="self-birth-place"', 1)[1].split("</label>", 1)[0]
+        self.assertIn("Choose a supported place from the suggestions.", block)
+        self.assertIn('list="places-list"', block)
+        self.assertIn("loadPlaces", self.js)
+        self.assertIn("/api/v1/profile/places", self.js)
+        self.assertIn("friendlyApiError", self.js)
+        self.assertIn("not in the supported list", self.js)
+
+    def test_beta_facing_ui_has_no_aptitude_labels(self):
+        self.assertNotIn("Technical aptitude signal", self.js)
+        self.assertNotIn("technical aptitude signals", self.js)
+        self.assertNotIn("Sales-related aptitude signal", self.js)
+        self.assertNotIn("aptitude", self.js.lower())
+        self.assertNotIn("aptitude", self.html.lower())
+        self.assertIn("Source-linked technical pattern", self.js)
+        self.assertIn("Source-linked sales-related pattern", self.js)
+        self.assertIn("source-linked technical patterns", self.js)
+        footer = self.html.split("site-footer", 1)[1].split("</footer>", 1)[0].lower()
+        self.assertIn("does not replace", footer)
+        self.assertIn("technical assessment", footer)
+        self.assertIn("hiring judgment", footer)
+        self.assertIn("work-style hypotheses", footer)
+
     def test_self_profile_calls_mercury_source_profile_endpoint(self):
         self.assertIn('/api/v1/mercury-source-profile', self.js)
         self.assertIn("buildMyProfile", self.js)
@@ -787,7 +824,7 @@ class RecruiterMarsHowYouWorkTests(unittest.TestCase):
         self.assertIn("watchouts-block", secondary)
         self.assertNotIn("best role", secondary.lower())
         self.assertNotIn("source-described associations and aptitudes", secondary)
-        self.assertIn("source-described associations and aptitudes", methodology)
+        self.assertIn("source-described associations and patterns", methodology)
         self.assertIn("not recommended jobs", methodology)
         self.assertIn("Source material from the framework", methodology)
         self.assertNotIn("Source material from the framework", secondary)
@@ -958,7 +995,7 @@ class RecruiterProfileArchitectureTests(unittest.TestCase):
         self.assertIn("profile-professional", working)
         self.assertIn("watchouts-block", working)
         self.assertNotIn('class="watchouts-block" open', working)
-        self.assertIn("source-described associations and aptitudes", working)
+        self.assertIn("source-described associations and patterns", working)
 
     def test_evidence_contains_methodology_and_factor_details(self):
         evidence = self._fn("function renderProfileEvidence", "function profileTabFromHash")
@@ -1135,14 +1172,18 @@ class RecruiterProfileArchitectureTests(unittest.TestCase):
             "const MERCURY_THINKING_GROUPS",
         )
         self.assertIn("technical_ability:", presentation)
-        self.assertIn("Technical aptitude signal", presentation)
-        self.assertIn("repeated source-described technical aptitude signals", presentation)
+        self.assertIn("Source-linked technical pattern", presentation)
+        self.assertIn("repeated source-linked technical patterns", presentation)
         self.assertIn('debate:', presentation)
         self.assertIn("Debate tendency", presentation)
         self.assertIn("argumentation:", presentation)
         self.assertIn("Argumentation pattern", presentation)
         self.assertIn("sales:", presentation)
-        self.assertIn("Sales-related aptitude signal", presentation)
+        self.assertIn("Source-linked sales-related pattern", presentation)
+        self.assertNotIn("Technical aptitude signal", presentation)
+        self.assertNotIn("technical aptitude signals", presentation)
+        self.assertNotIn("Sales-related aptitude signal", presentation)
+        self.assertNotIn("aptitude", presentation.lower())
         self.assertNotIn("analytical_thinking", presentation)
         self.assertNotIn("validated", presentation.lower())
         self.assertNotIn("verified skill", presentation.lower())
@@ -1170,7 +1211,8 @@ class RecruiterProfileArchitectureTests(unittest.TestCase):
             "const OVERVIEW_MERCURY_SIGNAL_PRESENTATION",
             "const MERCURY_THINKING_GROUPS",
         )
-        self.assertIn("Technical aptitude signal", presentation)
+        self.assertIn("Source-linked technical pattern", presentation)
+        self.assertNotIn("Technical aptitude signal", presentation)
         self.assertNotIn("Technical Ability", overview)
         self.assertNotIn("Technical Ability", glance)
         self.assertNotIn("Technical talent", presentation)

@@ -1176,6 +1176,14 @@ details.more-details > summary::-webkit-details-marker {
   font-weight: 650;
 }
 
+.field-hint {
+  margin: 0;
+  color: var(--text-faint);
+  font-size: 0.78rem;
+  line-height: 1.35;
+  font-weight: 500;
+}
+
 .field input,
 .field select,
 .field textarea,

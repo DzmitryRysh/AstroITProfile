@@ -1375,7 +1375,7 @@
     const professionalHtml = professional
       ? `<details class="methodology-row">
           <summary>Professional associations</summary>
-          <p class="section-helper">These are source-described associations and aptitudes, not recommended jobs, verified competencies, or hiring recommendations.</p>
+          <p class="section-helper">These are source-described associations and patterns, not recommended jobs, verified competencies, or hiring recommendations.</p>
         </details>`
       : "";
     const compensation = populated.find((section) => section.key === "compensations");
@@ -1412,8 +1412,8 @@
   // Overview-only recruiter labels. Canonical signal ids / tags are unchanged.
   const OVERVIEW_MERCURY_SIGNAL_PRESENTATION = {
     technical_ability: {
-      label: "Technical aptitude signal",
-      takeaway: "The profile contains repeated source-described technical aptitude signals.",
+      label: "Source-linked technical pattern",
+      takeaway: "The profile contains repeated source-linked technical patterns.",
     },
     debate: {
       label: "Debate tendency",
@@ -1422,7 +1422,7 @@
       label: "Argumentation pattern",
     },
     sales: {
-      label: "Sales-related aptitude signal",
+      label: "Source-linked sales-related pattern",
     },
   };
   // Overview-only glance wording. Canonical card text remains in Thinking/Evidence.
@@ -2220,7 +2220,7 @@
       professional
         ? `<details class="watchouts-block profile-professional">
             <summary><span class="watchouts-summary-main">${escapeHtml(marsSectionTitle(professional, person))}</span></summary>
-            <p class="section-helper">These are source-described associations and aptitudes, not recommended jobs, verified competencies, or hiring recommendations.</p>
+            <p class="section-helper">These are source-described associations and patterns, not recommended jobs, verified competencies, or hiring recommendations.</p>
             <div class="watchouts-body">${renderMarsSectionBody(professional, facts, presentation)}</div>
           </details>`
         : "",
@@ -2746,6 +2746,14 @@
     return candidates;
   }
 
+  function friendlyApiError(message) {
+    const text = String(message || "");
+    if (/^Unknown place:/i.test(text)) {
+      return "That birth place is not in the supported list. Choose a place from the suggestions.";
+    }
+    return text || "Request failed";
+  }
+
   async function apiRequest(path, options = {}) {
     const response = await fetch(path, {
       headers: { Accept: "application/json", ...(options.body ? { "Content-Type": "application/json" } : {}) },
@@ -2765,7 +2773,7 @@
         : Array.isArray(detail)
           ? detail.map((item) => item.msg || JSON.stringify(item)).join("; ")
           : `Request failed (${response.status})`;
-      throw new Error(message);
+      throw new Error(friendlyApiError(message));
     }
     return data;
   }

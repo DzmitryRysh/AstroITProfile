@@ -579,7 +579,11 @@ class HumanCopyModuleTests(unittest.TestCase):
             _fact("taurus_bio_vocal_artistic_aptitude", aptitude_raw)
         )
         self.assertIn("source-described", aptitude_raw)
-        self.assertNotIn("source-described", aptitude_human.lower())
+        self.assertEqual(
+            aptitude_human,
+            "May show a source-described vocal or artistic pattern.",
+        )
+        self.assertNotIn("aptitude", aptitude_human.lower())
 
         self.assertNotIn("taurus_harmonious_thinking", HUMAN_COPY_OVERRIDES)
         self.assertEqual(
@@ -591,6 +595,20 @@ class HumanCopyModuleTests(unittest.TestCase):
             ),
             "Harmonious thinking.",
         )
+
+    def test_presentation_aptitude_ids_have_no_aptitude_wording(self):
+        aptitude_ids = [fid for fid in HUMAN_COPY_OVERRIDES if "aptitude" in fid]
+        self.assertGreater(len(aptitude_ids), 10)
+        for fact_id in aptitude_ids:
+            human = HUMAN_COPY_OVERRIDES[fact_id]
+            self.assertNotIn("aptitude", human.lower(), fact_id)
+            self.assertTrue(
+                "pattern" in human.lower() or "potential" in human.lower(),
+                fact_id,
+            )
+        # Catch presentation values whose keys do not contain aptitude.
+        for fact_id, human in HUMAN_COPY_OVERRIDES.items():
+            self.assertNotIn("aptitude", human.lower(), fact_id)
 
 
 if __name__ == "__main__":

@@ -573,91 +573,91 @@ HUMAN_COPY_OVERRIDES: dict[str, str] = {
     ),
     # --- Bio pair aptitudes ---
     "mars_sun_bio_manual_work_aptitude": (
-        "The source associates this pairing with manual-work aptitude, not technical ability."
+        "The source associates this pairing with manual-work patterns, not technical ability."
     ),
     "mars_sun_bio_selling_persuasion_aptitude": (
-        "The source associates this pairing with selling or persuasion aptitude."
+        "The source associates this pairing with selling or persuasion patterns."
     ),
     "mars_sun_bio_anti_crisis_aptitude": (
-        "The source associates this pairing with anti-crisis aptitude, not generic risk tolerance."
+        "The source associates this pairing with anti-crisis patterns, not generic risk tolerance."
     ),
     "mars_sun_bio_skilled_action_in_chaos_uncertainty": (
         "The source associates this pairing with skilled action in chaos or uncertainty."
     ),
     "mars_mercury_bio_selling_persuasion_aptitude": (
-        "The source associates this pairing with selling or persuasion aptitude."
+        "The source associates this pairing with selling or persuasion patterns."
     ),
     "mars_mercury_bio_mobile_quick_intellect_predisposition": (
         "The source associates this pairing with a mobile, quick intellect predisposition; "
         "this is not a Mercury thinking claim."
     ),
     "mars_mercury_bio_technical_analytical_it_engineering_aptitude": (
-        "The source associates this pairing with technical, analytical, or IT-engineering aptitude."
+        "The source associates this pairing with technical, analytical, or IT-engineering patterns."
     ),
     "mars_mercury_bio_vocal_musical_aptitude": (
-        "The source associates this pairing with vocal or musical aptitude."
+        "The source associates this pairing with vocal or musical patterns."
     ),
     "mars_mercury_bio_sense_of_humor": (
         "The source associates this pairing with a sense of humor."
     ),
     "mars_venus_bio_design_aptitude": (
-        "The source associates this pairing with design aptitude, including photography, "
+        "The source associates this pairing with design patterns, including photography, "
         "clothing, websites, architecture, and similar work."
     ),
     "mars_jupiter_bio_philosopher_aptitude": (
-        "The source associates this pairing with philosopher aptitude."
+        "The source associates this pairing with philosopher patterns."
     ),
     "mars_jupiter_bio_teacher_mentor_aptitude": (
-        "The source associates this pairing with teacher or mentor aptitude."
+        "The source associates this pairing with teacher or mentor patterns."
     ),
     "mars_jupiter_bio_ideological_manager_aptitude": (
-        "The source associates this pairing with ideological-manager aptitude."
+        "The source associates this pairing with ideological-manager patterns."
     ),
     "mars_jupiter_bio_sets_goals": (
-        "The source associates this pairing with an aptitude for setting goals."
+        "The source associates this pairing with a source-described pattern related to setting goals."
     ),
     "mars_jupiter_bio_invents_strategies": (
-        "The source associates this pairing with an aptitude for inventing strategies; "
+        "The source associates this pairing with a source-described pattern related to inventing strategies; "
         "this is not strategic execution style."
     ),
     "mars_jupiter_bio_inspires": (
-        "The source associates this pairing with an aptitude to inspire."
+        "The source associates this pairing with a source-described pattern related to inspiring others."
     ),
     "mars_jupiter_bio_moral_material_value_orientation": (
         "The source associates this pairing with a particular moral or material-value "
         "orientation; this is not a moral verdict."
     ),
     "mars_saturn_bio_design_aptitude": (
-        "The source associates this pairing with design aptitude."
+        "The source associates this pairing with design patterns."
     ),
     "mars_saturn_bio_manual_work_aptitude": (
-        "The source associates this pairing with manual-work aptitude."
+        "The source associates this pairing with manual-work patterns."
     ),
     "mars_saturn_bio_management_organizational_aptitude": (
-        "The source associates this pairing with management or organizational aptitude."
+        "The source associates this pairing with management or organizational patterns."
     ),
     "mars_uranus_bio_technical_analytical_it_engineering_aptitude": (
-        "The source associates this pairing with technical, analytical, or IT-engineering aptitude."
+        "The source associates this pairing with technical, analytical, or IT-engineering patterns."
     ),
     "mars_uranus_bio_psychology_aptitude": (
-        "The source associates this pairing with psychology aptitude, not diagnostic ability."
+        "The source associates this pairing with psychology patterns, not diagnostic ability."
     ),
     "mars_uranus_bio_planning_forecasting_aptitude": (
-        "The source associates this pairing with planning or forecasting aptitude; "
+        "The source associates this pairing with planning or forecasting patterns; "
         "this is not strategic execution."
     ),
     "mars_uranus_bio_astrology_forecasting": (
-        "The source includes astrology forecasting among associated aptitudes."
+        "The source includes astrology forecasting among associated patterns."
     ),
     "mars_uranus_bio_hypnosis_extrasensory": (
         "The source associates this pairing with hypnosis or extrasensory claims; "
         "this is not a validated competency or diagnosis."
     ),
     "mars_neptune_bio_design_aptitude": (
-        "The source associates this pairing with design aptitude."
+        "The source associates this pairing with design patterns."
     ),
     "mars_neptune_bio_psychology_aptitude": (
-        "The source associates this pairing with psychology aptitude, not diagnostic ability."
+        "The source associates this pairing with psychology patterns, not diagnostic ability."
     ),
     "mars_neptune_bio_hypnosis_extrasensory": (
         "The source associates this pairing with hypnosis or extrasensory claims; "
@@ -668,19 +668,19 @@ HUMAN_COPY_OVERRIDES: dict[str, str] = {
         "this is not a medical qualification or diagnosis."
     ),
     "mars_pluto_bio_selling_persuasion_aptitude": (
-        "The source associates this pairing with selling or persuasion aptitude."
+        "The source associates this pairing with selling or persuasion patterns."
     ),
     "mars_pluto_bio_anti_crisis_aptitude": (
-        "The source associates this pairing with anti-crisis aptitude, not generic risk tolerance."
+        "The source associates this pairing with anti-crisis patterns, not generic risk tolerance."
     ),
     "mars_pluto_bio_skilled_action_in_chaos_uncertainty": (
         "The source associates this pairing with skilled action in chaos or uncertainty."
     ),
     "mars_pluto_bio_management_organizational_aptitude": (
-        "The source associates this pairing with management or organizational aptitude."
+        "The source associates this pairing with management or organizational patterns."
     ),
     "mars_pluto_bio_psychology_aptitude": (
-        "The source associates this pairing with psychology aptitude, not diagnostic ability."
+        "The source associates this pairing with psychology patterns, not diagnostic ability."
     ),
     "mars_pluto_bio_hypnosis_extrasensory": (
         "The source associates this pairing with hypnosis or extrasensory claims; "
