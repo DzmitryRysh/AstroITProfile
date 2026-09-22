@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AstroIT · Private Beta</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --panel: #1a222c;
+      --text: #e8eef4;
+      --muted: #9aa8b5;
+      --accent: #3d9bfd;
+      --danger: #ef7a6a;
+      --border: #2a3542;
+      --radius: 10px;
+      --font: "Segoe UI", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      font-family: var(--font);
+      background:
+        radial-gradient(ellipse at top, #1a2a3a 0%, transparent 55%),
+        var(--bg);
+      color: var(--text);
+      padding: 1.5rem;
+    }
+    .card {
+      width: min(100%, 24rem);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.75rem 1.5rem 1.5rem;
+    }
+    .brand {
+      margin: 0;
+      font-size: 0.85rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 700;
+    }
+    h1 {
+      margin: 0.35rem 0 1.25rem;
+      font-size: 1.55rem;
+      font-weight: 650;
+    }
+    label {
+      display: grid;
+      gap: 0.4rem;
+      font-size: 0.92rem;
+    }
+    input[type="password"] {
+      width: 100%;
+      padding: 0.7rem 0.8rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #121820;
+      color: var(--text);
+      font: inherit;
+    }
+    input:focus {
+      outline: 2px solid color-mix(in srgb, var(--accent) 70%, white);
+      outline-offset: 1px;
+    }
+    button {
+      margin-top: 1rem;
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 0;
+      border-radius: 8px;
+      background: var(--accent);
+      color: #041018;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .error {
+      margin: 0.85rem 0 0;
+      color: var(--danger);
+      font-size: 0.9rem;
+    }
+    .hint {
+      margin: 1rem 0 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <p class="brand">AstroIT</p>
+    <h1>Private Beta</h1>
+    <form method="post" action="/beta-access" autocomplete="off">
+      <label>
+        Access code
+        <input
+          type="password"
+          name="access_code"
+          required
+          autofocus
+          autocomplete="current-password"
+          spellcheck="false"
+        />
+      </label>
+      <button type="submit">Enter Beta</button>
+    </form>
+    __ERROR_BLOCK__
+    <p class="hint">Invite-only access. Do not share the access code outside the beta cohort.</p>
+  </main>
+</body>
+</html>

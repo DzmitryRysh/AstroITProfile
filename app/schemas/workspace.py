@@ -43,6 +43,8 @@ class WorkspaceRecord(BaseModel):
     candidates: list[CandidateInput]
     created_at: datetime
     updated_at: datetime
+    # Opaque browser scope ownership. None = legacy/unscoped record.
+    workspace_scope_id: Optional[str] = None
 
     @field_validator("workspace_id")
     @classmethod

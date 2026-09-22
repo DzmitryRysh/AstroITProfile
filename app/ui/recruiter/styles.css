@@ -103,6 +103,12 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 0.55rem;
+  align-items: center;
+}
+
+.beta-logout-form {
+  display: inline;
+  margin: 0;
 }
 
 .layout {
