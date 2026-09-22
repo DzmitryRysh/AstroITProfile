@@ -360,30 +360,6 @@
     setBrandTitleMode("self");
   }
 
-  const SELF_DEMOS = {
-    avdey: {
-      display_name: "Avdey",
-      birth_date: "1986-07-14",
-      birth_time: "07:10",
-      birth_place: "Simferopol, Ukraine",
-      sex: "male",
-    },
-    vlad: {
-      display_name: "Vlad",
-      birth_date: "1986-05-16",
-      birth_time: "15:00",
-      birth_place: "Dnipro, Ukraine",
-      sex: "male",
-    },
-    dzmitry: {
-      display_name: "Dzmitry",
-      birth_date: "1985-11-12",
-      birth_time: "14:15",
-      birth_place: "Zhodino, Belarus",
-      sex: "male",
-    },
-  };
-
   const CATEGORY_LABELS = {
     thinking: "Thinking",
     communication: "Communication",
@@ -435,18 +411,6 @@
     selfOverlay.hidden = true;
     selfDrawer.hidden = true;
     document.body.style.overflow = "";
-  }
-
-  function fillSelfDemo(key) {
-    const demo = SELF_DEMOS[key];
-    if (!demo) return;
-    document.getElementById("self-name").value = demo.display_name;
-    document.getElementById("self-birth-date").value = demo.birth_date;
-    document.getElementById("self-birth-time").value = demo.birth_time;
-    document.getElementById("self-birth-place").value = demo.birth_place;
-    const sexEl = document.getElementById("self-sex");
-    if (sexEl) sexEl.value = demo.sex || "";
-    setStatus(selfSetupStatus, `Filled ${demo.display_name}. Click Build My Profile to call the API.`);
   }
 
   function titleCaseSignal(value) {
@@ -4323,9 +4287,6 @@
   document.getElementById("self-build-team").addEventListener("click", () => {
     closeSelfDrawer();
     openSetup();
-  });
-  document.querySelectorAll("[data-self-demo]").forEach((btn) => {
-    btn.addEventListener("click", () => fillSelfDemo(btn.getAttribute("data-self-demo")));
   });
   document.getElementById("load-demo-empty").addEventListener("click", loadDemoAndAnalyze);
   document.getElementById("load-demo").addEventListener("click", loadDemoAndAnalyze);

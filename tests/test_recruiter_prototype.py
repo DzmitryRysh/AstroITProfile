@@ -1,7 +1,7 @@
 import unittest
 from pathlib import Path
 
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from starlette.routing import Mount, Route
 
 from app.core.app import RECRUITER_UI_DIR, create_app
@@ -35,6 +35,17 @@ class RecruiterPrototypeRouteTests(unittest.TestCase):
     def test_recruiter_route_is_registered(self):
         paths = {getattr(route, "path", None) for route in self.app.routes}
         self.assertIn("/recruiter", paths)
+
+    def test_root_redirects_to_recruiter_product_entry(self):
+        route = next(
+            item
+            for item in self.app.routes
+            if isinstance(item, Route) and item.path == "/"
+        )
+        response = route.endpoint()
+        self.assertIsInstance(response, RedirectResponse)
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(response.headers["location"], "/recruiter")
 
     def test_recruiter_serves_intended_index_file(self):
         route = next(
@@ -111,9 +122,11 @@ class RecruiterUxPolishTests(unittest.TestCase):
         self.assertIn('id="self-birth-date"', self.html)
         self.assertIn('id="self-birth-place"', self.html)
         self.assertIn('list="places-list"', self.html.split('id="self-birth-place"', 1)[1].split(">", 1)[0])
-        self.assertIn('data-self-demo="avdey"', self.html)
-        self.assertIn('data-self-demo="vlad"', self.html)
-        self.assertIn('data-self-demo="dzmitry"', self.html)
+        self.assertNotIn("Avdey", self.html)
+        self.assertNotIn("Vlad", self.html)
+        self.assertNotIn("Dzmitry", self.html)
+        self.assertNotIn("data-self-demo", self.html)
+        self.assertNotIn("SELF_DEMOS", self.js)
         self.assertIn("Back to Start", self.html)
         self.assertIn("Set Up Project / Team", self.html)
         self.assertIn("self-build-team", self.html)
@@ -372,8 +385,8 @@ class RecruiterUxPolishTests(unittest.TestCase):
             self.assertNotIn("candidate score", blob)
             self.assertNotIn("fit score", blob)
         self.assertNotIn("strongest pattern", patterns_fn.replace("strongest_patterns", ""))
-        # Quick-fill + Set Up Project / Team preserved.
-        self.assertIn('data-self-demo="avdey"', self.html)
+        # Self form remains; production quick fills with real identities removed.
+        self.assertNotIn('data-self-demo="avdey"', self.html)
         self.assertIn("Set Up Project / Team", self.html)
         self.assertIn("self-build-team", self.html)
 
@@ -408,10 +421,14 @@ class RecruiterUxPolishTests(unittest.TestCase):
         self.assertIn("renderSectionFactorExplore", explore_block)
         self.assertNotIn("apiPost", explore_block)
         self.assertNotIn("mercury-source-profile", explore_block)
-        self.assertIn("data-self-demo=\"avdey\"", self.html)
-        self.assertIn("data-self-demo=\"vlad\"", self.html)
-        self.assertIn("data-self-demo=\"dzmitry\"", self.html)
-        self.assertIn("SELF_DEMOS", self.js)
+        self.assertNotIn("data-self-demo", self.html)
+        self.assertNotIn("SELF_DEMOS", self.js)
+        self.assertNotIn("Avdey", self.html)
+        self.assertNotIn("Vlad", self.html)
+        self.assertNotIn("Dzmitry", self.html)
+        self.assertNotIn("Avdey", self.js)
+        self.assertNotIn("Vlad", self.js)
+        self.assertNotIn("Dzmitry", self.js)
 
     def test_progressive_section_factor_disclosure(self):
         body_fn = self.js.split("function renderSectionBody", 1)[1].split(
@@ -600,6 +617,17 @@ class RecruiterUxPolishTests(unittest.TestCase):
         self.assertIn("hidden", self.html.split('id="workspaces-overlay"', 1)[1].split(">", 1)[0])
         self.assertLess(self.html.find('id="empty-state"'), self.html.find('id="workspaces-overlay"'))
 
+    def test_workspace_copy_describes_browser_scoped_private_beta(self):
+        overlay = self.html.split('id="workspaces-overlay"', 1)[1]
+        self.assertIn("Saved Workspaces", overlay)
+        self.assertIn("Private Beta", overlay)
+        self.assertIn("scoped to this browser during private beta", overlay)
+        self.assertIn("Another browser or device has a separate saved-workspace scope", overlay)
+        self.assertNotIn("Local Persistence", self.html)
+        self.assertNotIn("stored locally in this prototype", self.html)
+        self.assertNotIn("Prototype quick fills", self.html)
+        self.assertNotIn("Prototype quick fills", self.js)
+
     def test_workspace_persistence_api_usage_in_js(self):
         self.assertIn('"/api/v1/workspaces"', self.js)
         self.assertIn("`/api/v1/workspaces/${activeWorkspaceId}`", self.js)
@@ -768,7 +796,7 @@ class RecruiterMarsHowYouWorkTests(unittest.TestCase):
         self.assertIn("function buildPersonPerspective", self.js)
         self.assertIn("function fillPersonTemplate", self.js)
         self.assertIn("id=\"self-sex\"", self.html)
-        self.assertIn('sex: "male"', self.js)
+        self.assertIn('resolvedSex === "male"', self.js)
         helper = self.js.split("function buildPersonPerspective", 1)[1].split(
             "function fillPersonTemplate", 1
         )[0]
@@ -1037,7 +1065,7 @@ class RecruiterProfileArchitectureTests(unittest.TestCase):
         self.assertIn("howWorksHeading(person)", overview)
         self.assertNotIn("How you think", overview)
         self.assertNotIn("you/your", self_fn.lower())
-        self.assertIn('sex: "male"', self.js)
+        self.assertIn('resolvedSex === "male"', self.js)
         self.assertIn("id=\"self-sex\"", RECRUITER_INDEX.read_text(encoding="utf-8"))
 
     def test_no_score_rank_or_hiring_language_in_architecture(self):
