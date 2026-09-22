@@ -1,198 +1,208 @@
-# AstroIT Profile 🪐💻
-**Astrology-driven career & technical aptitude profiling for IT professionals**
+# AstroIT
 
-AstroIT Profile is an experimental analytics engine that maps **astrological career indicators** to **IT roles, technical strengths, risks, and growth paths**.
+AstroIT explores **work-style and team-contribution patterns** through structured
+astrological profiles. It is a descriptive discussion tool for individuals and teams —
+not a hiring decision engine.
 
-The project does **not** aim to replace traditional assessments (CVs, interviews, coding tests).  
-Instead, it adds a **symbolic + structural layer** that helps explain:
-
-- How a person naturally thinks in technical systems  
-- Where their career energy is best expressed  
-- Why certain IT roles feel natural or exhausting  
-- What long-term technical growth path fits them best  
+Product entry: `/recruiter`
 
 ---
 
-## Core Idea
+## What AstroIT does
 
-AstroIT Profile translates **classical and modern astrology** into **clear, readable IT-oriented insights**.
+AstroIT helps explore descriptive patterns related to:
 
-Instead of vague horoscopes, the system works with:
-- Houses (career, work style, visibility)
-- Planetary rulers
-- Technical planets (Mercury, Uranus, Saturn)
-- Weighted scoring
-- Explicit logic and explainable output
+- thinking and information processing
+- execution style
+- how thinking and execution interact
+- contribution patterns
+- what a project needs (Project Demand)
+- how a person’s contribution patterns relate to that demand
+- team / workflow coverage
 
-This makes astrology usable as a **decision-support tool**, not mysticism.
-
----
-
-## What the Profile Includes
-
-### 1. IT Fit Score (0–100)
-
-A weighted score representing **technical alignment with IT work**, based on:
-
-- Uranus (technology, innovation)
-- Mercury (thinking style)
-- 10th house (career axis)
-- 6th house (daily work style)
-- Career ruler bonuses
-- Key aspects (advanced layer)
-
-The score is **capped, calibrated, and explainable**.
+Outputs are meant to support conversation. They are hypotheses and source-linked
+patterns, not verdicts.
 
 ---
 
-### 2. Personality Style Archetype (Sun)
+## What AstroIT does not do
 
-A **recognition layer** — how the person tends to express themselves.
+AstroIT is **not**:
 
-Examples:
-- Deep Systems Analyst  
-- Strategic Architect  
-- Innovative Technologist  
+- a Fit Score engine
+- a candidate ranking system
+- an automated hiring decision system
+- a validated aptitude or skills test
+- a compatibility-percentage product
+- a technical-skills verifier
+- a scientific employment predictor
 
-This layer supports **self-identification**, not career prediction.
-
----
-
-### 3. IT Archetype (Career-Driven)
-
-The **main professional archetype**, derived from:
-- 10th house sign (MC)
-- Ruler of the 10th house
-- Ruler’s house placement
-
-Examples:
-- Public / Visible Research Engineer  
-- Platform Futurist  
-- Architecture-Focused Engineer  
-
-This answers:
-**“What role fits me long-term in IT?”**
+Technical qualifications, interviews, and human judgment remain separate.
 
 ---
 
-### 4. Career Axis Block (Key Feature)
+## Product layers
 
-A dedicated structured block describing **career realization**.
+Current analytical layers (frozen v1 architecture):
 
-Includes:
-- Career theme (visibility, research, platforms, leadership, etc.)
-- Plain-English summary
-- Role hints
-- Core factors:
-  - MC sign
-  - Main ruler
-  - Ruler sign & house
-- Career-related aspects
-- Aspect score bonuses
+| Layer | Role |
+|---|---|
+| **Mercury (THINK)** | Thinking, communication, and learning-style patterns |
+| **Mars (DO)** | Execution and how work gets done |
+| **THINK → DO** | How thinking and execution interact |
+| **Contribution Profile** | Contribution-pattern summary for a person |
+| **Project Demand** | What the project needs across contribution dimensions |
+| **Contribution × Project Demand Coverage** | How one person’s patterns relate to stated project needs |
+| **Team / Workflow Coverage** | Team and workflow coverage views for setup and discussion |
 
-This block is designed for **frontend visualization**.
-
----
-
-### 5. Technical Mind (Mercury ↔ Uranus)
-
-A special block detecting **aspects between Mercury and Uranus**.
-
-Describes:
-- Non-linear thinking
-- Innovation style
-- How technical insights arise
-- Where the mind thrives (R&D, automation, architecture, security)
-
-Each aspect includes:
-- Aspect type
-- Orb
-- Impact (support / tension)
-- Score bonus
-- Title, explanation, and advice
+These layers are descriptive. The product does not expose a hidden overall fit score
+or rank people against each other.
 
 ---
 
-### 6. Strengths & Risks
+## Current beta experience
 
-Human-readable lists generated from all active factors.
+A working **recruiter UI** ships with the app.
 
-**Strengths** examples:
-- systems thinking
-- security mindset
-- learning drive
+- **Entry:** `GET /` redirects to `/recruiter`
+- **With private beta gate enabled:** unauthenticated browsers are sent to
+  `/beta-access`; after a valid shared access code, the recruiter UI is available
+- **Explore Yourself:** build a personal thinking / working profile from birth data
+- **Project / team workflow:** set up people and project context, then explore
+  contribution, demand, and coverage views
+- **Saved Workspaces:** persist team/project *input* for later sessions
+- **Load Demo Scenario:** sample data for trying the product without entering a full team
 
-**Risks** examples:
-- over-intensity
-- skipping details
-- burnout tendency
-
----
-
-### 7. Transparent Notes
-
-Each profile includes a **debug-style explanation**:
-- What contributed to the score
-- Which bonuses were applied
-- Which planets and houses mattered most
-
-This keeps the system **auditable and honest**.
+There are **no full user accounts** in this beta.
 
 ---
 
-## Architecture Overview
+## Privacy and decision safeguards
 
-**Backend**
+- Outputs are descriptive context for discussion, not automated hiring decisions
+- The product does not rank candidates
+- Technical qualifications must be verified separately (CV, interviews, assessment)
+- Birth data is sensitive input; treat it accordingly
+- This beta does not include third-party analytics or tracking
+
+When the invite-only gate is enabled:
+
+- access uses a **shared beta access code**
+- a **signed HttpOnly session cookie** authenticates the browser
+- recruiter UI, API, and docs are protected
+- `/health` remains public
+- saved workspaces are **browser-scoped** (an anonymous scope is stored in that browser),
+  not account-synced
+
+Clearing cookies can make a previous browser scope unavailable even if workspace
+records remain on disk. Another browser or device gets a separate saved-workspace
+scope.
+
+---
+
+## Known beta limitations
+
+1. **Birth time** — optional. Without it, house-dependent interpretations may be
+   unavailable; a profile can still be built.
+2. **Birth place** — search uses a curated list of supported locations (not
+   worldwide geocoding).
+3. **Workspaces** — scoped to the browser during private beta; no account-level
+   cross-device sync.
+4. **Private beta** — the product is still evolving; APIs and UI may change.
+
+---
+
+## Tech stack
+
 - Python
 - FastAPI
-- Swiss Ephemeris (`swisseph`)
-
-**Structure**
-- `astro_calc` — planetary positions & houses
-- `it_profile` — scoring logic
-- `career_axis` — career interpretation
-- `aspects` — aspect detection & scoring
-- `technical_mind` — Mercury–Uranus logic
-- `astro_service` — orchestration layer
-
-All blocks are **modular and replaceable**.
+- Swiss Ephemeris (`pyswisseph`)
+- Static recruiter UI (`app/ui/recruiter`)
+- Docker production image
+- JSON file persistence for workspaces
+- `unittest` test suite
 
 ---
 
-## Current Status
+## Local development
 
-- Core MVP implemented
-- Career Axis logic complete
-- Ruler bonuses implemented
-- Aspect system (Level 2) live
-- Technical Mind block live
-- Stable API output
+Create/activate a virtualenv, install dependencies, then:
 
-Frontend is planned next.
+```powershell
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
+```
 
----
+Useful URLs (gate **disabled** by default):
 
-## Target Audience
+| URL | Purpose |
+|---|---|
+| http://127.0.0.1:8000/recruiter | Recruiter UI |
+| http://127.0.0.1:8000/docs | OpenAPI / Swagger |
+| http://127.0.0.1:8000/health | Health check |
 
-- IT professionals & engineers  
-- Career switchers into tech  
-- Founders & indie hackers  
-- Career coaches / HR innovators  
-- Astrology-aware users who want structure  
+The private beta gate is off unless `ASTROIT_BETA_GATE_ENABLED` is explicitly set
+to a truthy value. Do not put real secrets in the repo.
 
----
-
-## Roadmap
-
-- Saturn & architecture depth
-- Team compatibility profiles
-- Money-focused project (MoneyCompass)
-- Frontend dashboard
-- Paid API / B2B integrations
+You can also use `python run.py` for local reload on `127.0.0.1` (not for production).
 
 ---
 
-## Disclaimer
+## Docker / production
 
-AstroIT Profile is an **exploratory decision-support system**.  
-It does not claim absolute truth and should not be used as the sole basis for life or career decisions.
+See **[docs/production.md](docs/production.md)** for build/run details, health
+behavior, and workspace privacy notes.
+
+Minimal example (gate disabled):
+
+```powershell
+docker build -t astroit:beta .
+
+docker run --rm -p 8000:8000 `
+  -e PORT=8000 `
+  -e ASTROIT_WORKSPACE_STORE_PATH=/data/workspaces.json `
+  -v ${PWD}/runtime-data:/data `
+  astroit:beta
+```
+
+Use a durable volume for `ASTROIT_WORKSPACE_STORE_PATH` so saves survive container
+restarts.
+
+---
+
+## Environment variables
+
+| Variable | Notes |
+|---|---|
+| `ASTROIT_WORKSPACE_STORE_PATH` | Path to workspace JSON store (recommended in Docker/prod) |
+| `ASTROIT_BETA_GATE_ENABLED` | Explicitly enable invite-only beta gate (default off) |
+| `ASTROIT_BETA_ACCESS_CODE` | Shared invite code (required when gate on) |
+| `ASTROIT_SESSION_SECRET` | Session signing secret, ≥16 chars (required when gate on) |
+| `ASTROIT_COOKIE_SECURE` | Set cookie Secure flag (`true` on HTTPS) |
+| `PORT` | Listen port inside the container (default `8000`) |
+
+Never commit real access codes or session secrets.
+
+---
+
+## Testing
+
+```powershell
+.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py" -v
+```
+
+At the current beta checkpoint, the full unittest suite passes.
+
+---
+
+## Project status
+
+Private beta: recruiter UI, analytical layers above, Docker production shell, and
+invite-only gate with browser-scoped workspaces are in place. Analytical
+architecture for this checkpoint is frozen; product copy and packaging continue to
+evolve.
+
+---
+
+## Documentation
+
+- [docs/production.md](docs/production.md) — Docker, env, health, beta access, workspace scope
