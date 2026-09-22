@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from fastapi import FastAPI
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.api.routes.beta_access import router as beta_access_router
@@ -28,7 +28,7 @@ def create_app(*, run_startup_checks: bool = True) -> FastAPI:
 
     @app.get("/")
     def root():
-        return {"message": "Astro IT Profile backend is running"}
+        return RedirectResponse(url="/recruiter", status_code=303)
 
     @app.get("/health")
     def health():

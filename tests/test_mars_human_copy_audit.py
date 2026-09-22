@@ -51,7 +51,7 @@ class MarsDetectAuditReasonsTests(unittest.TestCase):
             REASON_COMPETENCE_INFLATION,
             detect_audit_reasons(
                 "The source associates this pairing with technical, analytical, "
-                "or IT-engineering aptitude."
+                "or IT-engineering patterns."
             ),
         )
         self.assertNotIn(

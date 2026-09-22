@@ -163,6 +163,14 @@ class MercuryNarrativeCoreTests(unittest.TestCase):
         self.assertEqual(deep.house.fact_ids, [])
         self.assertIsNotNone(deep.sign.narrative)
 
+    def test_technical_ability_labels_avoid_aptitude_wording(self):
+        from app.services.mercury_deep_narrative import TAG_LABEL, TAG_PHRASE
+
+        self.assertEqual(TAG_PHRASE["technical_ability"], "technical pattern")
+        self.assertEqual(TAG_LABEL["technical_ability"], "Technical pattern")
+        self.assertNotIn("aptitude", TAG_PHRASE["technical_ability"].lower())
+        self.assertNotIn("aptitude", TAG_LABEL["technical_ability"].lower())
+
 
 if __name__ == "__main__":
     unittest.main()

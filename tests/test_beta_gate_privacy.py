@@ -149,6 +149,30 @@ class BetaAuthFlowTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"status": "ok"})
 
+    def test_unauthenticated_root_lands_at_beta_access(self):
+        response = self.client.get("/", follow_redirects=False)
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(response.headers["location"], "/beta-access")
+
+    def test_authenticated_root_redirects_to_recruiter(self):
+        self.client.post(
+            "/beta-access",
+            data={"access_code": "beta-invite-code"},
+            follow_redirects=False,
+        )
+        response = self.client.get("/", follow_redirects=False)
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(response.headers["location"], "/recruiter")
+
+    def test_beta_login_includes_product_framing(self):
+        response = self.client.get("/beta-access")
+        self.assertEqual(response.status_code, 200)
+        body = response.text
+        self.assertIn("Private Beta", body)
+        self.assertIn("work-style and team-contribution patterns", body)
+        self.assertIn("structured", body.lower())
+        self.assertIn("astrological profiles", body)
+
     def test_unauthenticated_recruiter_redirects(self):
         response = self.client.get("/recruiter", follow_redirects=False)
         self.assertEqual(response.status_code, 303)

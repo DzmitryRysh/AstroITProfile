@@ -8,6 +8,9 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from fastapi.responses import RedirectResponse
+from fastapi.testclient import TestClient
+
 from app.core.app import create_app
 from app.core.runtime_checks import (
     places_data_path,
@@ -102,6 +105,60 @@ class ProductionAppFactoryTests(unittest.TestCase):
     def test_startup_checks_can_be_skipped(self):
         app = create_app(run_startup_checks=False)
         self.assertIsNotNone(app)
+
+    def test_root_redirects_to_recruiter(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            store = Path(tmp) / "workspaces.json"
+            previous = os.environ.get("ASTROIT_WORKSPACE_STORE_PATH")
+            gate_prev = os.environ.get("ASTROIT_BETA_GATE_ENABLED")
+            os.environ["ASTROIT_WORKSPACE_STORE_PATH"] = str(store)
+            os.environ.pop("ASTROIT_BETA_GATE_ENABLED", None)
+            client = None
+            try:
+                app = create_app()
+                client = TestClient(app)
+                response = client.get("/", follow_redirects=False)
+                self.assertEqual(response.status_code, 303)
+                self.assertEqual(response.headers["location"], "/recruiter")
+                root_route = next(
+                    route
+                    for route in app.routes
+                    if getattr(route, "path", None) == "/"
+                )
+                payload = root_route.endpoint()
+                self.assertIsInstance(payload, RedirectResponse)
+                self.assertEqual(payload.headers["location"], "/recruiter")
+            finally:
+                if client is not None:
+                    client.close()
+                if previous is None:
+                    os.environ.pop("ASTROIT_WORKSPACE_STORE_PATH", None)
+                else:
+                    os.environ["ASTROIT_WORKSPACE_STORE_PATH"] = previous
+                if gate_prev is None:
+                    os.environ.pop("ASTROIT_BETA_GATE_ENABLED", None)
+                else:
+                    os.environ["ASTROIT_BETA_GATE_ENABLED"] = gate_prev
+
+    def test_health_remains_public_ok_payload(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            store = Path(tmp) / "workspaces.json"
+            previous = os.environ.get("ASTROIT_WORKSPACE_STORE_PATH")
+            os.environ["ASTROIT_WORKSPACE_STORE_PATH"] = str(store)
+            client = None
+            try:
+                app = create_app()
+                client = TestClient(app)
+                response = client.get("/health")
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.json(), {"status": "ok"})
+            finally:
+                if client is not None:
+                    client.close()
+                if previous is None:
+                    os.environ.pop("ASTROIT_WORKSPACE_STORE_PATH", None)
+                else:
+                    os.environ["ASTROIT_WORKSPACE_STORE_PATH"] = previous
 
 
 class DebugNoiseTests(unittest.TestCase):

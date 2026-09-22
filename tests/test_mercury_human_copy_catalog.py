@@ -81,12 +81,12 @@ S44B_SAGITTARIUS_OVERRIDES: dict[str, str] = {
     "sag_bio_afflicted_strange_religion_drift": (
         "May drift toward strange religions."
     ),
-    "sag_bio_expert_aptitude": "May show aptitude for expert-level work.",
+    "sag_bio_expert_aptitude": "May show a source-described pattern related to expert-level work.",
     "sag_bio_foreign_language_aptitude": (
-        "May show aptitude for foreign languages."
+        "May show a source-described pattern related to foreign languages."
     ),
-    "sag_bio_humanities_aptitude": "May show aptitude for the humanities.",
-    "sag_bio_pr_aptitude": "May show aptitude for PR.",
+    "sag_bio_humanities_aptitude": "May show a source-described pattern related to the humanities.",
+    "sag_bio_pr_aptitude": "May show a source-described pattern related to PR.",
     "sag_bio_teacher_instructor_quality": (
         "May show teacher or instructor qualities."
     ),
@@ -418,7 +418,11 @@ class SagittariusFamilyS44BTests(unittest.TestCase):
         self.assertNotIn("Source affliction", afflicted.human_text)
 
         aptitude = build_catalog_entry(by_id["sag_bio_expert_aptitude"])
-        self.assertNotIn("source-described", aptitude.human_text.lower())
+        self.assertEqual(
+            aptitude.human_text,
+            "May show a source-described pattern related to expert-level work.",
+        )
+        self.assertNotIn("aptitude", aptitude.human_text.lower())
 
         motive = build_catalog_entry(by_id["sag_bio_authority_learning_motivation"])
         self.assertEqual(motive.human_text, "Learning may be motivated by authority.")
@@ -502,7 +506,7 @@ class TaurusFamilyS45BTests(unittest.TestCase):
             "Learning may be motivated by money."
         ),
         "taurus_bio_vocal_artistic_aptitude": (
-            "May show vocal or artistic aptitude."
+            "May show a source-described vocal or artistic pattern."
         ),
     }
 
@@ -552,7 +556,11 @@ class TaurusFamilyS45BTests(unittest.TestCase):
                 self.assertNotIn(" / ", human)
 
         aptitude = build_catalog_entry(by_id["taurus_bio_vocal_artistic_aptitude"])
-        self.assertNotIn("source-described", aptitude.human_text.lower())
+        self.assertEqual(
+            aptitude.human_text,
+            "May show a source-described vocal or artistic pattern.",
+        )
+        self.assertNotIn("aptitude", aptitude.human_text.lower())
         motive = build_catalog_entry(by_id["taurus_bio_money_learning_motivation"])
         self.assertEqual(motive.human_text, "Learning may be motivated by money.")
 
@@ -868,7 +876,7 @@ class CapricornLeoFamilyS47BTests(unittest.TestCase):
         "capricorn_bio_table_template_oriented": (
             "Oriented toward tables and templates."
         ),
-        "capricorn_bio_technical_aptitude": "Technical aptitude.",
+        "capricorn_bio_technical_aptitude": "Source-described technical pattern.",
         "capricorn_l7_beautiful_voice": "May have a beautiful voice.",
         "capricorn_l7_chopped_concise_phrases": (
             "Phrases can be clipped and concise."
@@ -1143,7 +1151,7 @@ class AquariusGeminiFamilyS48BTests(unittest.TestCase):
             "Speech tempo may become irregular or broken."
         ),
         "aquarius_bio_afflicted_loss_of_focus": "May lose focus.",
-        "aquarius_bio_artistic_aptitude": "May show artistic aptitude.",
+        "aquarius_bio_artistic_aptitude": "May show a source-described artistic pattern.",
         "aquarius_bio_continual_learning_courses": (
             "Continual learning; may enjoy courses."
         ),
@@ -1151,7 +1159,7 @@ class AquariusGeminiFamilyS48BTests(unittest.TestCase):
         "aquarius_bio_forecasting": "Forecasting ability.",
         "aquarius_bio_insights": "May show insight.",
         "aquarius_bio_interest_in_future": "Interest in the future.",
-        "aquarius_bio_inventor_aptitude": "May show aptitude for invention.",
+        "aquarius_bio_inventor_aptitude": "May show a source-described pattern related to invention.",
         "aquarius_bio_motivation_extraordinary_new_information": (
             "Learning may be motivated by extraordinary or unusual new "
             "information."
@@ -1165,7 +1173,7 @@ class AquariusGeminiFamilyS48BTests(unittest.TestCase):
         "aquarius_bio_planning": "Planning ability.",
         "aquarius_bio_strong_firm_memory": "Strong or firm memory.",
         "aquarius_bio_technical_scientific_aptitude": (
-            "May show technical or scientific aptitude."
+            "May show a source-described technical or scientific pattern."
         ),
         "aquarius_bio_uranian_freedom_equality_fraternity_coloring": (
             "Thinking, communication, and learning may be colored by themes of "
@@ -1469,10 +1477,10 @@ class PiscesAriesFamilyS49BTests(unittest.TestCase):
             "Words may greatly exceed completed actions or results."
         ),
         "pisces_bio_humanities_aptitude": (
-            "May show aptitude for the humanities."
+            "May show a source-described pattern related to the humanities."
         ),
         "pisces_bio_languages_aptitude": (
-            "May show aptitude for languages."
+            "May show a source-described pattern related to languages."
         ),
         "pisces_bio_learning_emotional_psychological_attunement": (
             "Learning through emotional or psychological attunement with real "
@@ -1727,7 +1735,7 @@ class PiscesAriesFamilyS49BTests(unittest.TestCase):
         )
         self.assertEqual(
             HUMAN_COPY_OVERRIDES["pisces_bio_humanities_aptitude"],
-            "May show aptitude for the humanities.",
+            "May show a source-described pattern related to the humanities.",
         )
         self.assertEqual(
             HUMAN_COPY_OVERRIDES["pisces_bio_learning_youtube_content_video"],
@@ -1825,11 +1833,11 @@ class ScorpioLibraFamilyS410BTests(unittest.TestCase):
         "scorpio_bio_afflicted_quarrelsome_verbal_conflict": (
             "Communication may become quarrelsome or verbally abusive."
         ),
-        "scorpio_bio_analytical_aptitude": "May show analytical aptitude.",
+        "scorpio_bio_analytical_aptitude": "May show a source-described analytical pattern.",
         "scorpio_bio_authoritative_voice_effect": (
             "Voice may have an authoritative or commanding effect."
         ),
-        "scorpio_bio_critic_aptitude": "May show critic aptitude.",
+        "scorpio_bio_critic_aptitude": "May show a source-described critic pattern.",
         "scorpio_bio_influence_people": "May tend to influence people.",
         "scorpio_bio_intuitive_deep_thinking": (
             "Deep thinking with an intuitive quality."
@@ -1860,14 +1868,14 @@ class ScorpioLibraFamilyS410BTests(unittest.TestCase):
         "scorpio_bio_psychological_penetration": (
             "May probe psychological material deeply."
         ),
-        "scorpio_bio_researcher_aptitude": "May show researcher aptitude.",
+        "scorpio_bio_researcher_aptitude": "May show a source-described researcher pattern.",
         "scorpio_bio_speak_through_secrets": (
             "May speak through secrets, leaving others to figure things out."
         ),
         "scorpio_bio_sticky_attention": (
             "Attention can be sticky or persistent."
         ),
-        "scorpio_bio_technical_aptitude": "May show technical aptitude.",
+        "scorpio_bio_technical_aptitude": "May show a source-described technical pattern.",
         "scorpio_l7_argument_dispute_learning": (
             "Argument or dispute can support learning."
         ),
@@ -1959,16 +1967,16 @@ class ScorpioLibraFamilyS410BTests(unittest.TestCase):
             "Communication may involve lying or distortion."
         ),
         "libra_bio_communicator_aptitude": (
-            "May show aptitude for communication."
+            "May show a source-described pattern related to communication."
         ),
         "libra_bio_compliment_skill": "May show skill with compliments.",
         "libra_bio_compromise_skill": "May show skill with compromise.",
         "libra_bio_dialogue_skill": "May show skill in dialogue.",
         "libra_bio_humanities_aptitude": (
-            "May show aptitude for the humanities."
+            "May show a source-described pattern related to the humanities."
         ),
         "libra_bio_interviewer_aptitude": (
-            "May show aptitude for interviewing."
+            "May show a source-described pattern related to interviewing."
         ),
         "libra_bio_learning_two_sides": (
             "Learning through two sides or two aspects of a situation."
@@ -1994,7 +2002,7 @@ class ScorpioLibraFamilyS410BTests(unittest.TestCase):
             "presenting, consulting, law, and politics; these are not career "
             "assignments."
         ),
-        "libra_bio_salesperson_aptitude": "May show sales aptitude.",
+        "libra_bio_salesperson_aptitude": "May show a source-described sales-related pattern.",
         "libra_bio_venusian_diplomacy_aesthetic_coloring": (
             "Thinking, communication, and learning may be colored by diplomacy "
             "and aesthetic quality."
@@ -2122,11 +2130,11 @@ class ScorpioLibraFamilyS410BTests(unittest.TestCase):
         )
         self.assertEqual(
             HUMAN_COPY_OVERRIDES["libra_bio_communicator_aptitude"],
-            "May show aptitude for communication.",
+            "May show a source-described pattern related to communication.",
         )
         self.assertEqual(
             HUMAN_COPY_OVERRIDES["libra_bio_interviewer_aptitude"],
-            "May show aptitude for interviewing.",
+            "May show a source-described pattern related to interviewing.",
         )
         self.assertEqual(
             HUMAN_COPY_OVERRIDES["libra_bio_motivation_possibility_to_discuss"],
@@ -2213,7 +2221,7 @@ class CancerVirgoFamilyS411BTests(unittest.TestCase):
         ),
         "cancer_bio_depth_substantive_nature": "May show depth and substance.",
         "cancer_bio_humanities_aptitude": (
-            "May show aptitude for the humanities."
+            "May show a source-described pattern related to the humanities."
         ),
         "cancer_bio_learning_colored_by_emotionality": (
             "Learning may be colored by emotionality."
@@ -2250,7 +2258,7 @@ class CancerVirgoFamilyS411BTests(unittest.TestCase):
             "Thinking may be colored by emotionality."
         ),
         "cancer_bio_writer_association": (
-            "May show writing aptitude or potential."
+            "May show a source-described writing pattern or potential."
         ),
         "cancer_l7_arguments_arise_intuitively": (
             "Arguments may arise intuitively."
@@ -2335,12 +2343,12 @@ class CancerVirgoFamilyS411BTests(unittest.TestCase):
         "virgo_bio_high_mastery_of_words": (
             "May show potential for very high mastery of words."
         ),
-        "virgo_bio_legal_aptitude": "May show legal aptitude.",
+        "virgo_bio_legal_aptitude": "May show a source-described legal pattern.",
         "virgo_bio_less_accumulation_for_its_own_sake": (
             "Learning merely for the sake of accumulating knowledge is "
             "described as less characteristic."
         ),
-        "virgo_bio_literary_aptitude": "May show literary aptitude.",
+        "virgo_bio_literary_aptitude": "May show a source-described literary pattern.",
         "virgo_bio_motivation_curiosity": (
             "Learning may be motivated by curiosity."
         ),
@@ -2365,8 +2373,8 @@ class CancerVirgoFamilyS411BTests(unittest.TestCase):
         "virgo_bio_strongly_articulated_wording": (
             "Strongly articulated or stamped wording."
         ),
-        "virgo_bio_technical_aptitude": "May show technical aptitude.",
-        "virgo_bio_writing_aptitude": "May show writing aptitude.",
+        "virgo_bio_technical_aptitude": "May show a source-described technical pattern.",
+        "virgo_bio_writing_aptitude": "May show a source-described writing pattern.",
         "virgo_l7_dev_avoid_micromanagement": (
             "Growth area: avoid micromanagement."
         ),

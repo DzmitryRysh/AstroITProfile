@@ -28,6 +28,8 @@
   const workspaceSaveStatus = document.getElementById("workspace-save-status");
   const DEFAULT_BRAND_TITLE = "Team Intelligence";
   const SELF_BRAND_TITLE = "Your Work Profile";
+  const UNSUPPORTED_PLACE_MESSAGE =
+    "That birth place is not in the supported list. Choose a place from the suggestions.";
 
   /** Presentation-only: named entry → person profile; empty name → self. */
   const PERSON_SECTION_TITLES = {
@@ -360,30 +362,6 @@
     setBrandTitleMode("self");
   }
 
-  const SELF_DEMOS = {
-    avdey: {
-      display_name: "Avdey",
-      birth_date: "1986-07-14",
-      birth_time: "07:10",
-      birth_place: "Simferopol, Ukraine",
-      sex: "male",
-    },
-    vlad: {
-      display_name: "Vlad",
-      birth_date: "1986-05-16",
-      birth_time: "15:00",
-      birth_place: "Dnipro, Ukraine",
-      sex: "male",
-    },
-    dzmitry: {
-      display_name: "Dzmitry",
-      birth_date: "1985-11-12",
-      birth_time: "14:15",
-      birth_place: "Zhodino, Belarus",
-      sex: "male",
-    },
-  };
-
   const CATEGORY_LABELS = {
     thinking: "Thinking",
     communication: "Communication",
@@ -435,18 +413,6 @@
     selfOverlay.hidden = true;
     selfDrawer.hidden = true;
     document.body.style.overflow = "";
-  }
-
-  function fillSelfDemo(key) {
-    const demo = SELF_DEMOS[key];
-    if (!demo) return;
-    document.getElementById("self-name").value = demo.display_name;
-    document.getElementById("self-birth-date").value = demo.birth_date;
-    document.getElementById("self-birth-time").value = demo.birth_time;
-    document.getElementById("self-birth-place").value = demo.birth_place;
-    const sexEl = document.getElementById("self-sex");
-    if (sexEl) sexEl.value = demo.sex || "";
-    setStatus(selfSetupStatus, `Filled ${demo.display_name}. Click Build My Profile to call the API.`);
   }
 
   function titleCaseSignal(value) {
@@ -1411,7 +1377,7 @@
     const professionalHtml = professional
       ? `<details class="methodology-row">
           <summary>Professional associations</summary>
-          <p class="section-helper">These are source-described associations and aptitudes, not recommended jobs, verified competencies, or hiring recommendations.</p>
+          <p class="section-helper">These are source-described associations and patterns, not recommended jobs, verified competencies, or hiring recommendations.</p>
         </details>`
       : "";
     const compensation = populated.find((section) => section.key === "compensations");
@@ -1448,8 +1414,8 @@
   // Overview-only recruiter labels. Canonical signal ids / tags are unchanged.
   const OVERVIEW_MERCURY_SIGNAL_PRESENTATION = {
     technical_ability: {
-      label: "Technical aptitude signal",
-      takeaway: "The profile contains repeated source-described technical aptitude signals.",
+      label: "Source-linked technical pattern",
+      takeaway: "The profile contains repeated source-linked technical patterns.",
     },
     debate: {
       label: "Debate tendency",
@@ -1458,7 +1424,7 @@
       label: "Argumentation pattern",
     },
     sales: {
-      label: "Sales-related aptitude signal",
+      label: "Source-linked sales-related pattern",
     },
   };
   // Overview-only glance wording. Canonical card text remains in Thinking/Evidence.
@@ -2256,7 +2222,7 @@
       professional
         ? `<details class="watchouts-block profile-professional">
             <summary><span class="watchouts-summary-main">${escapeHtml(marsSectionTitle(professional, person))}</span></summary>
-            <p class="section-helper">These are source-described associations and aptitudes, not recommended jobs, verified competencies, or hiring recommendations.</p>
+            <p class="section-helper">These are source-described associations and patterns, not recommended jobs, verified competencies, or hiring recommendations.</p>
             <div class="watchouts-body">${renderMarsSectionBody(professional, facts, presentation)}</div>
           </details>`
         : "",
@@ -2655,13 +2621,28 @@
     try {
       mercury = await mercuryPromise;
     } catch (err) {
-      setStatus(selfSetupStatus, err.message, "error");
-      setStatus(selfProfileStatus, err.message, "error");
       try {
         const marsOnly = await marsPromise;
-        selfProfileContent.innerHTML = renderHowYouWorkDimension(marsOnly, null, currentPersonPerspective());
+        // Mercury failed but Mars succeeded — show Mars-only without a second shell error.
+        closeSelfDrawer();
+        setStatus(selfSetupStatus, "");
+        setStatus(selfProfileStatus, err.message, "error");
+        selfProfileContent.innerHTML = renderHowYouWorkDimension(
+          marsOnly,
+          null,
+          currentPersonPerspective()
+        );
       } catch (marsErr) {
-        selfProfileContent.innerHTML = renderHowYouWorkDimension(null, marsErr.message, currentPersonPerspective());
+        const message = preferSelfProfileError(
+          err && err.message,
+          marsErr && marsErr.message
+        );
+        // Both failed (typical unsupported-place case). Keep the drawer open with
+        // one modal error; do not leave a second page-level failure message behind it.
+        showEmptyShell();
+        selfProfileContent.innerHTML = "";
+        setStatus(selfProfileStatus, "");
+        setStatus(selfSetupStatus, message, "error");
       }
       return;
     }
@@ -2782,6 +2763,38 @@
     return candidates;
   }
 
+  function friendlyApiError(message) {
+    const text = String(message || "");
+    if (/^Unknown place:/i.test(text)) {
+      return UNSUPPORTED_PLACE_MESSAGE;
+    }
+    return text || "Request failed";
+  }
+
+  function isUnsupportedPlaceMessage(message) {
+    const text = String(message || "");
+    return text === UNSUPPORTED_PLACE_MESSAGE || /^Unknown place:/i.test(text);
+  }
+
+  function isGenericRequestFailureMessage(message) {
+    return /^Request failed \(\d+\)$/i.test(String(message || ""));
+  }
+
+  function preferSelfProfileError(primary, secondary) {
+    const first = String(primary || "");
+    const second = String(secondary || "");
+    if (isUnsupportedPlaceMessage(first) || isUnsupportedPlaceMessage(second)) {
+      return UNSUPPORTED_PLACE_MESSAGE;
+    }
+    if (isGenericRequestFailureMessage(first) && second && !isGenericRequestFailureMessage(second)) {
+      return second;
+    }
+    if (isGenericRequestFailureMessage(second) && first && !isGenericRequestFailureMessage(first)) {
+      return first;
+    }
+    return first || second || "Request failed";
+  }
+
   async function apiRequest(path, options = {}) {
     const response = await fetch(path, {
       headers: { Accept: "application/json", ...(options.body ? { "Content-Type": "application/json" } : {}) },
@@ -2801,7 +2814,7 @@
         : Array.isArray(detail)
           ? detail.map((item) => item.msg || JSON.stringify(item)).join("; ")
           : `Request failed (${response.status})`;
-      throw new Error(message);
+      throw new Error(friendlyApiError(message));
     }
     return data;
   }
@@ -4323,9 +4336,6 @@
   document.getElementById("self-build-team").addEventListener("click", () => {
     closeSelfDrawer();
     openSetup();
-  });
-  document.querySelectorAll("[data-self-demo]").forEach((btn) => {
-    btn.addEventListener("click", () => fillSelfDemo(btn.getAttribute("data-self-demo")));
   });
   document.getElementById("load-demo-empty").addEventListener("click", loadDemoAndAnalyze);
   document.getElementById("load-demo").addEventListener("click", loadDemoAndAnalyze);

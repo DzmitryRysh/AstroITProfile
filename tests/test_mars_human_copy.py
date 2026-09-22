@@ -159,12 +159,13 @@ class MarsHumanCopyModuleTests(unittest.TestCase):
         ]
         self.assertEqual(snapshots, after)
 
-    def test_bio_copy_is_source_bounded_aptitude_not_hiring(self):
+    def test_bio_copy_is_source_bounded_pattern_not_hiring(self):
         by_id = {fact.id: fact.text for fact in ALL_MARS_SOURCE_FACTS}
         fact_id = "mars_mercury_bio_technical_analytical_it_engineering_aptitude"
         human = get_human_fact_text(_fact(fact_id, by_id[fact_id]))
         self.assertIn("The source associates this pairing with", human)
-        self.assertIn("aptitude", human.lower())
+        self.assertIn("technical, analytical, or IT-engineering patterns", human)
+        self.assertNotIn("aptitude", human.lower())
         self.assertNotIn("Strong technical skills", human)
         self.assertNotIn("effective manager", human.lower())
         self.assertNotIn("would be good at", human.lower())
@@ -330,11 +331,27 @@ class MarsHumanCopySynthesisIntegrationTests(unittest.TestCase):
                 "mars_mercury_bio_technical_analytical_it_engineering_aptitude",
             )
             self.assertIn("The source associates this pairing with", tech)
-            self.assertIn("aptitude", tech.lower())
+            self.assertIn("IT-engineering patterns", tech)
+            self.assertNotIn("aptitude", tech.lower())
             self.assertNotIn("Strong technical skills", tech)
             mentor = self._display(synthesis, "mars_jupiter_bio_teacher_mentor_aptitude")
-            self.assertIn("teacher or mentor aptitude", mentor.lower())
+            self.assertIn("teacher or mentor patterns", mentor.lower())
+            self.assertNotIn("aptitude", mentor.lower())
             self.assertNotIn("effective manager", mentor.lower())
             for fact in synthesis.facts_by_id.values():
                 self.assertNotEqual(fact.scope, "SOURCE_ONLY")
                 self.assertNotEqual(fact.scope, "PERSONAL_MARS")
+
+    def test_presentation_overrides_have_no_aptitude_wording(self):
+        aptitude_ids = [fid for fid in HUMAN_COPY_OVERRIDES if "aptitude" in fid]
+        self.assertGreater(len(aptitude_ids), 10)
+        for fact_id in aptitude_ids:
+            human = HUMAN_COPY_OVERRIDES[fact_id]
+            self.assertNotIn("aptitude", human.lower(), fact_id)
+        # Also cover value strings whose keys do not contain aptitude.
+        for fact_id, human in HUMAN_COPY_OVERRIDES.items():
+            self.assertNotIn("aptitude", human.lower(), fact_id)
+
+
+if __name__ == "__main__":
+    unittest.main()

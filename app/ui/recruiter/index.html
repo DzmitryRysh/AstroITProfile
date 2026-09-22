@@ -327,10 +327,16 @@
           <label class="field">
             <span>Birth Time (optional)</span>
             <input id="self-birth-time" type="time" />
+            <p class="field-hint">
+              Birth time is optional. Without it, house-dependent interpretations may be unavailable.
+            </p>
           </label>
           <label class="field">
             <span>Birth Place</span>
             <input id="self-birth-place" type="text" list="places-list" required />
+            <p class="field-hint">
+              Choose a supported place from the suggestions.
+            </p>
           </label>
           <label class="field">
             <span>Pronouns (optional)</span>
@@ -341,12 +347,6 @@
               <option value="neutral">They / them</option>
             </select>
           </label>
-        </div>
-        <div class="demo-fills" aria-label="Prototype quick fills">
-          <span class="demo-fills-label">Quick fill</span>
-          <button type="button" class="btn btn-ghost" data-self-demo="avdey">Avdey</button>
-          <button type="button" class="btn btn-ghost" data-self-demo="vlad">Vlad</button>
-          <button type="button" class="btn btn-ghost" data-self-demo="dzmitry">Dzmitry</button>
         </div>
         <p id="self-setup-status" class="status-line" role="status" aria-live="polite"></p>
       </div>
@@ -369,13 +369,16 @@
     >
       <div class="setup-drawer-head">
         <div>
-          <p class="eyebrow">Local Persistence</p>
+          <p class="eyebrow">Private Beta</p>
           <h2 id="workspaces-heading">Saved Workspaces</h2>
         </div>
         <button type="button" class="btn btn-ghost" data-close-workspaces>Close</button>
       </div>
       <div class="setup-body">
-        <p class="empty-note">Saved workspaces are stored locally in this prototype.</p>
+        <p class="empty-note">
+          Workspaces are scoped to this browser during private beta.
+          Another browser or device has a separate saved-workspace scope.
+        </p>
         <div id="workspaces-status" class="status-line" role="status" aria-live="polite"></div>
         <div id="workspaces-list" class="form-list"></div>
       </div>
