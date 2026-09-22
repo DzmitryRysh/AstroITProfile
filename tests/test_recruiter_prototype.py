@@ -152,6 +152,34 @@ class RecruiterUxPolishTests(unittest.TestCase):
         self.assertIn("/api/v1/profile/places", self.js)
         self.assertIn("friendlyApiError", self.js)
         self.assertIn("not in the supported list", self.js)
+        self.assertIn("preferSelfProfileError", self.js)
+        self.assertIn("UNSUPPORTED_PLACE_MESSAGE", self.js)
+
+    def test_unsupported_place_self_profile_error_is_single_clear_message(self):
+        helpers = self.js.split("function friendlyApiError", 1)[1].split(
+            "async function apiRequest", 1
+        )[0]
+        self.assertIn("UNSUPPORTED_PLACE_MESSAGE", helpers)
+        self.assertIn("preferSelfProfileError", helpers)
+        self.assertIn("isGenericRequestFailureMessage", helpers)
+        self.assertIn(
+            "That birth place is not in the supported list. Choose a place from the suggestions.",
+            self.js,
+        )
+        build = self.js.split("async function buildMyProfile", 1)[1].split(
+            "function createMemberCard", 1
+        )[0]
+        self.assertIn("preferSelfProfileError(", build)
+        self.assertIn("showEmptyShell()", build)
+        self.assertIn('setStatus(selfProfileStatus, "")', build)
+        self.assertIn("setStatus(selfSetupStatus, message, \"error\")", build)
+        # Both-failed place case must not paint a second error into profile content.
+        both_fail = build.split("catch (marsErr)", 1)[1].split("return;", 1)[0]
+        self.assertNotIn("renderHowYouWorkDimension(null, marsErr.message", both_fail)
+        self.assertNotIn("Request failed (500)", both_fail)
+        # Generic fallback retained for non-place failures.
+        self.assertIn("`Request failed (${response.status})`", self.js)
+        self.assertIn("if (birthTime) payload.birth_time = birthTime", build)
 
     def test_beta_facing_ui_has_no_aptitude_labels(self):
         self.assertNotIn("Technical aptitude signal", self.js)

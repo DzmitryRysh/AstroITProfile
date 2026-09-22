@@ -28,6 +28,8 @@
   const workspaceSaveStatus = document.getElementById("workspace-save-status");
   const DEFAULT_BRAND_TITLE = "Team Intelligence";
   const SELF_BRAND_TITLE = "Your Work Profile";
+  const UNSUPPORTED_PLACE_MESSAGE =
+    "That birth place is not in the supported list. Choose a place from the suggestions.";
 
   /** Presentation-only: named entry → person profile; empty name → self. */
   const PERSON_SECTION_TITLES = {
@@ -2619,13 +2621,28 @@
     try {
       mercury = await mercuryPromise;
     } catch (err) {
-      setStatus(selfSetupStatus, err.message, "error");
-      setStatus(selfProfileStatus, err.message, "error");
       try {
         const marsOnly = await marsPromise;
-        selfProfileContent.innerHTML = renderHowYouWorkDimension(marsOnly, null, currentPersonPerspective());
+        // Mercury failed but Mars succeeded — show Mars-only without a second shell error.
+        closeSelfDrawer();
+        setStatus(selfSetupStatus, "");
+        setStatus(selfProfileStatus, err.message, "error");
+        selfProfileContent.innerHTML = renderHowYouWorkDimension(
+          marsOnly,
+          null,
+          currentPersonPerspective()
+        );
       } catch (marsErr) {
-        selfProfileContent.innerHTML = renderHowYouWorkDimension(null, marsErr.message, currentPersonPerspective());
+        const message = preferSelfProfileError(
+          err && err.message,
+          marsErr && marsErr.message
+        );
+        // Both failed (typical unsupported-place case). Keep the drawer open with
+        // one modal error; do not leave a second page-level failure message behind it.
+        showEmptyShell();
+        selfProfileContent.innerHTML = "";
+        setStatus(selfProfileStatus, "");
+        setStatus(selfSetupStatus, message, "error");
       }
       return;
     }
@@ -2749,9 +2766,33 @@
   function friendlyApiError(message) {
     const text = String(message || "");
     if (/^Unknown place:/i.test(text)) {
-      return "That birth place is not in the supported list. Choose a place from the suggestions.";
+      return UNSUPPORTED_PLACE_MESSAGE;
     }
     return text || "Request failed";
+  }
+
+  function isUnsupportedPlaceMessage(message) {
+    const text = String(message || "");
+    return text === UNSUPPORTED_PLACE_MESSAGE || /^Unknown place:/i.test(text);
+  }
+
+  function isGenericRequestFailureMessage(message) {
+    return /^Request failed \(\d+\)$/i.test(String(message || ""));
+  }
+
+  function preferSelfProfileError(primary, secondary) {
+    const first = String(primary || "");
+    const second = String(secondary || "");
+    if (isUnsupportedPlaceMessage(first) || isUnsupportedPlaceMessage(second)) {
+      return UNSUPPORTED_PLACE_MESSAGE;
+    }
+    if (isGenericRequestFailureMessage(first) && second && !isGenericRequestFailureMessage(second)) {
+      return second;
+    }
+    if (isGenericRequestFailureMessage(second) && first && !isGenericRequestFailureMessage(first)) {
+      return first;
+    }
+    return first || second || "Request failed";
   }
 
   async function apiRequest(path, options = {}) {

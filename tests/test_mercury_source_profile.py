@@ -352,6 +352,33 @@ class AvdeyGoldenCaseTests(unittest.TestCase):
         self.assertIn("/api/v1/mercury-source-profile", paths)
         self.assertIn("/api/v1/mercury-work-profile", paths)
 
+    def test_unsupported_place_returns_422_not_500(self):
+        from fastapi.testclient import TestClient
+
+        app = create_app(run_startup_checks=False)
+        client = TestClient(app, raise_server_exceptions=False)
+        try:
+            payload = {
+                "birth_date": "1986-07-14",
+                "birth_place": "testville, Mars",
+            }
+            mercury = client.post("/api/v1/mercury-source-profile", json=payload)
+            mars = client.post("/api/v1/mars-source-profile", json=payload)
+            self.assertEqual(mercury.status_code, 422, mercury.text)
+            self.assertEqual(mars.status_code, 422, mars.text)
+            self.assertIn("Unknown place", mercury.json()["detail"])
+            self.assertIn("Unknown place", mars.json()["detail"])
+            supported = client.post(
+                "/api/v1/mercury-source-profile",
+                json={
+                    "birth_date": "1986-07-14",
+                    "birth_place": "Simferopol, Ukraine",
+                },
+            )
+            self.assertEqual(supported.status_code, 200, supported.text)
+        finally:
+            client.close()
+
 
 class DirectMotionCoverageTests(unittest.TestCase):
     def test_direct_motion_is_not_unsupported_by_itself(self):
